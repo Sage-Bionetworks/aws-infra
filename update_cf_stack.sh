@@ -8,8 +8,9 @@ aws cloudformation update-stack \
 --notification-arns $CloudformationNotifyLambdaTopicArn \
 --template-url $TEMPLATE_URL \
 --parameters \
-ParameterKey=AwsAccountId,ParameterValue=$AwsAccountId \
-ParameterKey=AwsDefaultVpcId,ParameterValue=$AwsDefaultVpcId \
-ParameterKey=AwsVpcSubnetPrefix,ParameterValue=$AwsVpcSubnetPrefix \
-ParameterKey=FhcrcVpnCidrip,ParameterValue=$FhcrcVpnCidrip \
-ParameterKey=OperatorEmail,ParameterValue=$OperatorEmail
+ParameterKey=AwsAccountId,ParameterValue="$AwsAccountId" \
+ParameterKey=AwsDefaultVpcId,ParameterValue="$AwsDefaultVpcId" \
+ParameterKey=AwsVpcSubnetPrefix,ParameterValue="$AwsVpcSubnetPrefix" \
+ParameterKey=FhcrcVpnCidrip,ParameterValue="$FhcrcVpnCidrip" \
+ParameterKey=OperatorEmail,ParameterValue="$OperatorEmail" \
+ParameterKey=SSLCertArn,ParameterValue="$SSLCertArn"
