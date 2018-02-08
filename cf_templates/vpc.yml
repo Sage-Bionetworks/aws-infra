@@ -1,394 +1,231 @@
-Description: Template for VPC
-AWSTemplateFormatVersion: 2010-09-09
-Parameters:
-  AwsDefaultVpcId:
-    Description: The AWS account's default VPC id
-    Type: String
-    Default: param_place_holder
-  AwsVpcSubnetPrefix:
-    Description: The VPC subnet prefix (i.e. 10.40)
-    Type: String
-    Default: param_place_holder
-  SSLCertArn:
-    Description: SSL certificate for load balancer
-    Type: String
-    Default: param_place_holder
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Creates a VPC with Managed NAT, similar to the VPC Wizard at
+  https://console.aws.amazon.com/vpc/home#wizardFullpagePublicAndPrivate: (extended from VPC_with_PublicIPs_And_DNS.template sample)
+Mappings:
+  SubnetConfig:
+    VPC:
+      CIDR: "10.0.0.0/16"
+    Public:
+      CIDR: "10.0.0.0/24"
+    Private:
+      CIDR: "10.0.1.0/24"
 Resources:
-  AWSEC2InternetGateway:
-    Type: "AWS::EC2::InternetGateway"
-  AWSEC2VPCGatewayAttachment:
-    Type: "AWS::EC2::VPCGatewayAttachment"
-    DependsOn: AWSEC2InternetGateway
-    Properties:
-      InternetGatewayId: !Ref AWSEC2InternetGateway
-      VpcId: !Ref AWSEC2VPC
-  AWSEC2DHCPOptions:
-    Type: "AWS::EC2::DHCPOptions"
-    Properties:
-       DomainName: ec2.internal
-       DomainNameServers:
-        - AmazonProvidedDNS
-  AWSEC2VPCDHCPOptionsAssociation:
-    Type: "AWS::EC2::VPCDHCPOptionsAssociation"
-    DependsOn:
-      - AWSEC2VPC
-      - AWSEC2DHCPOptions
-    Properties:
-      DhcpOptionsId: !Ref AWSEC2DHCPOptions
-      VpcId: !Ref AWSEC2VPC
-  AWSEC2VPC:
+  VPC:
     Type: "AWS::EC2::VPC"
     Properties:
-      CidrBlock: !Join
-        - '.'
-        - - !Ref AwsVpcSubnetPrefix
-          - 0.0/16
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
-      InstanceTenancy: default
-  AWSEC2RouteTable:
+      EnableDnsSupport: "true"
+      EnableDnsHostnames: "true"
+      CidrBlock:
+        Fn::FindInMap:
+          - "SubnetConfig"
+          - "VPC"
+          - "CIDR"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Public"
+        -
+          Key: "Name"
+          Value: "VPC Public and Private with NAT"
+  PublicSubnet:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId:
+        Ref: "VPC"
+      CidrBlock:
+        Fn::FindInMap:
+          - "SubnetConfig"
+          - "Public"
+          - "CIDR"
+      MapPublicIpOnLaunch: "true"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Public"
+        -
+          Key: "Name"
+          Value: "Public"
+  PrivateSubnet:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId:
+        Ref: "VPC"
+      CidrBlock:
+        Fn::FindInMap:
+          - "SubnetConfig"
+          - "Private"
+          - "CIDR"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Private"
+        -
+          Key: "Name"
+          Value: "Private"
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Public"
+  GatewayToInternet:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId:
+        Ref: "VPC"
+      InternetGatewayId:
+        Ref: "InternetGateway"
+  PublicRouteTable:
     Type: "AWS::EC2::RouteTable"
-    DependsOn: AWSEC2VPC
     Properties:
-      VpcId: !Ref AWSEC2VPC
-  AWSEC2SubnetRouteTableAssociationEast1a:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - AWSEC2RouteTable
-      - AWSEC2SubnetUsEast1a
+      VpcId:
+        Ref: "VPC"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Public"
+  PublicRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: "GatewayToInternet"
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1a
-      RouteTableId: !Ref AWSEC2RouteTable
-  AWSEC2SubnetRouteTableAssociationEast1b:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - AWSEC2RouteTable
-      - AWSEC2SubnetUsEast1b
+      RouteTableId:
+        Ref: "PublicRouteTable"
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId:
+        Ref: "InternetGateway"
+  PublicSubnetRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1b
-      RouteTableId: !Ref AWSEC2RouteTable
-  AWSEC2SubnetRouteTableAssociationEast1c:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - AWSEC2RouteTable
-      - AWSEC2SubnetUsEast1c
-    Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1c
-      RouteTableId: !Ref AWSEC2RouteTable
-  AWSEC2SubnetRouteTableAssociationEast1d:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - AWSEC2RouteTable
-      - AWSEC2SubnetUsEast1d
-    Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1d
-      RouteTableId: !Ref AWSEC2RouteTable
-  AWSEC2SubnetRouteTableAssociationEast1e:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - AWSEC2RouteTable
-      - AWSEC2SubnetUsEast1e
-    Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1e
-      RouteTableId: !Ref AWSEC2RouteTable
-  AWSEC2SubnetRouteTableAssociationEast1f:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - AWSEC2RouteTable
-      - AWSEC2SubnetUsEast1f
-    Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1f
-      RouteTableId: !Ref AWSEC2RouteTable
-  AWSEC2Route:
-    Type: AWS::EC2::Route
-    DependsOn:
-      - AWSEC2InternetGateway
-      - AWSEC2RouteTable
-    Properties:
-      RouteTableId: !Ref AWSEC2RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref AWSEC2InternetGateway
-  AWSEC2NetworkAcl:
+      SubnetId:
+        Ref: "PublicSubnet"
+      RouteTableId:
+        Ref: "PublicRouteTable"
+  PublicNetworkAcl:
     Type: "AWS::EC2::NetworkAcl"
-    DependsOn: AWSEC2VPC
     Properties:
-      VpcId: !Ref AWSEC2VPC
-  AWSEC2NetworkAclEntryIngress:
-    Type: AWS::EC2::NetworkAclEntry
-    DependsOn: AWSEC2NetworkAcl
+      VpcId:
+        Ref: "VPC"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Public"
+  InboundHTTPPublicNetworkAclEntry:
+    Type: "AWS::EC2::NetworkAclEntry"
     Properties:
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-      RuleNumber: '100'
+      NetworkAclId:
+        Ref: "PublicNetworkAcl"
+      RuleNumber: "100"
       Protocol: "-1"
-      RuleAction: allow
-      CidrBlock: 0.0.0.0/0
-  AWSEC2NetworkAclEntryEgress:
-    Type: AWS::EC2::NetworkAclEntry
-    DependsOn: AWSEC2NetworkAcl
+      RuleAction: "allow"
+      Egress: "false"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: "0"
+        To: "65535"
+  OutboundPublicNetworkAclEntry:
+    Type: "AWS::EC2::NetworkAclEntry"
     Properties:
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-      RuleNumber: '100'
-      Egress: true
+      NetworkAclId:
+        Ref: "PublicNetworkAcl"
+      RuleNumber: "100"
       Protocol: "-1"
-      RuleAction: allow
-      CidrBlock: 0.0.0.0/0
-  AWSEC2SubnetUsEast1a:
-    Type: "AWS::EC2::Subnet"
-    DependsOn: AWSEC2VPC
-    Properties:
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref AWSEC2VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref AwsVpcSubnetPrefix
-          - 0.0/20
-      AvailabilityZone: !Select
-        - 0
-        - Fn::GetAZs: ""
-  AWSEC2SubnetUsEast1b:
-    Type: "AWS::EC2::Subnet"
-    DependsOn: AWSEC2VPC
-    Properties:
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref AWSEC2VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref AwsVpcSubnetPrefix
-          - 16.0/20
-      AvailabilityZone: !Select
-        - 1
-        - Fn::GetAZs: ""
-  AWSEC2SubnetUsEast1c:
-    Type: "AWS::EC2::Subnet"
-    DependsOn: AWSEC2VPC
-    Properties:
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref AWSEC2VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref AwsVpcSubnetPrefix
-          - 32.0/20
-      AvailabilityZone: !Select
-        - 2
-        - Fn::GetAZs: ""
-  AWSEC2SubnetUsEast1d:
-    Type: "AWS::EC2::Subnet"
-    DependsOn: AWSEC2VPC
-    Properties:
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref AWSEC2VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref AwsVpcSubnetPrefix
-          - 48.0/20
-      AvailabilityZone: !Select
-        - 3
-        - Fn::GetAZs: ""
-  AWSEC2SubnetUsEast1e:
-    Type: "AWS::EC2::Subnet"
-    DependsOn: AWSEC2VPC
-    Properties:
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref AWSEC2VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref AwsVpcSubnetPrefix
-          - 64.0/20
-      AvailabilityZone: !Select
-        - 4
-        - Fn::GetAZs: ""
-  AWSEC2SubnetUsEast1f:
-    Type: "AWS::EC2::Subnet"
-    DependsOn: AWSEC2VPC
-    Properties:
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref AWSEC2VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref AwsVpcSubnetPrefix
-          - 80.0/20
-      AvailabilityZone: !Select
-        - 5
-        - Fn::GetAZs: ""
-  AWSEC2SubnetNetworkAclAssociationUsEast1a:
+      RuleAction: "allow"
+      Egress: "true"
+      CidrBlock: "0.0.0.0/0"
+      PortRange:
+        From: "0"
+        To: "65535"
+  PublicSubnetNetworkAclAssociation:
     Type: "AWS::EC2::SubnetNetworkAclAssociation"
-    DependsOn:
-      - AWSEC2NetworkAcl
-      - AWSEC2SubnetUsEast1a
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1a
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-  AWSEC2SubnetNetworkAclAssociationUsEast1b:
-    Type: "AWS::EC2::SubnetNetworkAclAssociation"
-    DependsOn:
-      - AWSEC2NetworkAcl
-      - AWSEC2SubnetUsEast1b
+      SubnetId:
+        Ref: "PublicSubnet"
+      NetworkAclId:
+        Ref: "PublicNetworkAcl"
+  NATGateway:
+    Type: "AWS::EC2::NatGateway"
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1b
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-  AWSEC2SubnetNetworkAclAssociationUsEast1c:
-    Type: "AWS::EC2::SubnetNetworkAclAssociation"
-    DependsOn:
-      - AWSEC2NetworkAcl
-      - AWSEC2SubnetUsEast1c
+      AllocationId:
+        Fn::GetAtt:
+          - "ElasticIP"
+          - "AllocationId"
+      SubnetId:
+        Ref: "PublicSubnet"
+  ElasticIP:
+    Type: "AWS::EC2::EIP"
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1c
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-  AWSEC2SubnetNetworkAclAssociationUsEast1d:
-    Type: "AWS::EC2::SubnetNetworkAclAssociation"
-    DependsOn:
-      - AWSEC2NetworkAcl
-      - AWSEC2SubnetUsEast1d
+      Domain: "vpc"
+  PrivateRouteTable:
+    Type: "AWS::EC2::RouteTable"
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1d
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-  AWSEC2SubnetNetworkAclAssociationUsEast1e:
-    Type: "AWS::EC2::SubnetNetworkAclAssociation"
-    DependsOn:
-      - AWSEC2NetworkAcl
-      - AWSEC2SubnetUsEast1e
+      VpcId:
+        Ref: "VPC"
+  PrivateRouteToInternet:
+    Type: "AWS::EC2::Route"
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1e
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-  AWSEC2SubnetNetworkAclAssociationUsEast1f:
-    Type: "AWS::EC2::SubnetNetworkAclAssociation"
-    DependsOn:
-      - AWSEC2NetworkAcl
-      - AWSEC2SubnetUsEast1f
+      RouteTableId:
+        Ref: "PrivateRouteTable"
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId:
+        Ref: "NATGateway"
+  PrivateSubnetRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
-      SubnetId: !Ref AWSEC2SubnetUsEast1f
-      NetworkAclId: !Ref AWSEC2NetworkAcl
-  AWSEC2VPCPeeringConnection:
-    Type: "AWS::EC2::VPCPeeringConnection"
-    DependsOn: AWSEC2VPC
-    Properties:
-      PeerVpcId: !Ref AwsDefaultVpcId
-      VpcId: !Ref AWSEC2VPC
-  AWSLBSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    DependsOn: AWSEC2VPC
-    Properties:
-      GroupDescription: Load Balancer Security Group
-      VpcId: !Ref AWSEC2VPC
-      SecurityGroupIngress:
-        - CidrIp: 0.0.0.0/0
-          FromPort: '443'
-          ToPort: '443'
-          IpProtocol: tcp
-        - CidrIp: 0.0.0.0/0
-          FromPort: '80'
-          ToPort: '80'
-          IpProtocol: tcp
-      SecurityGroupEgress:
-        - CidrIp: 0.0.0.0/0
-          FromPort: '80'
-          ToPort: '80'
-          IpProtocol: tcp
-  AWSEC2SecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    DependsOn:
-      - AWSEC2VPC
-      - AWSLBSecurityGroup
-    Properties:
-      GroupDescription: EC2 Security Group
-      VpcId: !Ref AWSEC2VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: '80'
-          ToPort: '80'
-          SourceSecurityGroupId: !Ref AWSLBSecurityGroup
-  AWSELBLoadBalancer:
-    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
-    DependsOn:
-      - AWSEC2LoadBalancerSecurityGroup
-      - AWSEC2SubnetUsEast1a
-      - AWSEC2SubnetUsEast1b
-      - AWSEC2SubnetUsEast1c
-      - AWSEC2SubnetUsEast1d
-      - AWSEC2SubnetUsEast1e
-      - AWSEC2SubnetUsEast1f
-    Properties:
-      SecurityGroups:
-        - !Ref AWSEC2LoadBalancerSecurityGroup
-      Listeners:
-        - LoadBalancerPort: '80'
-          Protocol: HTTP
-          InstancePort: '80'
-        - LoadBalancerPort: '443'
-          Protocol: HTTPS
-          SSLCertificateId: !Ref SSLCertArn
-          InstanceProtocol: HTTP
-          InstancePort: '80'
-      Policies: []
-      Subnets:
-        - !Ref AWSEC2SubnetUsEast1a
-        - !Ref AWSEC2SubnetUsEast1b
-        - !Ref AWSEC2SubnetUsEast1c
-        - !Ref AWSEC2SubnetUsEast1d
-        - !Ref AWSEC2SubnetUsEast1e
-        - !Ref AWSEC2SubnetUsEast1f
-  AWSEC2LoadBalancerSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    DependsOn: AWSEC2VPC
-    Properties:
-      VpcId: !Ref AWSEC2VPC
-      GroupDescription: >-
-        Elastic Beanstalk created security group used when no ELB security
-        groups are specified during ELB creation
-      SecurityGroupIngress:
-        - CidrIp: 0.0.0.0/0
-          FromPort: '443'
-          ToPort: '443'
-          IpProtocol: tcp
-        - CidrIp: 0.0.0.0/0
-          FromPort: '80'
-          ToPort: '80'
-          IpProtocol: tcp
-      SecurityGroupEgress:
-        - CidrIp: 0.0.0.0/0
-          FromPort: '80'
-          ToPort: '80'
-          IpProtocol: tcp
+      SubnetId:
+        Ref: "PrivateSubnet"
+      RouteTableId:
+        Ref: "PrivateRouteTable"
 Outputs:
-  AWSEC2VPC:
-    Value: !Ref AWSEC2VPC
+  VPCId:
+    Description: "VPCId of the newly created VPC"
+    Value:
+      Ref: "VPC"
     Export:
-      Name: !Sub '${AWS::StackName}-Vpc'
-  AvailabilityZones:
-    Value: !Join
-      - ','
-      - - !GetAtt
-          - AWSEC2SubnetUsEast1a
-          - AvailabilityZone
-        - !GetAtt
-          - AWSEC2SubnetUsEast1b
-          - AvailabilityZone
-        - !GetAtt
-          - AWSEC2SubnetUsEast1c
-          - AvailabilityZone
-        - !GetAtt
-          - AWSEC2SubnetUsEast1d
-          - AvailabilityZone
-        - !GetAtt
-          - AWSEC2SubnetUsEast1e
-          - AvailabilityZone
-        - !GetAtt
-          - AWSEC2SubnetUsEast1f
-          - AvailabilityZone
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VPC']]
+  PublicSubnet:
+    Description: "SubnetId of the public subnet"
+    Value:
+      Ref: "PublicSubnet"
     Export:
-      Name: !Sub '${AWS::StackName}-AvailabilityZones'
-  PublicSubnets:
-    Value: !Join
-      - ','
-      - - !Ref AWSEC2SubnetUsEast1a
-        - !Ref AWSEC2SubnetUsEast1b
-        - !Ref AWSEC2SubnetUsEast1c
-        - !Ref AWSEC2SubnetUsEast1d
-        - !Ref AWSEC2SubnetUsEast1e
-        - !Ref AWSEC2SubnetUsEast1f
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet']]
+  PrivateSubnet:
+    Description: "SubnetId of the private subnet"
+    Value:
+      Ref: "PrivateSubnet"
     Export:
-      Name: !Sub '${AWS::StackName}-PublicSubnets'
-  AWSEC2InternetGateway:
-    Value: !Ref AWSEC2InternetGateway
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet']]
+  DefaultSecurityGroup:
+    Description: "DefaultSecurityGroup Id "
+    Value: { "Fn::GetAtt" : ["VPC", "DefaultSecurityGroup"] }
     Export:
-      Name: !Sub '${AWS::StackName}-InternetGateway'
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'DefaultSecurityGroup']]
