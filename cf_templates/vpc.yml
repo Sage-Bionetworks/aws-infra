@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   Creates a VPC with Managed NAT, similar to the VPC Wizard at
-  https://console.aws.amazon.com/vpc/home#wizardFullpagePublicAndPrivate: (extended from VPC_with_PublicIPs_And_DNS.template sample)
+  https://console.aws.amazon.com/vpc/home#wizardFullpagePublicAndPrivate
 Parameters:
   VpcSubnetPrefix:
     Description: The VPC subnet prefix (i.e. 10.40)
@@ -12,9 +12,9 @@ Mappings:
     VPC:
       CIDR: "0.0/16"
     Public:
-      CIDR: "0.0/24"
+      CIDR: "0.0/20"
     Private:
-      CIDR: "1.0/24"
+      CIDR: "16.0/20"
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -36,16 +36,18 @@ Resources:
         -
           Key: "Name"
           Value: "VPC Public and Private with NAT"
-  PublicSubnet:
+  PublicSubnetAz0:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId:
-        Ref: "VPC"
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
       CidrBlock: !Join
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public, CIDR]
-      MapPublicIpOnLaunch: "true"
+      AvailabilityZone: !Select
+        - 0
+        - Fn::GetAZs: ""
       Tags:
         -
           Key: "Application"
@@ -57,15 +59,17 @@ Resources:
         -
           Key: "Name"
           Value: "Public"
-  PrivateSubnet:
+  PrivateSubnetAz3:
     Type: "AWS::EC2::Subnet"
     Properties:
-      VpcId:
-        Ref: "VPC"
+      VpcId: !Ref VPC
       CidrBlock: !Join
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Private, CIDR]
+      AvailabilityZone: !Select
+        - 3
+        - Fn::GetAZs: ""
       Tags:
         -
           Key: "Application"
@@ -121,7 +125,7 @@ Resources:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId:
-        Ref: "PublicSubnet"
+        Ref: "PublicSubnetAz0"
       RouteTableId:
         Ref: "PublicRouteTable"
   PublicNetworkAcl:
@@ -163,11 +167,11 @@ Resources:
       PortRange:
         From: "0"
         To: "65535"
-  PublicSubnetNetworkAclAssociation:
+  PublicSubnetNetworkAclAssociationUsEast1a:
     Type: "AWS::EC2::SubnetNetworkAclAssociation"
     Properties:
       SubnetId:
-        Ref: "PublicSubnet"
+        Ref: "PublicSubnetAz0"
       NetworkAclId:
         Ref: "PublicNetworkAcl"
   NATGateway:
@@ -178,7 +182,7 @@ Resources:
           - "ElasticIP"
           - "AllocationId"
       SubnetId:
-        Ref: "PublicSubnet"
+         Ref: "PublicSubnetAz0"
   ElasticIP:
     Type: "AWS::EC2::EIP"
     Properties:
@@ -200,7 +204,7 @@ Resources:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId:
-        Ref: "PrivateSubnet"
+        Ref: "PrivateSubnetAz3"
       RouteTableId:
         Ref: "PrivateRouteTable"
 Outputs:
@@ -213,15 +217,13 @@ Outputs:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VPC']]
   PublicSubnet:
     Description: "SubnetId of the public subnet"
-    Value:
-      Ref: "PublicSubnet"
+    Value: !Ref PublicSubnetAz0
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet']]
   PrivateSubnet:
     Description: "SubnetId of the private subnet"
-    Value:
-      Ref: "PrivateSubnet"
+    Value: !Ref PrivateSubnetAz3
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet']]
