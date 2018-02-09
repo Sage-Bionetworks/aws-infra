@@ -2,25 +2,29 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   Creates a VPC with Managed NAT, similar to the VPC Wizard at
   https://console.aws.amazon.com/vpc/home#wizardFullpagePublicAndPrivate: (extended from VPC_with_PublicIPs_And_DNS.template sample)
+Parameters:
+  VpcSubnetPrefix:
+    Description: The VPC subnet prefix (i.e. 10.40)
+    Type: String
+    Default: 10.0
 Mappings:
   SubnetConfig:
     VPC:
-      CIDR: "10.0.0.0/16"
+      CIDR: "0.0/16"
     Public:
-      CIDR: "10.0.0.0/24"
+      CIDR: "0.0/24"
     Private:
-      CIDR: "10.0.1.0/24"
+      CIDR: "1.0/24"
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
     Properties:
       EnableDnsSupport: "true"
       EnableDnsHostnames: "true"
-      CidrBlock:
-        Fn::FindInMap:
-          - "SubnetConfig"
-          - "VPC"
-          - "CIDR"
+      CidrBlock: !Join
+        - '.'
+        - - !Ref VpcSubnetPrefix
+          - !FindInMap [SubnetConfig, VPC, CIDR]
       Tags:
         -
           Key: "Application"
@@ -37,11 +41,10 @@ Resources:
     Properties:
       VpcId:
         Ref: "VPC"
-      CidrBlock:
-        Fn::FindInMap:
-          - "SubnetConfig"
-          - "Public"
-          - "CIDR"
+      CidrBlock: !Join
+        - '.'
+        - - !Ref VpcSubnetPrefix
+          - !FindInMap [SubnetConfig, Public, CIDR]
       MapPublicIpOnLaunch: "true"
       Tags:
         -
@@ -59,11 +62,10 @@ Resources:
     Properties:
       VpcId:
         Ref: "VPC"
-      CidrBlock:
-        Fn::FindInMap:
-          - "SubnetConfig"
-          - "Private"
-          - "CIDR"
+      CidrBlock: !Join
+        - '.'
+        - - !Ref VpcSubnetPrefix
+          - !FindInMap [SubnetConfig, Private, CIDR]
       Tags:
         -
           Key: "Application"
