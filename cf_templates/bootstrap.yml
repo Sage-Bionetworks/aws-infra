@@ -26,6 +26,22 @@ Resources:
   AWSS3CloudformationBucket:
     Type: "AWS::S3::Bucket"
     DeletionPolicy: Delete
+    Properties:
+      AccessControl: PublicRead
+  AWSIAMS3CloudformationBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref AWSS3CloudformationBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "AllowPublicRead"
+            Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}/*"
 Outputs:
   AWSIAMTravisUser:
     Value: !Ref AWSIAMTravisUser
