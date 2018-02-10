@@ -2,21 +2,12 @@ sudo: false
 language: python
 python: 3.4
 cache: pip
-branches:
-  only:
-  - develop
-  - uat
-  - prod
-env:
-  global:
-  - STACK_NAME=change_me
 install:
 - ./setup_git_crypt.sh
-- openssl aes-256-cbc -K $encrypted_01c81fac4a66_key -iv $encrypted_01c81fac4a66_iv -in git-crypt.key.enc -out git-crypt.key -d
+- openssl aes-256-cbc -K $encrypted_98582b7ec082_key -iv $encrypted_98582b7ec082_iv -in git-crypt.key.enc -out git-crypt.key -d
 - /tmp/git-crypt-master/git-crypt unlock ./git-crypt.key
 - rm -rf git-crypt.key
 - source env_vars && source env_vars.secret
-- source ./normalize_vars.sh
 - /tmp/git-crypt-master/git-crypt lock
 - ./setup_aws_cli.sh
 script:

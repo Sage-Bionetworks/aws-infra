@@ -5,26 +5,27 @@ infrastructure on AWS
 ## Create resources
 
 ```
-aws --profile aws-admin --region us-east-1 cloudformation create-stack \
-  --stack-name sage \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --template-body cf_templates/bridge.yml \
-  --parameters \
-  ParameterKey=AwsDefaultVpcId,ParameterValue=vpc-3b1a2b3c4 \
-  ..
-  .. [Rest of the parameters from update_cf_stack.sh]
+aws --profile admincentral.root --region us-east-1 \
+cloudformation create-stack --stack-name bootstrap \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://cf_templates/bootstrap.yml
 
+aws --profile admincentral.root --region us-east-1 \ 
+cloudformation create-stack --stack-name essentials \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://cf_templates/essentials.yml \
+--parameters \
+ParameterKey=OperatorEmail,ParameterValue="foo@sagebase.org" \
+ParameterKey=FhcrcVpnCidrip,ParameterValue="40.165.75.0/16"
 ```
 
-The above should setup resources for a sage account.  Once the infrastructure
-for Bridge account has been setup you can access and view the account using the
-AWS console[1].  When you are satisified with how the account is configured you
-can run BridgePF-infra[2] template to setup BridgePF in the account.
+The above should bootstrap resources and setup essential resources for new sage
+accounts.  Once the resources has been setup you can access and view the account
+using the AWS console[1].
 
 
 ## Continuous Integration
-We have configured Travis to deploy CF template updates.  Travis does this by
-running update_cf_stack.sh on every change.
+We have configured Travis to deploy CF template to an S3 bucket.
 
 
 # Contributions
