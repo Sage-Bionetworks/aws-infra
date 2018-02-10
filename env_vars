@@ -1,3 +1,1 @@
 # unencypted environment variables
-export OperatorEmail_develop=sagebioit-develop@sagebase.org
-export OperatorEmail_prod=sagebioit-prod@sagebase.org
