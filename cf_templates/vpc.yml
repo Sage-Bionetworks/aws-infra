@@ -59,7 +59,7 @@ Resources:
         -
           Key: "Name"
           Value: "Public"
-  PrivateSubnetAz0:
+  PrivateSubnetAz3:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref VPC
@@ -68,7 +68,7 @@ Resources:
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Private, CIDR]
       AvailabilityZone: !Select
-        - 0
+        - 3
         - Fn::GetAZs: ""
       Tags:
         -
@@ -204,7 +204,7 @@ Resources:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId:
-        Ref: "PrivateSubnetAz0"
+        Ref: "PrivateSubnetAz3"
       RouteTableId:
         Ref: "PrivateRouteTable"
 Outputs:
@@ -223,7 +223,7 @@ Outputs:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet']]
   PrivateSubnet:
     Description: "SubnetId of the private subnet"
-    Value: !Ref PrivateSubnetAz0
+    Value: !Ref PrivateSubnetAz3
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet']]
