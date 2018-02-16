@@ -475,7 +475,7 @@ Outputs:
       Ref: "VPC"
     Export:
       Name:
-        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VPC']]
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VPCId']]
   PublicSubnet:
     Description: "SubnetId of the public subnet"
     Value: !Ref PublicSubnetAz0
@@ -512,9 +512,9 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet2']]
-  DefaultSecurityGroup:
-    Description: "DefaultSecurityGroup Id "
+  VpcDefaultSecurityGroup:
+    Description: "VPC DefaultSecurityGroup Id "
     Value: { "Fn::GetAtt" : ["VPC", "DefaultSecurityGroup"] }
     Export:
       Name:
-        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'DefaultSecurityGroup']]
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcDefaultSecurityGroup']]
