@@ -43,7 +43,7 @@ Resources:
             Ref: "AWS::StackName"
         -
           Key: "Network"
-          Value: "Public, Public1, Public2"
+          Value: "Public, Public1, Public2, Private, Private1, Private2"
         -
           Key: "Name"
           Value: !Ref VpcName
@@ -194,7 +194,7 @@ Resources:
           Key: "Network"
           Value: "Public, Public1, Public2"
         -
-          Key: "Network"
+          Key: "Name"
           Value: "Public, Public1, Public2"
   GatewayToInternet:
     Type: "AWS::EC2::VPCGatewayAttachment"
@@ -216,6 +216,9 @@ Resources:
         -
           Key: "Network"
           Value: "Public"
+        -
+          Key: "Name"
+          Value: "Public"
   PublicRouteTable1:
     Type: "AWS::EC2::RouteTable"
     Properties:
@@ -229,6 +232,9 @@ Resources:
         -
           Key: "Network"
           Value: "Public1"
+        -
+          Key: "Name"
+          Value: "Public1"
   PublicRouteTable2:
     Type: "AWS::EC2::RouteTable"
     Properties:
@@ -241,6 +247,9 @@ Resources:
             Ref: "AWS::StackName"
         -
           Key: "Network"
+          Value: "Public2"
+        -
+          Key: "Name"
           Value: "Public2"
   PublicRoute:
     Type: "AWS::EC2::Route"
@@ -302,6 +311,9 @@ Resources:
             Ref: "AWS::StackName"
         -
           Key: "Network"
+          Value: "Public"
+        -
+          Key: "Name"
           Value: "Public"
   InboundHTTPPublicNetworkAclEntry:
     Type: "AWS::EC2::NetworkAclEntry"
@@ -368,16 +380,49 @@ Resources:
     Properties:
       VpcId:
         Ref: "VPC"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Private"
+        -
+          Key: "Name"
+          Value: "Private"
   PrivateRouteTable1:
     Type: "AWS::EC2::RouteTable"
     Properties:
       VpcId:
         Ref: "VPC"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Private1"
+        -
+          Key: "Name"
+          Value: "Private1"
   PrivateRouteTable2:
     Type: "AWS::EC2::RouteTable"
     Properties:
       VpcId:
         Ref: "VPC"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Private2"
+        -
+          Key: "Name"
+          Value: "Private2"
   PrivateRouteToInternet:
     Type: "AWS::EC2::Route"
     Properties:
