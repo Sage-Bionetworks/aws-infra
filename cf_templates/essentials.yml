@@ -6,6 +6,12 @@ Parameters:
   FhcrcVpnCidrip:
     Type: String
     NoEcho: true
+  VpcPeeringRequesterAwsAccountId:
+    Type: String
+    NoEcho: true
+    Description: The AWS account running the Sophos-VPN
+    AllowedPattern: '[0-9]*'
+    ConstraintDescription: Must be account number without dashes
 Resources:
   # resources for cloudtrail
   AWSLogsCloudtrailLogGroup:
@@ -308,6 +314,31 @@ Resources:
         Owner: AWS
         SourceIdentifier: CLOUD_TRAIL_ENABLED
       MaximumExecutionFrequency: TwentyFour_Hours
+  # Create a role to authorize the VPC Peering request from a specific account,
+  # this is used to create the VPC Peer between different accounts in  CloudFormation
+  # https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/solutions/VPCPeering
+  VPCPeeringAuthorizerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref VpcPeeringRequesterAwsAccountId
+                  - ':root'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: VPCAuthorizer
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:AcceptVpcPeeringConnection'
+                Resource:
+                  - '*'
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
@@ -329,3 +360,8 @@ Outputs:
     Value: !Ref AWSSNSCloudformationNotifyLambdaTopic
     Export:
       Name: !Sub '${AWS::StackName}-CloudformationNotifyLambdaTopicArn'
+  VPCPeeringAuthorizerRole:
+    Description: Cross Account Role Name
+    Value: !Ref VPCPeeringAuthorizerRole
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCPeeringAuthorizerRole'
