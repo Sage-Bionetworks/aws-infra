@@ -10,36 +10,16 @@ Parameters:
     Description: The VPC subnet prefix (i.e. 10.40)
     Type: String
     Default: 10.0
-  PublicSubnetZone:
-    Description: Availability zone for public subnet
-    Type: AWS::EC2::AvailabilityZone::Name
-    ConstraintDescription: An Availability Zone, such as us-east-1a
-    Default: us-east-1a
-  PublicSubnetZone1:
-    Description: Availability zone for public subnet
-    Type: AWS::EC2::AvailabilityZone::Name
-    ConstraintDescription: An Availability Zone, such as us-east-1a
-    Default: us-east-1b
-  PublicSubnetZone2:
-    Description: Availability zone for public subnet
-    Type: AWS::EC2::AvailabilityZone::Name
-    ConstraintDescription: An Availability Zone, such as us-east-1a
-    Default: us-east-1c
-  PrivateSubnetZone:
-    Description: Availability zone for private subnet
-    Type: AWS::EC2::AvailabilityZone::Name
-    ConstraintDescription: An Availability Zone, such as us-east-1a
-    Default: us-east-1a
-  PrivateSubnetZone1:
-    Description: Availability zone for private subnet
-    Type: AWS::EC2::AvailabilityZone::Name
-    ConstraintDescription: An Availability Zone, such as us-east-1a
-    Default: us-east-1b
-  PrivateSubnetZone2:
-    Description: Availability zone for private subnet
-    Type: AWS::EC2::AvailabilityZone::Name
-    ConstraintDescription: An Availability Zone, such as us-east-1a
-    Default: us-east-1c
+  PublicSubnetZones:
+    Description: Availability zones for public subnets
+    Type: List<AWS::EC2::AvailabilityZone::Name>
+    ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
+    Default: "us-east-1a, us-east-1b, us-east-1c"
+  PrivateSubnetZones:
+    Description: Availability zones for private subnets
+    Type: List<AWS::EC2::AvailabilityZone::Name>
+    ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
+    Default: "us-east-1a, us-east-1b, us-east-1c"
 Mappings:
   SubnetConfig:
     VPC:
@@ -86,7 +66,9 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public, CIDR]
-      AvailabilityZone: !Ref PublicSubnetZone
+      AvailabilityZone: !Select
+        - 0
+        - !Ref PublicSubnetZones
       Tags:
         -
           Key: "Application"
@@ -106,7 +88,9 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Private, CIDR]
-      AvailabilityZone: !Ref PrivateSubnetZone
+      AvailabilityZone: !Select
+        - 0
+        - !Ref PrivateSubnetZones
       Tags:
         -
           Key: "Application"
@@ -127,7 +111,9 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public1, CIDR]
-      AvailabilityZone: !Ref PublicSubnetZone1
+      AvailabilityZone: !Select
+        - 1
+        - !Ref PublicSubnetZones
       Tags:
         -
           Key: "Application"
@@ -148,7 +134,9 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public2, CIDR]
-      AvailabilityZone: !Ref PublicSubnetZone2
+      AvailabilityZone: !Select
+        - 2
+        - !Ref PublicSubnetZones
       Tags:
         -
           Key: "Application"
@@ -168,7 +156,9 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Private1, CIDR]
-      AvailabilityZone: !Ref PrivateSubnetZone1
+      AvailabilityZone: !Select
+        - 1
+        - !Ref PrivateSubnetZones
       Tags:
         -
           Key: "Application"
@@ -188,7 +178,9 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Private2, CIDR]
-      AvailabilityZone: !Ref PrivateSubnetZone2
+      AvailabilityZone: !Select
+        - 2
+        - !Ref PrivateSubnetZones
       Tags:
         -
           Key: "Application"
