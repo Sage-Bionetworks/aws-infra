@@ -301,7 +301,7 @@ Resources:
       PortRange:
         From: "0"
         To: "65535"
-  PublicSubnetNetworkAclAssociationUsEast1a:
+  PublicSubnetNetworkAclAssociation:
     Type: "AWS::EC2::SubnetNetworkAclAssociation"
     Properties:
       SubnetId:
