@@ -229,62 +229,12 @@ Resources:
         -
           Key: "Name"
           Value: "Public"
-  PublicRouteTable1:
-    Type: "AWS::EC2::RouteTable"
-    Properties:
-      VpcId:
-        Ref: "VPC"
-      Tags:
-        -
-          Key: "Application"
-          Value:
-            Ref: "AWS::StackName"
-        -
-          Key: "Network"
-          Value: "Public1"
-        -
-          Key: "Name"
-          Value: "Public1"
-  PublicRouteTable2:
-    Type: "AWS::EC2::RouteTable"
-    Properties:
-      VpcId:
-        Ref: "VPC"
-      Tags:
-        -
-          Key: "Application"
-          Value:
-            Ref: "AWS::StackName"
-        -
-          Key: "Network"
-          Value: "Public2"
-        -
-          Key: "Name"
-          Value: "Public2"
   PublicRoute:
     Type: "AWS::EC2::Route"
     DependsOn: "GatewayToInternet"
     Properties:
       RouteTableId:
         Ref: "PublicRouteTable"
-      DestinationCidrBlock: "0.0.0.0/0"
-      GatewayId:
-        Ref: "InternetGateway"
-  PublicRoute1:
-    Type: "AWS::EC2::Route"
-    DependsOn: "GatewayToInternet"
-    Properties:
-      RouteTableId:
-        Ref: "PublicRouteTable1"
-      DestinationCidrBlock: "0.0.0.0/0"
-      GatewayId:
-        Ref: "InternetGateway"
-  PublicRoute2:
-    Type: "AWS::EC2::Route"
-    DependsOn: "GatewayToInternet"
-    Properties:
-      RouteTableId:
-        Ref: "PublicRouteTable2"
       DestinationCidrBlock: "0.0.0.0/0"
       GatewayId:
         Ref: "InternetGateway"
@@ -301,14 +251,14 @@ Resources:
       SubnetId:
         Ref: "PublicSubnet1"
       RouteTableId:
-        Ref: "PublicRouteTable1"
+        Ref: "PublicRouteTable"
   PublicSubnetRouteTableAssociation2:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId:
         Ref: "PublicSubnet2"
       RouteTableId:
-        Ref: "PublicRouteTable2"
+        Ref: "PublicRouteTable"
   PublicNetworkAcl:
     Type: "AWS::EC2::NetworkAcl"
     Properties:
@@ -401,59 +351,11 @@ Resources:
         -
           Key: "Name"
           Value: "Private"
-  PrivateRouteTable1:
-    Type: "AWS::EC2::RouteTable"
-    Properties:
-      VpcId:
-        Ref: "VPC"
-      Tags:
-        -
-          Key: "Application"
-          Value:
-            Ref: "AWS::StackName"
-        -
-          Key: "Network"
-          Value: "Private1"
-        -
-          Key: "Name"
-          Value: "Private1"
-  PrivateRouteTable2:
-    Type: "AWS::EC2::RouteTable"
-    Properties:
-      VpcId:
-        Ref: "VPC"
-      Tags:
-        -
-          Key: "Application"
-          Value:
-            Ref: "AWS::StackName"
-        -
-          Key: "Network"
-          Value: "Private2"
-        -
-          Key: "Name"
-          Value: "Private2"
   PrivateRouteToInternet:
     Type: "AWS::EC2::Route"
     Properties:
       RouteTableId:
         Ref: "PrivateRouteTable"
-      DestinationCidrBlock: "0.0.0.0/0"
-      NatGatewayId:
-        Ref: "NATGateway"
-  PrivateRouteToInternet1:
-    Type: "AWS::EC2::Route"
-    Properties:
-      RouteTableId:
-        Ref: "PrivateRouteTable1"
-      DestinationCidrBlock: "0.0.0.0/0"
-      NatGatewayId:
-        Ref: "NATGateway"
-  PrivateRouteToInternet2:
-    Type: "AWS::EC2::Route"
-    Properties:
-      RouteTableId:
-        Ref: "PrivateRouteTable2"
       DestinationCidrBlock: "0.0.0.0/0"
       NatGatewayId:
         Ref: "NATGateway"
@@ -470,14 +372,14 @@ Resources:
       SubnetId:
         Ref: "PrivateSubnet1"
       RouteTableId:
-        Ref: "PrivateRouteTable1"
+        Ref: "PrivateRouteTable"
   PrivateSubnetRouteTableAssociation2:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId:
         Ref: "PrivateSubnet2"
       RouteTableId:
-        Ref: "PrivateRouteTable2"
+        Ref: "PrivateRouteTable"
 Outputs:
   VPCId:
     Description: "VPCId of the newly created VPC"
