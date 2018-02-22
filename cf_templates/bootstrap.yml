@@ -46,16 +46,16 @@ Outputs:
   AWSIAMTravisUser:
     Value: !Ref AWSIAMTravisUser
     Export:
-      Name: !Sub '${AWS::StackName}-TravisUser'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUser'
   AWSIAMTravisUserAccessKey:
     Value: !Ref AWSIAMTravisUserAccessKey
     Export:
-      Name: !Sub '${AWS::StackName}-TravisUserAccessKey'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUserAccessKey'
   AWSIAMTravisUserSecretAccessKey:
     Value: !GetAtt AWSIAMTravisUserAccessKey.SecretAccessKey
     Export:
-      Name: !Sub '${AWS::StackName}-TravisUserSecretAccessKey'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUserSecretAccessKey'
   AWSS3CloudformationBucket:
     Value: !Ref AWSS3CloudformationBucket
     Export:
-      Name: !Sub '${AWS::StackName}-CloudformationBucket'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationBucket'

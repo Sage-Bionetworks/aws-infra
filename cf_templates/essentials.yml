@@ -343,25 +343,25 @@ Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
     Export:
-      Name: !Sub '${AWS::StackName}-CloudtrailBucket'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucket'
   FhcrcVpnCidrip:
     Value: !Ref FhcrcVpnCidrip
     Export:
-      Name: !Sub '${AWS::StackName}-FhcrcVpnCidrip'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-FhcrcVpnCidrip'
   AWSLambaCloudformationFunction:
     Value: !Ref AWSLambaCloudformationFunction
     Export:
-      Name: !Sub '${AWS::StackName}-LambaCloudformationFunction'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambaCloudformationFunction'
   AWSSNSCloudformationTopic:
     Value: !Ref AWSSNSCloudformationTopic
     Export:
-      Name: !Sub '${AWS::StackName}-CloudformationTopic'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationTopic'
   AWSSNSCloudformationNotifyLambdaTopic:
     Value: !Ref AWSSNSCloudformationNotifyLambdaTopic
     Export:
-      Name: !Sub '${AWS::StackName}-CloudformationNotifyLambdaTopicArn'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationNotifyLambdaTopicArn'
   VPCPeeringAuthorizerRole:
     Description: Cross Account Role Name
     Value: !Ref VPCPeeringAuthorizerRole
     Export:
-      Name: !Sub '${AWS::StackName}-VPCPeeringAuthorizerRole'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-VPCPeeringAuthorizerRole'
