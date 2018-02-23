@@ -20,6 +20,10 @@ Parameters:
     Type: List<AWS::EC2::AvailabilityZone::Name>
     ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
     Default: "us-east-1a, us-east-1b, us-east-1c"
+  VpnCidr:
+    Description: CIDR of the (sophos-utm) VPN
+    Type: String
+    Default: "10.1.0.0/16"
 Mappings:
   SubnetConfig:
     VPC:
@@ -380,6 +384,25 @@ Resources:
         Ref: "PrivateSubnet2"
       RouteTableId:
         Ref: "PrivateRouteTable"
+  VpnSecurityGroup:
+    DependsOn: "VPC"
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security Group for VPN
+      VpcId:
+        Ref: "VPC"
+      SecurityGroupIngress:
+        - CidrIp: !Ref VpnCidr
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: -1
+          Description: "Allow all VPN traffic"
+      # CF does not support removing all rules, workaround is to add a pointless rule
+      SecurityGroupEgress:
+        - CidrIp: !GetAtt "VPC.CidrBlock"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: -1
 Outputs:
   VPCId:
     Description: "VPCId of the newly created VPC"
@@ -430,3 +453,9 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcDefaultSecurityGroup']]
+  VpnSecurityGroup:
+    Description: "VPN Security Group Id "
+    Value: !Ref VpnSecurityGroup
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpnSecurityGroup']]
