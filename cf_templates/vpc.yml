@@ -5,7 +5,7 @@ Parameters:
   VpcName:
     Description: The VPC name (i.e. Synapse-Prod)
     Type: String
-    Default: admincentral-infra-vpc
+    Default: sage-default-vpc
   VpcSubnetPrefix:
     Description: The VPC subnet prefix (i.e. 10.40)
     Type: String
