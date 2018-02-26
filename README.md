@@ -2,7 +2,7 @@
 Scripts for building out and maintaining Sage Bionetworks
 infrastructure on AWS
 
-## Create resources
+## Create bootstrap and essential resources
 
 ```
 aws --profile admincentral.root --region us-east-1 \
@@ -10,7 +10,7 @@ cloudformation create-stack --stack-name bootstrap \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://cf_templates/bootstrap.yml
 
-aws --profile admincentral.root --region us-east-1 \ 
+aws --profile admincentral.travis --region us-east-1 \
 cloudformation create-stack --stack-name essentials \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://cf_templates/essentials.yml \
@@ -23,6 +23,20 @@ The above should bootstrap resources and setup essential resources for new sage
 accounts.  Once the resources has been setup you can access and view the account
 using the AWS console[1].
 
+## Create VPC
+
+```
+aws --profile admincentral.travis --region us-east-1 \
+cloudformation update-stack --stack-name my-vpc \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://cf_templates/vpc.yml \
+--parameters \
+ParameterKey=VpcName,ParameterValue="my-vpc" \
+ParameterKey=VpcSubnetPrefix,ParameterValue="192.150"
+```
+
+The above should create a custom VPC with a public and private subnet in
+multiple availability zones.
 
 ## Continuous Integration
 We have configured Travis to deploy CF template to an S3 bucket.
