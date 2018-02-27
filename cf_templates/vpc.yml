@@ -409,6 +409,14 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VPCId']]
+  VpcCidr:
+    Description: "VPC CIDR of the newly created VPC"
+    Value: !GetAtt
+      - VPC
+      - CidrBlock
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcCidr']]
   PublicSubnet:
     Description: "SubnetId of the public subnet"
     Value: !Ref PublicSubnet
@@ -421,6 +429,12 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet1']]
+  PublicRouteTable:
+    Description: "Route table Id for public subnets"
+    Value: !Ref PublicRouteTable
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicRouteTable']]
   PublicSubnet2:
     Description: "SubnetId of the public subnet 2"
     Value: !Ref PublicSubnet2
@@ -445,6 +459,12 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet2']]
+  PrivateRouteTable:
+    Description: "Route table Id for private subnets"
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateRouteTable']]
   VpcDefaultSecurityGroup:
     Description: "VPC DefaultSecurityGroup Id "
     Value: { "Fn::GetAtt" : ["VPC", "DefaultSecurityGroup"] }
