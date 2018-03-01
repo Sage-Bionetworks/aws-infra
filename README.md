@@ -5,12 +5,12 @@ infrastructure on AWS
 ## Create bootstrap and essential resources
 
 ```
-aws --profile admincentral.root --region us-east-1 \
+aws --profile bridge.dev.root --region us-east-1 \
 cloudformation create-stack --stack-name bootstrap \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://cf_templates/bootstrap.yml
 
-aws --profile admincentral.travis --region us-east-1 \
+aws --profile bridge.dev.travis --region us-east-1 \
 cloudformation create-stack --stack-name essentials \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://cf_templates/essentials.yml \
@@ -21,13 +21,13 @@ ParameterKey=FhcrcVpnCidrip,ParameterValue="40.165.75.0/16"
 
 The above should bootstrap resources and setup essential resources for new sage
 accounts.  Once the resources has been setup you can access and view the account
-using the AWS console[1].
+using the [AWS console](https://AWS-account-ID-or-alias.signin.aws.amazon.com/console).
 
 ## Create VPC
 
 ```
-aws --profile admincentral.travis --region us-east-1 \
-cloudformation update-stack --stack-name my-vpc \
+aws --profile bridge.dev.travis --region us-east-1 \
+cloudformation update-stack --stack-name vpc-bridge-develop \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-body file://cf_templates/vpc.yml \
 --parameters \
@@ -37,6 +37,34 @@ ParameterKey=VpcSubnetPrefix,ParameterValue="192.150"
 
 The above should create a custom VPC with a public and private subnet in
 multiple availability zones.
+
+## Configure VPC peering to VPN
+
+`Important` - This template must be run in sequence and can only be run after
+the peering connection has been created.  To create the peering connnection run the
+[VPCPeer.yml](https://github.com/Sage-Bionetworks/admincentral-infra/blob/master/cf_templates/VPCPeer.yml)
+template.
+
+The sequence:
+1. Create VPC by running [vpc.yml](./vpc.yml) template
+2. Setup VPC peering connection by running VPCPeer.yml
+3. Configure the VPC public and private route table with [vpc.yml](./vpc.yml) template
+
+```
+aws --profile bridge.dev.travis --region us-east-1 \
+cloudformation update-stack --stack-name peer-vpc-bridge-develop \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://cf_templates/peer-route-config.yml \
+--parameters \
+ParameterKey=PeeringConnectionId,ParameterValue="pcx-eb02e083" \
+ParameterKey=VpcPublicRouteTable,ParameterValue="rtb-f1a9698d" \
+ParameterKey=VpcPrivateRouteTable,ParameterValue="rtb-bbb878c7"
+```
+
+The above should configure the public and private routes for the VPC with
+the peering connection to the VPN.  That allows the VPN to direct traffic
+to this VPC.
+
 
 ## Continuous Integration
 We have configured Travis to deploy CF template to an S3 bucket.
@@ -51,17 +79,8 @@ We have configured Travis to deploy CF template to an S3 bucket.
 * https://travis-ci.org/Sage-Bionetworks/aws-infra
 
 ## Secrets
-* We use git-crypt[3] to hide secrets.  Access to secrets is tightly controlled.  You will be required to
-have your own GPG key[4] and you must request access by a maintainer of this project.
+* We use [git-crypt](https://github.com/AGWA/git-crypt) to hide secrets.
+  Access to secrets is tightly controlled.  You will be required to have
+  your own [GPG key](https://help.github.com/articles/generating-a-new-gpg-key)
+  and you must request access by a maintainer of this project.
 
-
-
-# References
-
-[1] https://AWS-account-ID-or-alias.signin.aws.amazon.com/console
-
-[2] https://github.com/Sage-Bionetworks/Bridge-infra
-
-[3] https://github.com/AGWA/git-crypt
-
-[4] https://help.github.com/articles/generating-a-new-gpg-key
