@@ -2,14 +2,19 @@
 Scripts for building out and maintaining Sage Bionetworks
 infrastructure on AWS
 
-## Create bootstrap and essential resources
+## Create bootstrap
+Bootstrapping the account is a one time manual process:
+
+1. Login to the AWS console with the 'root' account.
+2. Goto Services -> Cloudformation
+3. Run the bootstrap.yml template
+
+This will create the admin account (i.e. travis) required to run other
+CF templates.
+
+## Create essential resources
 
 ```
-aws --profile bridge.dev.root --region us-east-1 \
-cloudformation create-stack --stack-name bootstrap \
---capabilities CAPABILITY_NAMED_IAM \
---template-body file://cf_templates/bootstrap.yml
-
 aws --profile bridge.dev.travis --region us-east-1 \
 cloudformation create-stack --stack-name essentials \
 --capabilities CAPABILITY_NAMED_IAM \
@@ -19,9 +24,9 @@ ParameterKey=OperatorEmail,ParameterValue="foo@sagebase.org" \
 ParameterKey=FhcrcVpnCidrip,ParameterValue="40.165.75.0/16"
 ```
 
-The above should bootstrap resources and setup essential resources for new sage
-accounts.  Once the resources has been setup you can access and view the account
-using the [AWS console](https://AWS-account-ID-or-alias.signin.aws.amazon.com/console).
+The above should setup essential resources for new sage accounts.  Once
+the resources has been setup you can access and view the account using the
+[AWS console](https://AWS-account-ID-or-alias.signin.aws.amazon.com/console).
 
 ## Create VPC
 
