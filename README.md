@@ -18,10 +18,11 @@ CF templates.
 aws --profile bridge.dev.travis --region us-east-1 \
 cloudformation create-stack --stack-name essentials \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://cf_templates/essentials.yml \
+--template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/essentials.yml \
 --parameters \
 ParameterKey=OperatorEmail,ParameterValue="foo@sagebase.org" \
 ParameterKey=FhcrcVpnCidrip,ParameterValue="40.165.75.0/16"
+ParameterKey=VpcPeeringRequesterAwsAccountId,ParameterValue="123456789012""
 ```
 
 The above should setup essential resources for new sage accounts.  Once
@@ -32,12 +33,12 @@ the resources has been setup you can access and view the account using the
 
 ```
 aws --profile bridge.dev.travis --region us-east-1 \
-cloudformation update-stack --stack-name vpc-bridge-develop \
+cloudformation create-stack --stack-name vpc-bridge-develop \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://cf_templates/vpc.yml \
+--template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/vpc.yml \
 --parameters \
-ParameterKey=VpcName,ParameterValue="my-vpc" \
-ParameterKey=VpcSubnetPrefix,ParameterValue="192.150"
+ParameterKey=VpcName,ParameterValue="vpc-bridge-develop" \
+ParameterKey=VpcSubnetPrefix,ParameterValue="172.150"
 ```
 
 The above should create a custom VPC with a public and private subnet in
@@ -57,9 +58,9 @@ The sequence:
 
 ```
 aws --profile bridge.dev.travis --region us-east-1 \
-cloudformation update-stack --stack-name peer-vpc-bridge-develop \
+cloudformation create-stack --stack-name peer-vpn-bridge-develop \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://cf_templates/peer-route-config.yml \
+--template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/peer-route-config.yml \
 --parameters \
 ParameterKey=PeeringConnectionId,ParameterValue="pcx-eb02e083" \
 ParameterKey=VpcPublicRouteTable,ParameterValue="rtb-f1a9698d" \
