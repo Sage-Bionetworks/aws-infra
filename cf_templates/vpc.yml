@@ -397,7 +397,7 @@ Resources:
           Description: "Allow all VPN traffic"
       # CF does not support removing all rules, workaround is to add a pointless rule
       SecurityGroupEgress:
-        - CidrIp: !GetAtt "VPC.CidrBlock"
+        - CidrIp: "0.0.0.0/0"
           FromPort: -1
           ToPort: -1
           IpProtocol: -1
