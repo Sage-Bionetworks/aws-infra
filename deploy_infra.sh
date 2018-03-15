@@ -3,7 +3,8 @@
 # Need to upload TEMPLATES to S3 before validating due to template-body MAX 51K length
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/validate-template.html#options
 S3_BUCKET="bootstrap-awss3cloudformationbucket-19qromfd235z9"
-S3_BUCKET_URL="s3://$S3_BUCKET/aws-infra/$TRAVIS_BRANCH"
+S3_BUCKET_PATH="aws-infra/$TRAVIS_BRANCH"
+S3_BUCKET_URL="s3://$S3_BUCKET/$S3_BUCKET_PATH"
 TEMP_DIR="temp"
 
 # get list of templates
@@ -16,11 +17,11 @@ do
   aws s3 cp $f $S3_BUCKET_URL/$TEMP_DIR/$f
 done
 
-TEMPLATE_URL="https://s3.amazonaws.com/$S3_BUCKET/$TRAVIS_BRANCH"
+TEMPLATE_URL="https://s3.amazonaws.com/$S3_BUCKET/$S3_BUCKET_PATH/$TEMP_DIR"
 for f in $TEMPLATES
 do
-  echo -e "\nValidating CF template $TEMPLATE_URL/$TEMP_DIR/$f"
-  aws cloudformation validate-template --template-url $TEMPLATE_URL/$TEMP_DIR/$f
+  echo -e "\nValidating CF template $TEMPLATE_URL/$f"
+  aws cloudformation validate-template --template-url $TEMPLATE_URL/$f
   aws s3 mv $S3_BUCKET_URL/$TEMP_DIR/$f $S3_BUCKET_URL/$f
 done
 
