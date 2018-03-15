@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 # Need to upload TEMPLATES to S3 before validating due to template-body MAX 51K length
 # https://docs.aws.amazon.com/cli/latest/reference/cloudformation/validate-template.html#options
@@ -22,6 +23,11 @@ for f in $TEMPLATES
 do
   echo -e "\nValidating CF template $TEMPLATE_URL/$f"
   aws cloudformation validate-template --template-url $TEMPLATE_URL/$f
+done
+
+for f in $TEMPLATES
+do
+  echo -e "\nPromote CF template to https://s3.amazonaws.com/$S3_BUCKET/$S3_BUCKET_PATH/$f"
   aws s3 mv $S3_BUCKET_URL/$TEMP_DIR/$f $S3_BUCKET_URL/$f
 done
 
