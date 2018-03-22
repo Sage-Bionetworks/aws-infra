@@ -250,6 +250,8 @@ Resources:
       S3BucketName: !Ref 'AWSS3ConfigBucket'
   AWSS3ConfigBucket:
     Type: AWS::S3::Bucket
+  AWSS3LambdaArtifactsBucket:
+    Type: AWS::S3::Bucket
   AWSSnsConfigTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -344,6 +346,10 @@ Outputs:
     Value: !Ref AWSS3CloudtrailBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucket'
+  AWSS3LambdaArtifactsBucket:
+    Value: !Ref AWSS3LambdaArtifactsBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaArtifactsBucket'
   FhcrcVpnCidrip:
     Value: !Ref FhcrcVpnCidrip
     Export:
