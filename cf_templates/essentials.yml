@@ -248,7 +248,8 @@ Resources:
     Properties:
       ConfigSnapshotDeliveryProperties:
         DeliveryFrequency: Six_Hours
-      S3BucketName: !Ref 'AWSS3ConfigBucket'
+      # Send log and data to AWS logcentral account
+      S3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
   AWSS3ConfigBucket:
     Type: AWS::S3::Bucket
   AWSS3LambdaArtifactsBucket:
@@ -309,7 +310,8 @@ Resources:
     Properties:
       Description: Checks whether AWS CloudTrail is enabled.
       InputParameters:
-        s3BucketName: !Ref AWSS3CloudtrailBucket
+        # logs and data are in AWS logcentral account
+        s3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
         snsTopicArn: !Ref AWSSNSCloudtrailTopic
         cloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
       Scope: {}
