@@ -117,7 +117,8 @@ Resources:
     Properties:
       CloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
       CloudWatchLogsRoleArn: !GetAtt AWSIAMCloudtrailLogRole.Arn
-      S3BucketName: !Ref AWSS3CloudtrailBucket
+      # send all logs to cloudtrail bucket in AWS logcentral account
+      S3BucketName: "essentials-awss3cloudtrailbucket-1jz6pf8dzid7r"
       SnsTopicName: !GetAtt AWSSNSCloudtrailTopic.TopicName
       IsLogging: true
       EnableLogFileValidation: true
