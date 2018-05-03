@@ -347,6 +347,10 @@ Outputs:
     Value: !Ref AWSS3CloudtrailBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucket'
+  AWSS3ConfigBucket:
+    Value: !Ref AWSS3ConfigBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AwsConfigBucket'
   AWSS3LambdaArtifactsBucket:
     Value: !Ref AWSS3LambdaArtifactsBucket
     Export:
