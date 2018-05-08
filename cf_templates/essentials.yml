@@ -344,6 +344,69 @@ Resources:
                   - 'ec2:AcceptVpcPeeringConnection'
                 Resource:
                   - '*'
+  # KMS Keys
+  AWSKmsInfraKey:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - "InfraKey"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "Allow administration of the key"
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !Join
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - !Ref AWS::AccountId
+                    - ':user/'
+                    - !ImportValue bootstrap-TravisUser
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: "Allow use of the key"
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !Join
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - !Ref AWS::AccountId
+                    - ':user/'
+                    - !ImportValue bootstrap-TravisUser
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"
+            Resource: "*"
+  AWSKmsInfraKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Join
+        - ''
+        - - 'alias/'
+          - !Ref AWS::StackName
+          - '/InfraKey'
+      TargetKeyId: !Ref AWSKmsInfraKey
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
@@ -378,3 +441,11 @@ Outputs:
     Value: !Ref VPCPeeringAuthorizerRole
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-VPCPeeringAuthorizerRole'
+  AWSKmsInfraKey:
+    Value: !Ref AWSKmsInfraKey
+    Export:
+      Name: !Sub '${AWS::StackName}-InfraKey'
+  AWSKmsInfraKeyAlias:
+    Value: !Ref AWSKmsInfraKeyAlias
+    Export:
+      Name: !Sub '${AWS::StackName}-InfraKeyAlias'
