@@ -365,7 +365,7 @@ Resources:
                   - - 'arn:aws:iam::'
                     - !Ref AWS::AccountId
                     - ':user/'
-                    - !ImportValue bootstrap-TravisUser
+                    - !ImportValue us-east-1-bootstrap-TravisUser
             Action:
               - "kms:Create*"
               - "kms:Describe*"
@@ -390,7 +390,7 @@ Resources:
                   - - 'arn:aws:iam::'
                     - !Ref AWS::AccountId
                     - ':user/'
-                    - !ImportValue bootstrap-TravisUser
+                    - !ImportValue us-east-1-bootstrap-TravisUser
             Action:
               - "kms:Encrypt"
               - "kms:Decrypt"
@@ -444,8 +444,8 @@ Outputs:
   AWSKmsInfraKey:
     Value: !Ref AWSKmsInfraKey
     Export:
-      Name: !Sub '${AWS::StackName}-InfraKey'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKey'
   AWSKmsInfraKeyAlias:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
-      Name: !Sub '${AWS::StackName}-InfraKeyAlias'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
