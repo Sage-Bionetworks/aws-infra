@@ -1,0 +1,13 @@
+Description: Test template
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  MyBla:
+    Type: String
+Resources:
+  touchNothing:
+    Type: AWS::CloudFormation::WaitConditionHandle
+Outputs:
+  MyBla:
+    Value: !Ref MyBla
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-MyBla'
