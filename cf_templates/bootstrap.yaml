@@ -1,0 +1,61 @@
+#This template is used to bootstrap resources for an AWS account.
+#The resources in this template only need to be created once.
+Description: Bootstrap resources for new AWS account
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  # !! IMPORTANT !! - AWS API will refuse to remove users that have attached resources.
+  # Therefore you must do the following before deleting them from this file:
+  # 1. Detach or remove the following user resources: login profile, attached
+  #    MFA device, access-keys, ssh-keys, and policies.
+  # 2. Detach the user from all groups.
+  AWSIAMTravisUserAccessKey:
+    Type: 'AWS::IAM::AccessKey'
+    Properties:
+      UserName: !Ref AWSIAMTravisUser
+  AWSIAMTravisUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Groups:
+        - !Ref AWSIAMCiGroup
+  AWSIAMCiGroup:
+    Type: 'AWS::IAM::Group'
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  # Cloudformation bucket for CF templates
+  AWSS3CloudformationBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Delete
+    Properties:
+      AccessControl: PublicRead
+  AWSIAMS3CloudformationBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref AWSS3CloudformationBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "AllowPublicRead"
+            Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}/*"
+Outputs:
+  AWSIAMTravisUser:
+    Value: !Ref AWSIAMTravisUser
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUser'
+  AWSIAMTravisUserAccessKey:
+    Value: !Ref AWSIAMTravisUserAccessKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUserAccessKey'
+  AWSIAMTravisUserSecretAccessKey:
+    Value: !GetAtt AWSIAMTravisUserAccessKey.SecretAccessKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUserSecretAccessKey'
+  AWSS3CloudformationBucket:
+    Value: !Ref AWSS3CloudformationBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationBucket'
