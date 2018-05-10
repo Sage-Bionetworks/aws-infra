@@ -7,7 +7,7 @@ Bootstrapping the account is a one time manual process:
 
 1. Login to the AWS console with the 'root' account.
 2. Goto Services -> Cloudformation
-3. Run the bootstrap.yml template
+3. Run the bootstrap.yaml template
 
 This will create the admin account (i.e. travis) required to run other
 CF templates.
@@ -18,7 +18,7 @@ CF templates.
 aws --profile bridge.dev.travis --region us-east-1 \
 cloudformation create-stack --stack-name essentials \
 --capabilities CAPABILITY_NAMED_IAM \
---template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/essentials.yml \
+--template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/essentials.yaml \
 --parameters \
 ParameterKey=OperatorEmail,ParameterValue="foo@sagebase.org" \
 ParameterKey=FhcrcVpnCidrip,ParameterValue="40.165.75.0/16"
@@ -35,7 +35,7 @@ the resources has been setup you can access and view the account using the
 aws --profile bridge.dev.travis --region us-east-1 \
 cloudformation create-stack --stack-name vpc-bridge-develop \
 --capabilities CAPABILITY_NAMED_IAM \
---template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/vpc.yml \
+--template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/vpc.yaml \
 --parameters \
 ParameterKey=VpcName,ParameterValue="vpc-bridge-develop" \
 ParameterKey=VpcSubnetPrefix,ParameterValue="172.150"
@@ -48,19 +48,19 @@ multiple availability zones.
 
 `Important` - This template must be run in sequence and can only be run after
 the peering connection has been created.  To create the peering connnection run the
-[VPCPeer.yml](https://github.com/Sage-Bionetworks/admincentral-infra/blob/master/cf_templates/VPCPeer.yml)
+[VPCPeer.yaml](https://github.com/Sage-Bionetworks/admincentral-infra/blob/master/cf_templates/VPCPeer.yaml)
 template.
 
 The sequence:
-1. Create VPC by running [vpc.yml](./vpc.yml) template
-2. Setup VPC peering connection by running VPCPeer.yml
-3. Configure the VPC public and private route table with [vpc.yml](./vpc.yml) template
+1. Create VPC by running [vpc.yaml](./vpc.yaml) template
+2. Setup VPC peering connection by running VPCPeer.yaml
+3. Configure the VPC public and private route table with [vpc.yaml](./vpc.yaml) template
 
 ```
 aws --profile bridge.dev.travis --region us-east-1 \
 cloudformation create-stack --stack-name peer-vpn-bridge-develop \
 --capabilities CAPABILITY_NAMED_IAM \
---template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/peer-route-config.yml \
+--template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/peer-route-config.yaml \
 --parameters \
 ParameterKey=PeeringConnectionId,ParameterValue="pcx-eb02e083" \
 ParameterKey=VpcPublicRouteTable,ParameterValue="rtb-f1a9698d" \
