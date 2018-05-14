@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Configure the VPC to VPN routes to allow the VPN to direct traffic to
   the VPC.  The peering connection
-  (https://github.com/Sage-Bionetworks/admincentral-infra/blob/master/cf_templates/VPCPeer.yml)
+  (https://github.com/Sage-Bionetworks/admincentral-infra/blob/master/cf_templates/VPCPeer.yaml)
   must be setup before deploying this template.
 Metadata: {}
 Parameters:

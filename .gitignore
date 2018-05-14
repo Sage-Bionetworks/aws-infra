@@ -106,3 +106,5 @@ ENV/
 # git-crypt
 git-crypt.key
 
+# MAC crap
+.DS_Store

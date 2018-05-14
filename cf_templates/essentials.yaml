@@ -117,7 +117,8 @@ Resources:
     Properties:
       CloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
       CloudWatchLogsRoleArn: !GetAtt AWSIAMCloudtrailLogRole.Arn
-      S3BucketName: !Ref AWSS3CloudtrailBucket
+      # send all logs to cloudtrail bucket in AWS logcentral account
+      S3BucketName: "essentials-awss3cloudtrailbucket-1jz6pf8dzid7r"
       SnsTopicName: !GetAtt AWSSNSCloudtrailTopic.TopicName
       IsLogging: true
       EnableLogFileValidation: true
@@ -247,7 +248,8 @@ Resources:
     Properties:
       ConfigSnapshotDeliveryProperties:
         DeliveryFrequency: Six_Hours
-      S3BucketName: !Ref 'AWSS3ConfigBucket'
+      # Send log and data to AWS logcentral account
+      S3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
   AWSS3ConfigBucket:
     Type: AWS::S3::Bucket
   AWSS3LambdaArtifactsBucket:
@@ -308,7 +310,8 @@ Resources:
     Properties:
       Description: Checks whether AWS CloudTrail is enabled.
       InputParameters:
-        s3BucketName: !Ref AWSS3CloudtrailBucket
+        # logs and data are in AWS logcentral account
+        s3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
         snsTopicArn: !Ref AWSSNSCloudtrailTopic
         cloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
       Scope: {}
@@ -341,11 +344,78 @@ Resources:
                   - 'ec2:AcceptVpcPeeringConnection'
                 Resource:
                   - '*'
+  # KMS Keys
+  AWSKmsInfraKey:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - "InfraKey"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "Allow administration of the key"
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !Join
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - !Ref AWS::AccountId
+                    - ':user/'
+                    - !ImportValue us-east-1-bootstrap-TravisUser
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: "Allow use of the key"
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !Join
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - !Ref AWS::AccountId
+                    - ':user/'
+                    - !ImportValue us-east-1-bootstrap-TravisUser
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"
+            Resource: "*"
+  AWSKmsInfraKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Join
+        - ''
+        - - 'alias/'
+          - !Ref AWS::StackName
+          - '/InfraKey'
+      TargetKeyId: !Ref AWSKmsInfraKey
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucket'
+  AWSS3ConfigBucket:
+    Value: !Ref AWSS3ConfigBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AwsConfigBucket'
   AWSS3LambdaArtifactsBucket:
     Value: !Ref AWSS3LambdaArtifactsBucket
     Export:
@@ -371,3 +441,11 @@ Outputs:
     Value: !Ref VPCPeeringAuthorizerRole
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-VPCPeeringAuthorizerRole'
+  AWSKmsInfraKey:
+    Value: !Ref AWSKmsInfraKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKey'
+  AWSKmsInfraKeyAlias:
+    Value: !Ref AWSKmsInfraKeyAlias
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
