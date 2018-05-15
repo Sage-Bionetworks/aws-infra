@@ -48,7 +48,7 @@ multiple availability zones.
 
 `Important` - This template must be run in sequence and can only be run after
 the peering connection has been created.  To create the peering connnection run the
-[VPCPeer.yaml](https://github.com/Sage-Bionetworks/admincentral-infra/blob/master/cf_templates/VPCPeer.yaml)
+[VPCPeer.yaml](https://github.com/Sage-Bionetworks/admincentral-infra/blob/master/templates/VPCPeer.yaml)
 template.
 
 The sequence:

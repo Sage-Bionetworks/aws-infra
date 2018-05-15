@@ -11,4 +11,5 @@ install:
 - /tmp/git-crypt-master/git-crypt lock
 - ./setup_aws_cli.sh
 script:
-- ./deploy_infra.sh
+- ./validate-templates.sh
+- ./deploy_templates.sh
