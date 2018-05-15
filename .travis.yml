@@ -12,4 +12,4 @@ install:
 - ./setup_aws_cli.sh
 script:
 - ./validate-templates.sh
-- ./deploy_templates.sh
+- ./deploy-templates.sh
