@@ -124,117 +124,6 @@ Resources:
       EnableLogFileValidation: true
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
-  # Monitor Cloudformation deployments
-  # https://aws.amazon.com/premiumsupport/knowledge-center/cloudformation-rollback-email/
-  AWSSNSCloudformationTopic:
-    Type: "AWS::SNS::Topic"
-    Properties:
-      Subscription:
-        -
-          Endpoint: !Ref OperatorEmail
-          Protocol: email
-  AWSIAMCloudformationTopicPolicy:
-    Type: "AWS::IAM::ManagedPolicy"
-    Properties:
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Sid: "CloudformationSnsPolicy"
-            Effect: "Allow"
-            Resource: !Ref AWSSNSCloudformationTopic
-            Action: "SNS:Publish"
-          -
-            Sid: "CloudformationLogsPolicy"
-            Effect: "Allow"
-            Resource: "arn:aws:logs:*:*:*"
-            Action:
-              - "logs:CreateLogGroup"
-              - "logs:CreateLogStream"
-              - "logs:PutLogEvents"
-  AWSIAMCloudformationLambdaRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Principal:
-              Service:
-                - "lambda.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Path: "/"
-      ManagedPolicyArns:
-        - !Ref AWSIAMCloudformationTopicPolicy
-  AWSLambaCloudformationFunction:
-    Type: "AWS::Lambda::Function"
-    Properties:
-      Handler: "index.handler"
-      Role: !GetAtt AWSIAMCloudformationLambdaRole.Arn
-      Runtime: "nodejs4.3"
-      Environment:
-        Variables:
-          CloudformationTopicArn: !Ref AWSSNSCloudformationTopic
-      Code:
-        ZipFile: >
-          topic_arn = process.env.CloudformationTopicArn;
-          var AWS = require('aws-sdk');
-          AWS.config.region_array = topic_arn.split(':'); // splits the ARN in to and array
-          AWS.config.region = AWS.config.region_array[3];  // makes the 4th variable in the array (will always be the region)
-
-
-          // ####################   BEGIN LOGGING   ########################
-
-          console.log(topic_arn);   // just for logging to the that the var was parsed correctly
-          console.log(AWS.config.region_array); // to see if the SPLIT command worked
-          console.log(AWS.config.region_array[3]); // to see if it got the region correctly
-          console.log(AWS.config.region); // to confirm that it set the AWS.config.region to the correct region from the ARN
-
-          // ####################  END LOGGING (you can remove this logging section)  ########################
-
-
-          exports.handler = function(event, context) {
-              console.log(event.Records[0]);
-              const message = event.Records[0].Sns.Message;
-              if (message.indexOf("UPDATE_ROLLBACK") > -1) {
-                  var fields = message.split("\n");
-                  subject = fields[11].replace(/['']+/g, '');
-                  send_SNS_notification(subject, message);
-              }
-          };
-
-          function send_SNS_notification(subject, message) {
-              var sns = new AWS.SNS();
-              subject = "ALARM:" + subject + " failed a cloudformation deployment";
-              sns.publish({
-                  Subject: subject,
-                  Message: message,
-                  TopicArn: topic_arn
-              }, function(err, data) {
-                  if (err) {
-                      console.log(err.stack);
-                      return;
-                  }
-                  console.log('push sent');
-                  console.log(data);
-              });
-          };
-  AWSSNSCloudformationNotifyLambdaTopic:
-    Type: "AWS::SNS::Topic"
-    Properties:
-      Subscription:
-        -
-          Endpoint: !GetAtt AWSLambaCloudformationFunction.Arn
-          Protocol: lambda
-  AWSLambdaCloudformationNotifyInvokePermission:
-    Type: 'AWS::Lambda::Permission'
-    Properties:
-      FunctionName: !GetAtt AWSLambaCloudformationFunction.Arn
-      Action: 'lambda:InvokeFunction'
-      Principal: sns.amazonaws.com
-      SourceArn: !Ref AWSSNSCloudformationNotifyLambdaTopic
   # AWS Config service, https://github.com/awslabs/aws-cloudformation-templates/blob/master/aws/services/Config/Config.yaml
   AWSConfigConfigurationRecorder:
     Type: AWS::Config::ConfigurationRecorder
@@ -424,18 +313,6 @@ Outputs:
     Value: !Ref FhcrcVpnCidrip
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-FhcrcVpnCidrip'
-  AWSLambaCloudformationFunction:
-    Value: !Ref AWSLambaCloudformationFunction
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambaCloudformationFunction'
-  AWSSNSCloudformationTopic:
-    Value: !Ref AWSSNSCloudformationTopic
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationTopic'
-  AWSSNSCloudformationNotifyLambdaTopic:
-    Value: !Ref AWSSNSCloudformationNotifyLambdaTopic
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationNotifyLambdaTopicArn'
   VPCPeeringAuthorizerRole:
     Description: Cross Account Role Name
     Value: !Ref VPCPeeringAuthorizerRole
