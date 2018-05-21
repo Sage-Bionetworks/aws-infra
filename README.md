@@ -9,10 +9,15 @@ Bootstrapping the account is a one time manual process:
 2. Goto Services -> Cloudformation
 3. Run the bootstrap.yaml template
 
-This will create the admin account (i.e. travis) required to run other
+This will create the admin account (i.e. travis) required to deploy other
 CF templates.
 
 ## Create essential resources
+
+Note: The essentials template will setup log aggregation to
+[logcentral](https://github.com/Sage-Bionetworks/logcentral-infra).  A
+pre-requesite for running this template is setup log aggregation from
+the the new account into logcentral.
 
 ```
 aws --profile bridge.dev.travis --region us-east-1 \
