@@ -42,6 +42,42 @@ Resources:
               AWS: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}/*"
+  # CF Service roles
+  AWSIAMCfServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !GetAtt AWSIAMTravisUser.Arn
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+  AWSIAMCfServicePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: "CfService"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action: "*"
+            Resource: "*"
+      Roles:
+        -
+          !Ref AWSIAMCfServiceRole
+  AWSIAMCfServiceInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        -
+          !Ref AWSIAMCfServiceRole
 Outputs:
   AWSIAMTravisUser:
     Value: !Ref AWSIAMTravisUser
@@ -59,3 +95,7 @@ Outputs:
     Value: !Ref AWSS3CloudformationBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationBucket'
+  AWSIAMCfServiceRoleArn:
+    Value: !GetAtt AWSIAMCfServiceRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleArn'

@@ -9,8 +9,37 @@ Bootstrapping the account is a one time manual process:
 2. Goto Services -> Cloudformation
 3. Run the bootstrap.yaml template
 
-This will create the admin account (i.e. travis) required to deploy other
+This will create the account (i.e. travis) required to deploy other
 CF templates.
+
+## Deploying templates
+
+The travis account by itself does not have permissions to deploy templates.
+You must use Travis and assume the cloudformation service role.
+
+1. Setup ~/.aws/credentials file
+```
+[default]
+region = us-east-1
+[bridge.dev.travis]
+aws_access_key_id = <Access Key>
+aws_secret_access_key = <Secret Access Key>
+```
+
+2. Setup ~/.aws/config file
+```
+[default]
+region = us-east-1
+[profile bridge.dev.cfservice]
+role_arn = <CF Service Role Arn>
+source_profile = bridge.dev.travis
+```
+__NOTE__- source_profile needs to match the profile in ~/.aws/credentials file
+
+4. Assume CF service role to deploy templates
+```
+aws --profile bridge.dev.cfservice --region us-east-1 cloudformation create-stack ...
+```
 
 ## Create essential resources
 
@@ -20,7 +49,7 @@ pre-requesite for running this template is setup log aggregation from
 the the new account into logcentral.
 
 ```
-aws --profile bridge.dev.travis --region us-east-1 \
+aws --profile bridge.dev.cfservice --region us-east-1 \
 cloudformation create-stack --stack-name essentials \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/essentials.yaml \
@@ -37,7 +66,7 @@ the resources has been setup you can access and view the account using the
 ## Create VPC
 
 ```
-aws --profile bridge.dev.travis --region us-east-1 \
+aws --profile bridge.dev.cfservice --region us-east-1 \
 cloudformation create-stack --stack-name vpc-bridge-develop \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/vpc.yaml \
@@ -62,7 +91,7 @@ The sequence:
 3. Configure the VPC public and private route table with [vpc.yaml](./vpc.yaml) template
 
 ```
-aws --profile bridge.dev.travis --region us-east-1 \
+aws --profile bridge.dev.cfservice --region us-east-1 \
 cloudformation create-stack --stack-name peer-vpn-bridge-develop \
 --capabilities CAPABILITY_NAMED_IAM \
 --template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/peer-route-config.yaml \
