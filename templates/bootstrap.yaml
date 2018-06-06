@@ -82,6 +82,10 @@ Outputs:
   AWSIAMTravisUser:
     Value: !Ref AWSIAMTravisUser
     Export:
+      Name: !Sub '${AWS::StackName}-TravisUser'
+  AWSIAMTravisUser:
+    Value: !Ref AWSIAMTravisUser
+    Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUser'
   AWSIAMTravisUserAccessKey:
     Value: !Ref AWSIAMTravisUserAccessKey
