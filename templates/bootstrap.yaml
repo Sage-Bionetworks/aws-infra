@@ -79,6 +79,7 @@ Resources:
         -
           !Ref AWSIAMCfServiceRole
 Outputs:
+  # Deprecated, do not reference this!, use AWSIAMTravisUser instead
   AWSIAMTravisUserShortName:
     Value: !Ref AWSIAMTravisUser
     Export:
