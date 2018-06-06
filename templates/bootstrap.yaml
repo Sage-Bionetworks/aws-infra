@@ -79,7 +79,7 @@ Resources:
         -
           !Ref AWSIAMCfServiceRole
 Outputs:
-  AWSIAMTravisUser:
+  AWSIAMTravisUserShortName:
     Value: !Ref AWSIAMTravisUser
     Export:
       Name: !Sub '${AWS::StackName}-TravisUser'
