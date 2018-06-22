@@ -1,0 +1,22 @@
+# Run this only after adding a member resource to Guard duty master
+# https://github.com/Sage-Bionetworks/logcentral-infra/blob/master/templates/GuardDutyMaster.yaml
+AWSTemplateFormatVersion: 2010-09-09
+Description: Setup GuardDuty memmber
+Parameters:
+  MasterAccountId:
+    Type: String
+    Description: The Guard Duty master account id
+  InvitationId:
+    Type: String
+    Description: The id of the invitation that is sent by the GuardDuty master
+Resources:
+  GDDetector:
+    Type: 'AWS::GuardDuty::Detector'
+    Properties:
+      Enable: true
+  GDMasterRef:
+    Type: 'AWS::GuardDuty::Master'
+    Properties:
+      DetectorId: !Ref GDDetector
+      InvitationId: !Ref InvitationId
+      MasterId: !Ref MasterAccountId
