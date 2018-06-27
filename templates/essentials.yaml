@@ -3,9 +3,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   OperatorEmail:
     Type: String
-  FhcrcVpnCidrip:
-    Type: String
-    NoEcho: true
   VpcPeeringRequesterAwsAccountId:
     Type: String
     NoEcho: true
@@ -309,10 +306,6 @@ Outputs:
     Value: !Ref AWSS3LambdaArtifactsBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaArtifactsBucket'
-  FhcrcVpnCidrip:
-    Value: !Ref FhcrcVpnCidrip
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-FhcrcVpnCidrip'
   VPCPeeringAuthorizerRole:
     Description: Cross Account Role Name
     Value: !Ref VPCPeeringAuthorizerRole
