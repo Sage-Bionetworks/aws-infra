@@ -141,8 +141,26 @@ Resources:
       S3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
   AWSS3ConfigBucket:
     Type: AWS::S3::Bucket
+  # Bucket for lambda artifacts
   AWSS3LambdaArtifactsBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      AccessControl: PublicRead
+  AWSIAMS3LambdaArtifactsBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref AWSS3LambdaArtifactsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "AllowPublicRead"
+            Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${AWSS3LambdaArtifactsBucket}/*"
   AWSSnsConfigTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -323,3 +341,4 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
+
