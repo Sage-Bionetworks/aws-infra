@@ -55,7 +55,6 @@ cloudformation create-stack --stack-name essentials \
 --template-url https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/essentials.yaml \
 --parameters \
 ParameterKey=OperatorEmail,ParameterValue="foo@sagebase.org" \
-ParameterKey=FhcrcVpnCidrip,ParameterValue="40.165.75.0/16"
 ParameterKey=VpcPeeringRequesterAwsAccountId,ParameterValue="123456789012""
 ```
 
