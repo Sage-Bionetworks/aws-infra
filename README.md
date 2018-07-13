@@ -1,6 +1,6 @@
 # Overview
-Scripts for building out and maintaining Sage Bionetworks
-infrastructure on AWS
+Shared templates for building out and maintaining Sage Bionetworks
+infrastructure on AWS.
 
 ## Create bootstrap
 Bootstrapping the account is a one time manual process:
@@ -15,7 +15,8 @@ CF templates.
 ## Deploying templates
 
 The travis account by itself does not have permissions to deploy templates.
-You must use Travis and assume the cloudformation service role.
+You must use the travis user credentials to assume the cfservice role to
+get permissions to deploy the templates.
 
 1. Setup ~/.aws/credentials file
 ```
@@ -106,8 +107,8 @@ to this VPC.
 
 
 ## Continuous Integration
-We have configured Travis to deploy CF template to an S3 bucket.
-
+We have configured Travis to deploy CF template to an S3 bucket on
+AWS Admincentral account.
 
 # Contributions
 
@@ -118,8 +119,8 @@ We have configured Travis to deploy CF template to an S3 bucket.
 * https://travis-ci.org/Sage-Bionetworks/aws-infra
 
 ## Secrets
-* We use [git-crypt](https://github.com/AGWA/git-crypt) to hide secrets.
-  Access to secrets is tightly controlled.  You will be required to have
-  your own [GPG key](https://help.github.com/articles/generating-a-new-gpg-key)
-  and you must request access by a maintainer of this project.
+* We use the [AWS SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html)
+to store secrets for this project.  Sceptre retrieves the secrets using
+a [sceptre ssm resolver](https://github.com/cloudreach/sceptre/tree/v1/contrib/ssm-resolver)
+and passes them to the cloudformation stack on deployment.
 
