@@ -5,13 +5,7 @@ cache: pip
 install:
 - wget https://github.com/Sage-Bionetworks/infra-utils/archive/master.zip -O /tmp/infra-utils.zip
 - unzip -j -n /tmp/infra-utils.zip -x infra-utils-master/.gitignore infra-utils-master/LICENSE infra-utils-master/README.md
-- ./setup_git_crypt.sh || travis_terminate 1
-- openssl aes-256-cbc -K $encrypted_98582b7ec082_key -iv $encrypted_98582b7ec082_iv -in git-crypt.key.enc -out git-crypt.key -d
-- /tmp/git-crypt-master/git-crypt unlock ./git-crypt.key
-- rm -rf git-crypt.key
-- source env_vars && source env_vars.secret
-- /tmp/git-crypt-master/git-crypt lock
-- ./setup_aws_cli.sh || travis_terniate 1
+- ./setup_aws_cli.sh || travis_terminate 1
 script:
 - ./validate-templates.sh || travis_terminate 1
 - ./deploy-templates.sh || travis_terminate 1
