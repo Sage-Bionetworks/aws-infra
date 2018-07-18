@@ -78,6 +78,67 @@ Resources:
       Roles:
         -
           !Ref AWSIAMCfServiceRole
+  # KMS Keys
+  AWSKmsInfraKey:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - "InfraKey"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "Allow administration of the key"
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !Join
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - !Ref AWS::AccountId
+                    - ':root'
+                - !GetAtt AWSIAMTravisUser.Arn
+                - !GetAtt AWSIAMCfServiceRole.Arn
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: "Allow use of the key"
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !GetAtt AWSIAMTravisUser.Arn
+                - !GetAtt AWSIAMCfServiceRole.Arn
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"
+            Resource: "*"
+  AWSKmsInfraKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Join
+        - ''
+        - - 'alias/'
+          - !Ref AWS::StackName
+          - '/InfraKey'
+      TargetKeyId: !Ref AWSKmsInfraKey
+
 Outputs:
   # Deprecated, do not reference this!, use AWSIAMTravisUser instead
   AWSIAMTravisUserShortName:
@@ -108,3 +169,11 @@ Outputs:
     Value: !GetAtt AWSIAMCfServiceRole.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleArn'
+  AWSKmsInfraKey:
+    Value: !Ref AWSKmsInfraKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKey'
+  AWSKmsInfraKeyAlias:
+    Value: !Ref AWSKmsInfraKeyAlias
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'

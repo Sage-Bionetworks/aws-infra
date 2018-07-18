@@ -249,6 +249,7 @@ Resources:
                 Resource:
                   - '*'
   # KMS Keys
+  # This key is deprecated, use the one in boostrap.yaml
   AWSKmsInfraKey:
     Type: "AWS::KMS::Key"
     Properties:
@@ -327,10 +328,12 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-VPCPeeringAuthorizerRole'
   AWSKmsInfraKey:
+    Description: This key is deprecated, use the one in boostrap stack
     Value: !Ref AWSKmsInfraKey
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKey'
   AWSKmsInfraKeyAlias:
+    Description: This key is deprecated, use the one in boostrap stack
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
