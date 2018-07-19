@@ -3,105 +3,81 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Generic SNS Notification Topics and Alarms
 
 Parameters:
-  pAccountDescription:
-    Description: Short Name for account (ie dev,ref,prod)
-    Type: String
-
-  pInitialSubscriberEmail:
+  InitialSubscriberEmail:
     Description: Add this initial email to the alerts
     Type: String
-
-  pEnableSubscriberSMS:
+  EnableSubscriberSMS:
     Description: Enable SMS notification of critical alerts
     Type: String
     Default: true
     AllowedValues:
       - true
       - false
-
-  pInitialSubscriberSMS:
+  InitialSubscriberSMS:
     Description: Add this initial Cell for SMS notification of critical alerts
     Type: String
     Default: 1-404-867-5309-CHANGETHIS
-
-  pBillingThreshold:
+  BillingThreshold:
     Description: Sets the billing alert to go off above this figure
     Type: Number
-
-  pDeployLambda:
+  DeployLambda:
     Description: Whether or not to deploy the slack lambda
     Type: String
     AllowedValues:
       - true
       - false
-
-  pLambdaFunctionName:
-    Description: Name of the Lambda Function
-    Type: String
-
-  # Slack Parameters passed as Env Vars to Lambda
-  pSlackWebhookURL:
+  SlackWebhookURL:
     Description: WebHook URL from Slack. Keep this secret
     Type: String
-    Default: SlackWebhook
-
-  pSlackChannel:
+    Default: https://hooks.slack.com/services/slack-webhook-id
+    NoEcho: true
+  SlackChannel:
     Description: Slack Channel to send the spam to
     Type: String
     Default: '#aws_notices'
-
-  pIconEmoji:
+  SlackIconEmoji:
     Description: Slack Emoji to use
     Type: String
     Default: ':cloud:'
 
 Conditions:
   cDeployLambda:
-    !Equals [ !Ref pDeployLambda, true]
+    !Equals [ !Ref DeployLambda, true]
   cDeploySMSAlerts:
-    !Equals [ !Ref pEnableSubscriberSMS, true]
+    !Equals [ !Ref EnableSubscriberSMS, true]
 
 Resources:
-  SNSAlertsNigthmare:
+  SNSAlertsNightmare:
     Type: AWS::SNS::Topic
     Condition: cDeploySMSAlerts
     Properties:
-      DisplayName: !Join ['', ["Nightmare Alerts for ", !Ref 'pAccountDescription']]
       Subscription:
-      - Endpoint: !Ref 'pInitialSubscriberSMS'
+      - Endpoint: !Ref 'InitialSubscriberSMS'
         Protocol: sms
-      TopicName: !Join ['-', ["Nightmare-Alerts", !Ref 'pAccountDescription']]
   SNSAlertsCritical:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: !Join ['', ["Critical Alerts for ", !Ref 'pAccountDescription']]
       Subscription:
-      - Endpoint: !Ref 'pInitialSubscriberEmail'
+      - Endpoint: !Ref 'InitialSubscriberEmail'
         Protocol: email
       - Endpoint: !GetAtt [SlackNotificationLambda, Arn]
         Protocol: lambda
-      TopicName: !Join ['-', ["Critical-Alerts", !Ref 'pAccountDescription']]
   SNSAlertsError:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: !Join ['', ["Error Alerts for ", !Ref 'pAccountDescription']]
       Subscription:
-      - Endpoint: !Ref 'pInitialSubscriberEmail'
+      - Endpoint: !Ref 'InitialSubscriberEmail'
         Protocol: email
       - Endpoint: !GetAtt [SlackNotificationLambda, Arn]
         Protocol: lambda
-      TopicName: !Join ['-', ["Error-Alerts", !Ref 'pAccountDescription']]
   SNSAlertsInfo:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: !Join ['', ["Info Alerts for ", !Ref 'pAccountDescription']]
       Subscription:
-      - Endpoint: !Ref 'pInitialSubscriberEmail'
+      - Endpoint: !Ref 'InitialSubscriberEmail'
         Protocol: email
       - Endpoint: !GetAtt [SlackNotificationLambda, Arn]
         Protocol: lambda
-      TopicName: !Join ['-', ["Info-Alerts", !Ref 'pAccountDescription']]
-
 
   SNSAlertPolicy:
     Type: AWS::SNS::TopicPolicy
@@ -125,7 +101,7 @@ Resources:
   SpendingAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: !Join ['', [Alarm if AWS spending is over $, !Ref 'pBillingThreshold']]
+      AlarmDescription: !Join ['', [Alarm if AWS spending is over $, !Ref 'BillingThreshold']]
       Namespace: AWS/Billing
       MetricName: EstimatedCharges
       Dimensions:
@@ -134,7 +110,7 @@ Resources:
       Statistic: Maximum
       Period: '21600'
       EvaluationPeriods: '1'
-      Threshold: !Ref 'pBillingThreshold'
+      Threshold: !Ref 'BillingThreshold'
       ComparisonOperator: GreaterThanThreshold
       AlarmActions: [!Ref 'SNSAlertsError']
 
@@ -174,7 +150,6 @@ Resources:
       Runtime: python2.7
       Handler: index.lambda_handler
       Timeout: '80'
-      FunctionName: !Ref 'pLambdaFunctionName'
       Code:
         ZipFile: |
           # Lambda to send SNS Messages to Slack
@@ -218,10 +193,9 @@ Resources:
       Role: !GetAtt [SlackNotificationLambdaRole, Arn]
       Environment:
         Variables:
-          HOOK_URL: !Ref pSlackWebhookURL
-          ACCOUNT_NAME: !Ref pAccountDescription
-          SLACK_CHANNEL: !Ref pSlackChannel
-          ICON_EMOJI: !Ref pIconEmoji
+          HOOK_URL: !Ref SlackWebhookURL
+          SLACK_CHANNEL: !Ref SlackChannel
+          ICON_EMOJI: !Ref SlackIconEmoji
 
   SlackNotificationLambdaInvocationRole:
     Type: AWS::IAM::Role
@@ -271,11 +245,11 @@ Resources:
 
 
 Outputs:
-  SNSAlertsNigthmare:
+  SNSAlertsNightmare:
     Condition: cDeploySMSAlerts
-    Value: !Ref 'SNSAlertsNigthmare'
+    Value: !Ref 'SNSAlertsNightmare'
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-SNSAlertsNigthmare'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SNSAlertsNightmare'
   SNSAlertsCriticalArn:
     Value: !Ref 'SNSAlertsCritical'
     Export:
@@ -288,5 +262,3 @@ Outputs:
     Value: !Ref 'SNSAlertsInfo'
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SNSAlertsInfoArn'
-  TemplateVersion:
-    Value: "0.1.0"
