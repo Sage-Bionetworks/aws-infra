@@ -108,3 +108,7 @@ git-crypt.key
 
 # MAC crap
 .DS_Store
+
+# AWS lambdas
+lambdas/*.zip
+

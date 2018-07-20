@@ -7,6 +7,7 @@ install:
 - unzip -j -n /tmp/infra-utils.zip -x infra-utils-master/.gitignore infra-utils-master/LICENSE infra-utils-master/README.md
 - ./setup_aws_cli.sh || travis_terminate 1
 script:
+- ./deploy_lambdas.sh || travis_terminate 1
 - ./validate-templates.sh || travis_terminate 1
 - ./deploy-templates.sh || travis_terminate 1
 
