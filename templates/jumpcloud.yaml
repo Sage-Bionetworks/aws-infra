@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Lambdas to manage jumpcloud systems
+Metadata: {}
+Parameters:
+  LambdaBucket:
+    Description: Bucket Holding Lambdas
+    Type: String
+  JcServiceApiKey:
+    Description: The Jumpcloud service user API key
+    Type: String
+    NoEcho: true
+Resources:
+  JumpcloudCleanSystems:
+    DependsOn:
+      - LambdaExecutionRole
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: clean_systems.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python2.7
+      Timeout: '10'
+      Environment:
+        Variables:
+          JC_SERVICE_API_KEY: !Ref JcServiceApiKey
+      Code:
+        S3Bucket: !Ref LambdaBucket
+        S3Key: "aws-infra/master/jumpcloud.zip"
+  PeriodicEvent:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "rate(1 hour)"
+      Targets:
+        - Arn: !GetAtt JumpcloudCleanSystems.Arn
+          Id: !Ref JumpcloudCleanSystems
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: PublishToCloudwatch
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt JumpcloudCleanSystems.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt PeriodicEvent.Arn
+Outputs:
+  JumpcloudCleanSystems:
+    Value: !Ref JumpcloudCleanSystems
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-JumpcloudCleanSystems'
