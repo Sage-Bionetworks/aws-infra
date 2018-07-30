@@ -32,6 +32,7 @@ import logging
 import os
 import csv
 import json
+import re
 from time import sleep
 import dateutil.parser
 from datetime import datetime, timedelta, date
@@ -114,7 +115,7 @@ def lambda_handler(event, context):
         except ClientError as e:
             logger.error(e.response['Error']['Message'])
 
-        if user_notice != '' and SEND_EMAIL:     # email to iam users
+        if user_notice != '' and SEND_EMAIL and isValidEmail(row['user']):     # email to iam users
             logger.info("Emailing user " + row['user'])
             subject = "Notification from AWS account {}".format(aws_account_identity)
             footer = '\n\tAWS account policy requires rotating access keys every {} days.'.format(max_age)
@@ -131,6 +132,12 @@ def lambda_handler(event, context):
 def obj_converter(o):
     if isinstance(o, datetime):
         return o.__str__()
+
+# simple lenient check for valid email format (requires * and . in the string)
+def isValidEmail(email):
+    if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', email):
+        return True
+    return False
 
 # get account identity info for reporting
 def get_aws_account_identity():
