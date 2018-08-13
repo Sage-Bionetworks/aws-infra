@@ -71,13 +71,6 @@ Resources:
       Roles:
         -
           !Ref AWSIAMCfServiceRole
-  AWSIAMCfServiceInstanceProfile:
-    Type: "AWS::IAM::InstanceProfile"
-    Properties:
-      Path: "/"
-      Roles:
-        -
-          !Ref AWSIAMCfServiceRole
 Outputs:
   # Deprecated, do not reference this!, use AWSIAMTravisUser instead
   AWSIAMTravisUserShortName:
