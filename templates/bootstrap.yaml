@@ -79,11 +79,6 @@ Resources:
         -
           !Ref AWSIAMCfServiceRole
 Outputs:
-  # Deprecated, do not reference this!, use AWSIAMTravisUser instead
-  AWSIAMTravisUserShortName:
-    Value: !Ref AWSIAMTravisUser
-    Export:
-      Name: !Sub '${AWS::StackName}-TravisUser'
   AWSIAMTravisUser:
     Value: !Ref AWSIAMTravisUser
     Export:
