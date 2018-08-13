@@ -63,6 +63,23 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt PeriodicEvent.Arn
+  JumpcloudCleanSystemsLambdaFailureAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue us-east-1-AccountAlertTopics-SNSAlertsErrorArn
+      MetricName: !Sub "${JumpcloudCleanSystems}-FailureAlarm"
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref JumpcloudCleanSystems
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
 Outputs:
   JumpcloudCleanSystems:
     Value: !Ref JumpcloudCleanSystems
