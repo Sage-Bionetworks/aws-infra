@@ -2,6 +2,14 @@
 #The resources in this template only need to be created once.
 Description: Bootstrap resources for new AWS account
 AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  CFBucketVersioning:
+    Type: String
+    Description: Enabled to enable bucket versionsing, default is Suspended
+    AllowedValues:
+      - Enabled
+      - Suspended
+    Default: Suspended
 Resources:
   # !! IMPORTANT !! - AWS API will refuse to remove users that have attached resources.
   # Therefore you must do the following before deleting them from this file:
@@ -29,7 +37,7 @@ Resources:
     Properties:
       AccessControl: PublicRead
       VersioningConfiguration:
-        Status: Enabled
+        Status: !Ref BucketVersioning
   AWSIAMS3CloudformationBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
