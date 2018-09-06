@@ -3,7 +3,7 @@
 Description: Bootstrap resources for new AWS account
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  CFBucketVersioning:
+  CfBucketVersioning:
     Type: String
     Description: Enabled to enable bucket versionsing, default is Suspended
     AllowedValues:
@@ -37,7 +37,7 @@ Resources:
     Properties:
       AccessControl: PublicRead
       VersioningConfiguration:
-        Status: !Ref BucketVersioning
+        Status: !Ref CfBucketVersioning
   AWSIAMS3CloudformationBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
