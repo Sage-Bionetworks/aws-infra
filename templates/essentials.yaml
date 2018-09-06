@@ -9,6 +9,13 @@ Parameters:
     Description: The AWS account running the Sophos-VPN
     AllowedPattern: '[0-9]*'
     ConstraintDescription: Must be account number without dashes
+  LambdaBucketVersioning:
+    Type: String
+    Description: Enabled to enable bucket versionsing, default is Suspended
+    AllowedValues:
+      - Enabled
+      - Suspended
+    Default: Suspended
 Resources:
   # resources for cloudtrail
   AWSLogsCloudtrailLogGroup:
@@ -144,6 +151,8 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       AccessControl: PublicRead
+      VersioningConfiguration:
+        Status: !Ref LambdaBucketVersioning
   AWSIAMS3LambdaArtifactsBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
