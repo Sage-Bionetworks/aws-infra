@@ -28,6 +28,8 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       AccessControl: PublicRead
+      VersioningConfiguration:
+        Status: Enabled
   AWSIAMS3CloudformationBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
