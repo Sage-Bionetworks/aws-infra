@@ -382,6 +382,7 @@ Resources:
         Ref: "PrivateSubnet2"
       RouteTableId:
         Ref: "PrivateRouteTable"
+  # Allow access to EC2 when connected to the Sage VPN
   VpnSecurityGroup:
     DependsOn: "VPC"
     Type: 'AWS::EC2::SecurityGroup'
@@ -396,6 +397,24 @@ Resources:
           IpProtocol: -1
           Description: "Allow all VPN traffic"
       # CF does not support removing all rules, workaround is to add a pointless rule
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: -1
+  # Allow access to bastian hosts
+  BastianSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security Group for bastians
+      VpcId:
+        Ref: "VPC"
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+          Description: "Allow SSH connection"
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
           FromPort: -1
@@ -466,14 +485,20 @@ Outputs:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateRouteTable']]
   VpcDefaultSecurityGroup:
-    Description: "VPC DefaultSecurityGroup Id "
+    Description: "VPC DefaultSecurityGroup Id"
     Value: { "Fn::GetAtt" : ["VPC", "DefaultSecurityGroup"] }
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcDefaultSecurityGroup']]
   VpnSecurityGroup:
-    Description: "VPN Security Group Id "
+    Description: "VPN Security Group Id"
     Value: !Ref VpnSecurityGroup
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpnSecurityGroup']]
+  BastianSecurityGroup:
+    Description: "Bastian Security Group Id"
+    Value: !Ref BastianSecurityGroup
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'BastianSecurityGroup']]
