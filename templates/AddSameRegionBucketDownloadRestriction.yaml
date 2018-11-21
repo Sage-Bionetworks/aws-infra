@@ -1,0 +1,126 @@
+Description: >
+  Add restriction on S3 bucket to only allow download from AWS resources in the same region
+  THIS CURRENTLY ONLY WORKS IN THE us-east-1 REGION!!!!!
+  Data transfers within the same region between AWS resources are free. 
+  Restricts downloading files from this bucket to only AWS resources (e.g. EC2 , Lambda) within the same region as this bucket.
+  This will not allow even the owner of the bucket to download objects in this bucket when not using an AWS resource in the same region!
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name of the bucket to which the same region AWS resource restriction bucket policy will be applied
+Resources:
+  ExternalBucketGroupPolicyUpdateRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: external-bucket-lambda-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - 's3:GetBucketPolicy'
+              - 's3:PutBucketPolicy'
+            Resource: !Sub "arn:aws:s3:::${BucketName}"
+      - PolicyName: PublishToCloudwatch
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'logs:CreateLogGroup'
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: 'arn:aws:logs:*:*:*'
+  ExternalBucketGroupPolicyUpdateLambda:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Description: Dynamically updates the external bucket policy to restrict downloading only IP addresses listed by AWS.
+      Runtime: python3.6
+      Handler: "index.handler"
+      Role: !GetAtt ExternalBucketGroupPolicyUpdateRole.Arn
+      Timeout: 10
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+          REGION: !Ref "AWS::Region"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          import cfnresponse
+          from botocore.vendored import requests
+
+          bucket_name = os.environ['BUCKET_NAME']
+          region = os.environ['REGION']
+          policy_statement_id="DenyGetObjectForNonMatchingIp"
+
+          # have to put in a not None value for repsonseData or error will be thrown
+          custom_resource_response_data = {'Data':''}
+
+          def handler(event, context):
+            try:
+              #for the case when this lambda is triggered by aws custom resource
+              custom_resource_request_type = event.get('RequestType')
+
+              s3_client = boto3.client('s3')
+
+              #get current bucket_policy from the s3 bucket and remove old policy if it exists
+              bucket_policy = json.loads(s3_client.get_bucket_policy(Bucket=bucket_name)['Policy'])
+              bucket_policy['Statement'] = [statement for statement in bucket_policy['Statement'] if (policy_statement_id != statement.get("Sid"))]
+
+              # when custom_resource_request_type is None, this lambda is being triggered by the SNS topic, not the CloudFormation custom resource
+              if not custom_resource_request_type or custom_resource_request_type == 'Create' or custom_resource_request_type == 'Update':
+
+                #generate new policy statement based on data from AWS
+                ip_ranges = requests.get('https://ip-ranges.amazonaws.com/ip-ranges.json').json()['prefixes']
+                region_ip_addresses = [item['ip_prefix'] for item in ip_ranges if (item["service"] == "AMAZON" and item["region"] == region)]
+                
+                new_ip_policy_statement = {'Sid': policy_statement_id,
+                                           'Effect': 'Deny',
+                                           'Principal': '*',
+                                           'Action': 's3:GetObject',
+                                           'Resource': 'arn:aws:s3:::'+bucket_name+'/*',
+                                           'Condition': {'NotIpAddress': {'aws:SourceIp': region_ip_addresses}}}
+
+
+
+
+                #add new IP address policy statement
+                bucket_policy['Statement'].append(new_ip_policy_statement)
+
+              s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
+
+              if custom_resource_request_type:
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, custom_resource_response_data)
+            except Exception as e:
+                cfnresponse.send(event, context, cfnresponse.FAILED, custom_resource_response_data) 
+                raise
+
+  ExternalBucketGroupPolicyUpdateSNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: 'arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged'
+      Protocol: lambda
+      Endpoint: !GetAtt ExternalBucketGroupPolicyUpdateLambda.Arn
+  ExternalBucketGroupPolicyUpdateLambdaSNSInvokePermission: # for sns to trigger group policy update lambda
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ExternalBucketGroupPolicyUpdateLambda.Arn
+      Action: 'lambda:InvokeFunction'
+      SourceArn: 'arn:aws:sns:us-east-1:806199016981:AmazonIpSpaceChanged'
+      Principal: sns.amazonaws.com
+  ExternalBucketGroupPolicyUpdateLambdaInitTrigger:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt ExternalBucketGroupPolicyUpdateLambda.Arn
