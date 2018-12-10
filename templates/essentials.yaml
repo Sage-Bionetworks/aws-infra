@@ -3,6 +3,10 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   OperatorEmail:
     Type: String
+  CentralCloudtrailBucket:
+    Type: String
+    Description: The central S3 bucket where AWS CloudTrail send logs to.
+    Default: essentials-awss3cloudtrailbucket-1jz6pf8dzid7r
   VpcPeeringRequesterAwsAccountId:
     Type: String
     NoEcho: true
@@ -122,7 +126,7 @@ Resources:
       CloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
       CloudWatchLogsRoleArn: !GetAtt AWSIAMCloudtrailLogRole.Arn
       # send all logs to cloudtrail bucket in AWS logcentral account
-      S3BucketName: "essentials-awss3cloudtrailbucket-1jz6pf8dzid7r"
+      S3BucketName: !Ref CentralCloudtrailBucket
       SnsTopicName: !GetAtt AWSSNSCloudtrailTopic.TopicName
       IsLogging: true
       EnableLogFileValidation: true
@@ -224,7 +228,7 @@ Resources:
       Description: Checks whether AWS CloudTrail is enabled.
       InputParameters:
         # logs and data are in AWS logcentral account
-        s3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
+        s3BucketName: !Ref CentralCloudtrailBucket
         snsTopicArn: !Ref AWSSNSCloudtrailTopic
         cloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
       Scope: {}
