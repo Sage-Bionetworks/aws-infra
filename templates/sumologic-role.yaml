@@ -1,0 +1,41 @@
+# This template allows sumo logic to read logs from a bucket
+# Source https://help.sumologic.com/03Send-Data/Sources/02Sources-for-Hosted-Collectors/Amazon-Web-Services/Configuring-your-AWS-Source-with-CloudFormation
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A CloudFormation template that creates a role for authenticating with
+  Sumo’s AWS integrations.
+Parameters:
+  ExternalID:
+    Type: String
+    Description: An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
+  Actions:
+    Type: CommaDelimitedList
+    Description: Comma separated list of permissive AWS actions granted to the role. Eg. s3:GetObject,s3:GetObjectVersion,s3:ListBucketVersions,s3:ListBucket
+  Resources:
+    Type: CommaDelimitedList
+    Description: Comma separated ARNs of the AWS resources that the role will have access to. Eg. arn:aws:s3:::mybucket
+Resources:
+  SumoRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::926226587429:root
+          Action: sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId:
+                Ref: ExternalID
+      Path: "/"
+      Policies:
+      - PolicyName: SumoPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              Ref: Actions
+            Resource:
+              Ref: Resources
