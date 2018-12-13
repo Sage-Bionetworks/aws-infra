@@ -1,5 +1,6 @@
-# This template allows sumo logic to read logs from a bucket
+# This template allows sumo logic to read logs from a bucket.
 # Source https://help.sumologic.com/03Send-Data/Sources/02Sources-for-Hosted-Collectors/Amazon-Web-Services/Configuring-your-AWS-Source-with-CloudFormation
+# NOTE: sumologic template is slightly incorrect, it's missing a '/*' on the resource. This template contains the fix.
 AWSTemplateFormatVersion: '2010-09-09'
 Description: A CloudFormation template that creates a role for authenticating with
   Sumo’s AWS integrations.
@@ -10,9 +11,9 @@ Parameters:
   Actions:
     Type: CommaDelimitedList
     Description: Comma separated list of permissive AWS actions granted to the role. Eg. s3:GetObject,s3:GetObjectVersion,s3:ListBucketVersions,s3:ListBucket
-  Resources:
-    Type: CommaDelimitedList
-    Description: Comma separated ARNs of the AWS resources that the role will have access to. Eg. arn:aws:s3:::mybucket
+  Resource:
+    Type: String
+    Description: ARN of the AWS resource that the role will have access to. Eg. arn:aws:s3:::mybucket
 Resources:
   SumoRole:
     Type: AWS::IAM::Role
@@ -38,7 +39,11 @@ Resources:
             Action:
               Ref: Actions
             Resource:
-              Ref: Resources
+              - Ref: Resource
+              - !Join
+                - '/'
+                - - !Ref Resource
+                  - '*'
 Outputs:
   SumoRoleId:
     Value: !GetAtt SumoRole.RoleId
