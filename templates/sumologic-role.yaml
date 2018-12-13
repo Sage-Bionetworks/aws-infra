@@ -39,3 +39,12 @@ Resources:
               Ref: Actions
             Resource:
               Ref: Resources
+Outputs:
+  SumoRoleId:
+    Value: !GetAtt SumoRole.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SumoRoleId'
+  SumoRoleArn:
+    Value: !GetAtt SumoRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SumoRole'
