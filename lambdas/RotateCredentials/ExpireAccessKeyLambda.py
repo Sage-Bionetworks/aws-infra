@@ -55,6 +55,7 @@ def lambda_handler(event, context):
         SENDER_EMAIL = os.environ['SENDER_EMAIL']
         REPORT_TOPIC_ARN = os.environ['REPORT_TOPIC_ARN']
         GRACE_PERIOD = int(os.environ['GRACE_PERIOD'])
+        MAX_ACCESS_KEY_AGE = int(os.environ['MAX_ACCESS_KEY_AGE'])
     except (KeyError, ValueError, Exception) as e:
         logger.error(e.response['Error']['Message'])
 
@@ -65,7 +66,7 @@ def lambda_handler(event, context):
     report_message_deactivated_key = '\n\tAccess key {} for user {} has been deactivated.'
     report_message_expired_key = '\n\tAccess key {} for user {} has expired.'
 
-    max_age = get_max_password_age()  # password expiration setting
+    max_age = MAX_ACCESS_KEY_AGE  # access key expiration setting
     credential_report = get_credential_report()
 
     aws_account_identity = get_aws_account_identity()  # either account name or id
@@ -235,16 +236,6 @@ def email_user(sender, recipient, subject, body):
         else:
             logger.info("Email sent to " + RECIPIENT)
             logger.info("Message ID: " + response['MessageId'])
-
-
-# Get the AWS account's setting for password age
-def get_max_password_age():
-    iam_client = boto3.client('iam')
-    try:
-        response = iam_client.get_account_password_policy()
-        return response['PasswordPolicy']['MaxPasswordAge']
-    except ClientError as e:
-        logger.error(e.response['Error']['Message'])
 
 
 # Get the AWS account's credential report (in CSV) and return a list of credentials info
