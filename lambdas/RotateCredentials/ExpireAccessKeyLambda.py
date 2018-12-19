@@ -10,20 +10,16 @@
 # 2. Upon key expiration it will automatically deactivate keys and
 #    notify users that they will need to rotate their expired keys.
 #
-# It's designed to expire keys on the same schedule as user passwords.
-# For example if the AWS account is configured to expire user passwords
-# every 90 days then access keys will also be set to expire every 90
-# days.  It's designed to review only IAM users with AWS console
-# access (human users).  It will skip all other users.  The purpose
-# is to avoid expiring access keys for service accounts.
+# This is designed to review only IAM users with AWS console
+# access (human users).  It will skip all other user accounts.
+# The purpose is to avoid expiring access keys for service accounts.
 #
 # Notifications:
 #
 #   Email user when:
-#     1. when their key has expired and been deactivated
-#     2. when their key has expired but not deactivated
-#     3. when their key is close to expiring (or in a configurable
-#        expiration grace period)
+#     1. Their key has expired and been deactivated
+#     2. Their key has expired but not deactivated
+#     3. Their key is close to expiring (or in a configurable expiration grace period)
 #
 #   SNS topic:
 #     It can be configured to send expired key reports to an SNS topic.
@@ -73,7 +69,7 @@ def lambda_handler(event, context):
     logger.debug('aws_account_identity: {}'.format(aws_account_identity))
 
     report = ''     # a report summary for account admins
-    # Iterate over the credential report, use the report to determine password expiration
+    # Iterate over the credential report, use the report to determine the expiration date
     # Then query for access keys, and use the key creation data to determine key expiration
     iam_client = boto3.client('iam')
     for row in credential_report:
