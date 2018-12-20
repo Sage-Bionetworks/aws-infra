@@ -53,9 +53,10 @@ Resources:
         CodeUri: expire_access_key/
         Handler: app.lambda_handler
         Events:
-          Type: Schedule
-          Properties:
-            Schedule: rate(1 day)
+          CheckAccessKeyScheduledEvent:
+            Type: Schedule
+            Properties:
+              Schedule: rate(1 day)
         Environment:
           Variables:
             GRACE_PERIOD: !Ref GracePeriod
