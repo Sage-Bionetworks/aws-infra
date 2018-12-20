@@ -1,7 +1,9 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  Automate IAM access key rotation schedule by notifying users to rotate their access keys.
-
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Automation to notify users to rotation their IAM access keys
+Globals:
+    Function:
+        Timeout: 30
 Parameters:
   LambdaBucket:
     Description: Bucket Holding Lambdas
@@ -43,32 +45,26 @@ Parameters:
     MaxValue: 1800
 
 Resources:
-  ExpireAccessKeyLambda:
-    Type: 'AWS::Lambda::Function'
-    Properties:
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: python2.7
-      Timeout: '30'
-      Handler: ExpireAccessKeyLambda.lambda_handler
-      Environment:
-        Variables:
-          GRACE_PERIOD: !Ref GracePeriod
-          DISABLE_KEYS: !Ref DisableKeys
-          SEND_EMAIL: !Ref SendEmail
-          SENDER_EMAIL: !Ref SenderEmail
-          SEND_REPORT: !Ref SendReport
-          REPORT_TOPIC_ARN: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsInfoArn
-          MAX_ACCESS_KEY_AGE: !Ref MaxAccessKeyAge
-      Code:
-        S3Bucket: !Ref LambdaBucket
-        S3Key: "aws-infra/master/RotateCredentials.zip"
-  PeriodicEvent:
-    Type: AWS::Events::Rule
-    Properties:
-      ScheduleExpression: "rate(1 day)"
-      Targets:
-        - Arn: !GetAtt ExpireAccessKeyLambda.Arn
-          Id: !Ref ExpireAccessKeyLambda
+  ExpireAccessKeyFunction:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        Role: !GetAtt LambdaExecutionRole.Arn
+        Runtime: python3.6
+        CodeUri: expire_access_key/
+        Handler: app.lambda_handler
+        Events:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+        Environment:
+          Variables:
+            GRACE_PERIOD: !Ref GracePeriod
+            DISABLE_KEYS: !Ref DisableKeys
+            SEND_EMAIL: !Ref SendEmail
+            SENDER_EMAIL: !Ref SenderEmail
+            SEND_REPORT: !Ref SendReport
+            REPORT_TOPIC_ARN: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsInfoArn
+            MAX_ACCESS_KEY_AGE: !Ref MaxAccessKeyAge
   LambdaExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -136,31 +132,24 @@ Resources:
                 Action:
                   - sns:Publish
                 Resource: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsInfoArn
-  LambdaInvokePermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt ExpireAccessKeyLambda.Arn
-      Action: lambda:InvokeFunction
-      Principal: events.amazonaws.com
-      SourceArn: !GetAtt PeriodicEvent.Arn
-  ExpireAccessKeyLambdaFailureAlarm:
+  ExpireAccessKeyFunctionFailureAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue us-east-1-AccountAlertTopics-SNSAlertsErrorArn
-      MetricName: !Sub "${ExpireAccessKeyLambda}-FailureAlarm"
+      MetricName: !Sub "${ExpireAccessKeyFunction}-FailureAlarm"
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: FunctionName
-          Value: !Ref ExpireAccessKeyLambda
+          Value: !Ref ExpireAccessKeyFunction
       EvaluationPeriods: 1
       Namespace: AWS/Lambda
       Period: 60
       Statistic: Sum
       Threshold: 0
 Outputs:
-  ExpireAccessKeyLambda:
-    Value: !Ref ExpireAccessKeyLambda
+  ExpireAccessKeyFunction:
+    Value: !Ref ExpireAccessKeyFunction
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ExpireAccessKeyLambda'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ExpireAccessKeyFunction'
