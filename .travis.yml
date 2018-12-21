@@ -10,7 +10,7 @@ install:
 - pip install aws-sam-cli
 script:
 # deploy artifacts to org-sagebase-admincentral
-- sam package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/RotateCredentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
+- sam package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
 - ./deploy_lambdas.sh || travis_terminate 1
 - ./validate-templates.sh || travis_terminate 1
 - ./deploy-templates.sh || travis_terminate 1
