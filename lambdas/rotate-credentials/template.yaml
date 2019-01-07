@@ -12,21 +12,21 @@ Parameters:
   DisableKeys:
     Description: Set to True if you want to disabled expired IAM access keys
     Type: String
-    Default: "false"
+    Default: false
     AllowedValues:
       - true
       - false
   SendReport:
     Description: Send expired credentials report to a notification topic
     Type: String
-    Default: "false"
+    Default: false
     AllowedValues:
       - true
       - false
   SendEmail:
     Description: Send expired credential notification emails to users
     Type: String
-    Default: "false"
+    Default: false
     AllowedValues:
       - true
       - false
