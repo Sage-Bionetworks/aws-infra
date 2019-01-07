@@ -12,14 +12,12 @@ Parameters:
     NoEcho: true
 Resources:
   JumpcloudCleanSystems:
-    DependsOn:
-      - LambdaExecutionRole
     Type: 'AWS::Lambda::Function'
     Properties:
       Handler: clean_systems.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: python2.7
-      Timeout: '10'
+      Timeout: 10
       Environment:
         Variables:
           JC_SERVICE_API_KEY: !Ref JcServiceApiKey
@@ -75,7 +73,6 @@ Resources:
         - Name: FunctionName
           Value: !Ref JumpcloudCleanSystems
       EvaluationPeriods: 1
-      MetricName: Errors
       Namespace: AWS/Lambda
       Period: 60
       Statistic: Sum
