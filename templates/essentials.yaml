@@ -72,7 +72,7 @@ Resources:
       Topics:
         - !Ref AWSSNSCloudtrailTopic
       PolicyDocument:
-        Version: "2008-10-17"
+        Version: "2012-10-17"
         Statement:
           -
             Sid: "CloudtrailTopicPolicy"
@@ -117,10 +117,8 @@ Resources:
         - !Ref AWSIAMCloudtrailLogManagedPolicy
   AWSCloudtrailTrail:
     DependsOn:
-      - AWSLogsCloudtrailLogGroup
       - AWSIAMS3CloudtrailBucketPolicy
       - AWSSNSCloudtrailTopicPolicy
-      - AWSIAMCloudtrailLogRole
     Type: "AWS::CloudTrail::Trail"
     Properties:
       CloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn

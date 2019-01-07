@@ -108,8 +108,8 @@ Resources:
       - Name: Currency
         Value: USD
       Statistic: Maximum
-      Period: '21600'
-      EvaluationPeriods: '1'
+      Period: 21600
+      EvaluationPeriods: 1
       Threshold: !Ref 'BillingThreshold'
       ComparisonOperator: GreaterThanThreshold
       AlarmActions: [!Ref 'SNSAlertsError']
@@ -149,7 +149,7 @@ Resources:
       Description: Send SNS Messages to Slack
       Runtime: python2.7
       Handler: index.lambda_handler
-      Timeout: '80'
+      Timeout: 80
       Code:
         ZipFile: |
           # Lambda to send SNS Messages to Slack
