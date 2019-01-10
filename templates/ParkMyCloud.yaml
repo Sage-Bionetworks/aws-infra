@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: Creates a stack to deploy the IAM Role needed to manage
+  your AWS resources with ParkMyCloud. Grants the minimum essential
+  permissions needed for proper ParkMyCloud operations. See 
+  https://parkmycloud.atlassian.net/wiki/x/BYCMAg for more information.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: ParkMyCloud
+        Parameters:
+          - PMCRoleName
+          - PMCAccountID
+          - PMCExternalID
+    ParameterLabels:
+      PMCRoleName:
+        default: ParkMyCloud IAM Role Name
+      PMCAccountID:
+        default: ParkMyCloud Account ID
+      PMCExternalID:
+        default: ParkMyCloud External ID
+
+Parameters:
+  PMCRoleName:
+    Description: Name of the ParkMyCloud IAM Role to create within your AWS account.
+                 Use only alphanumeric characters and/or the following +=,.@_-
+    Type: String
+    Default: 'ParkMyCloud_Cross_Account_Access_CF'
+  PMCAccountID:
+    Description: ParkMyCloud Account ID from the Add Credential screen on the ParkMyCloud Console
+    Type: String
+    Default: '753542375798'
+  PMCExternalID:
+    Description: ParkMyCloud External ID from the Add Credential screen on the ParkMyCloud Console
+    Type: String
+    Default: 'Insert ParkMyCloud External ID here'
+
+Resources:
+  ParkMyCloudIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${PMCRoleName}
+      # Description: Cross Account IAM Role for ParkMyCloud created by CloudFormation template
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${PMCAccountID}:root
+            Condition:
+              StringEquals:
+                "sts:ExternalId": !Ref PMCExternalID
+            Action:
+              - sts:AssumeRole 
+  ParkMyCloudCrossAccountPolicy:
+    Type: AWS::IAM::Policy  # Change Policy to ManagedPolicy if you want 
+                            # to use a standalone IAM policy object
+    Properties:
+      # If you use a ManagedPolicy, comment-out the PolicyName
+      PolicyName: ParkMyCloudRecommendedPolicy
+      Roles: [!Ref ParkMyCloudIAMRole]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ParkMyCloudTaggedOnly
+          Action:
+            - ec2:StartInstances
+            - ec2:StopInstances
+          Condition:
+            StringEquals:
+              ec2:ResourceTag/parkmycloud: 'yes'
+          Resource:
+            - "*"
+          Effect: Allow
+        - Sid: ParkMyCloudManagement
+          Action:
+            - autoscaling:Describe*
+            - autoscaling:UpdateAutoScalingGroup
+            - autoscaling:SuspendProcesses
+            - autoscaling:ResumeProcesses
+            - ec2:Describe*
+            - iam:GetUser
+            - rds:DescribeDBInstances
+            - rds:ListTagsForResource
+            - rds:StartDBInstance
+            - rds:StopDBInstance
+          Resource: "*"
+          Effect: Allow
+        - Sid: ParkMyCloudStartInstanceWithEncryptedBoot
+          Effect: Allow
+          Action: kms:CreateGrant
+          Resource: "*"
+        - Sid: ParkMyCloudLogsAccess
+          Effect: Allow
+          Action:
+            - logs:DescribeLogGroups
+            - logs:DescribeLogStreams
+            - logs:GetLogEvents
+            - logs:TestMetricFilter
+            - logs:FilterLogEvents
+          Resource: arn:aws:logs:*:*:*
+        - Sid: ParkMyCloudCloudWatchAccess
+          Effect: Allow
+          Action:
+            - cloudwatch:GetMetricStatistics
+            - cloudwatch:ListMetrics
+          Resource: "*"
+          Condition:
+            Bool:
+              aws:SecureTransport: 'true'
+Outputs:
+  RoleArn:
+    Description: The ARN of the ParkMyCloud IAM role
+    Value: !GetAtt [ParkMyCloudIAMRole, Arn]
+  RoleName:
+    Description: The Name of the IAM role that was created
+    Value: !Ref ParkMyCloudIAMRole
