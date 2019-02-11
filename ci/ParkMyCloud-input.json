@@ -1,0 +1,14 @@
+[
+    {
+        "ParameterKey": "PMCRoleName",
+        "ParameterValue": "$[taskcat_random-string]"
+    },
+    {
+        "ParameterKey": "PMCAccountID",
+        "ParameterValue": "753542375798"
+    },
+    {
+        "ParameterKey": "PMCExternalID",
+        "ParameterValue": "$[taskcat_random-numbers]"
+    }
+]

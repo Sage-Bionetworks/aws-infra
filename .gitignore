@@ -112,3 +112,8 @@ git-crypt.key
 # AWS lambdas
 lambdas/*.zip
 
+# taskcat
+/taskcat_outputs
+
+# temp files
+/temp

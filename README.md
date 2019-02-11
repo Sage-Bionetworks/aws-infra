@@ -105,9 +105,16 @@ The above should configure the public and private routes for the VPC with
 the peering connection to the VPN.  That allows the VPN to direct traffic
 to this VPC.
 
+## Validation
+We have setup the CI to syntax validate cloudformation templates with cfn-lint.
+
+## Tests
+We have setup the CI to test cloudformation templates with
+[taskcat](https://github.com/aws-quickstart/taskcat).  Tests get run in the
+AWS Admincentral account.
 
 ## Continuous Integration
-We have configured Travis to deploy CF template to an S3 bucket on
+We have configured the CI to deploy CF template to an S3 bucket on the
 AWS Admincentral account.
 
 # Contributions
