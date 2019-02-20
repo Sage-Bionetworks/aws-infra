@@ -1,0 +1,22 @@
+[
+    {
+        "ParameterKey": "VpcName",
+        "ParameterValue": "taskcattestvpc"
+    },
+    {
+        "ParameterKey": "VpcSubnetPrefix",
+        "ParameterValue": "10.254"
+    },
+    {
+        "ParameterKey": "PublicSubnetZones",
+        "ParameterValue": "$[taskcat_genaz_3]"
+    },
+    {
+        "ParameterKey": "PrivateSubnetZones",
+        "ParameterValue": "$[taskcat_genaz_3]"
+    },
+    {
+        "ParameterKey": "VpnCidr",
+        "ParameterValue": "10.1.0.0/16"
+    }
+]

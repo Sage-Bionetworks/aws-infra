@@ -1,0 +1,34 @@
+[
+    {
+        "ParameterKey": "InitialSubscriberEmail",
+        "ParameterValue": "taskcattest@sagebase.org"
+    },
+    {
+        "ParameterKey": "EnableSubscriberSMS",
+        "ParameterValue": "true"
+    },
+    {
+        "ParameterKey": "InitialSubscriberSMS",
+        "ParameterValue": "1-404-867-5309"
+    },
+    {
+        "ParameterKey": "BillingThreshold",
+        "ParameterValue": "$[taskcat_random-numbers]"
+    },
+    {
+        "ParameterKey": "DeployLambda",
+        "ParameterValue": "true"
+    },
+    {
+        "ParameterKey": "SlackWebhookURL",
+        "ParameterValue": "https://hooks.slack.com/services/slack-webhook-id"
+    },
+    {
+        "ParameterKey": "SlackChannel",
+        "ParameterValue": "#taskcattest"
+    },
+    {
+        "ParameterKey": "SlackIconEmoji",
+        "ParameterValue": ":cloud:"
+    }
+]

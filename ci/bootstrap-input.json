@@ -1,0 +1,6 @@
+[
+    {
+        "ParameterKey": "CfBucketVersioning",
+        "ParameterValue": "Suspended"
+    }
+]

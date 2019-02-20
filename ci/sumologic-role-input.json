@@ -1,0 +1,14 @@
+[
+    {
+        "ParameterKey": "ExternalID",
+        "ParameterValue": "$[taskcat_random-numbers]"
+    },
+    {
+        "ParameterKey": "Actions",
+        "ParameterValue": "s3:GetObject,s3:GetObjectVersion,s3:ListBucketVersions,s3:ListBucket"
+    },
+    {
+        "ParameterKey": "Resource",
+        "ParameterValue": "arn:aws:s3:::testbucket-3npcu2i3v38u6ijg"
+    }
+]

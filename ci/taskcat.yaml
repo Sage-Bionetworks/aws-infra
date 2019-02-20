@@ -1,0 +1,53 @@
+---
+global:
+  package-lambda: true
+  owner: zaro0508@sagebase.org
+  qsname: aws-infra
+  regions:
+    - ap-northeast-1
+    - ap-northeast-2
+    - ap-southeast-1
+    - ap-southeast-2
+    - eu-central-1
+    - eu-west-1
+    - sa-east-1
+    - us-east-1
+    - us-west-1
+    - us-west-2
+tests:
+  sumologic-role:
+    parameter_input: sumologic-role-input.json
+    regions:
+      - us-east-1
+    template_file: sumologic-role.yaml
+  ParkMyCloud:
+    parameter_input: ParkMyCloud-input.json
+    regions:
+      - us-east-1
+    template_file: ParkMyCloud.yaml
+  AccountAlertTopics:
+    parameter_input: AccountAlertTopics-input.json
+    regions:
+      - us-east-1
+    template_file: AccountAlertTopics.yaml
+  jumpcloud:
+    parameter_input: jumpcloud-input.json
+    regions:
+      - us-east-1
+    template_file: jumpcloud.yaml
+  # test depends on resources in Sage-Bionetworks/admincentral-infra/config/prod/taskcat.yaml
+  AddSameRegionBucketDownloadRestriction:
+    parameter_input: AddSameRegionBucketDownloadRestriction-input.json
+    regions:
+      - us-east-1
+    template_file: AddSameRegionBucketDownloadRestriction.yaml
+  bootstrap:
+    parameter_input: bootstrap-input.json
+    regions:
+      - us-east-1
+    template_file: bootstrap.yaml
+  vpc:
+    parameter_input: vpc-input.json
+    regions:
+      - us-east-1
+    template_file: vpc.yaml
