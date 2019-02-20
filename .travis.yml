@@ -22,7 +22,7 @@ jobs:
         - cfn-lint ./templates/**/*.yaml --ignore-checks W1001
         - cfn-lint ./lambdas/**/*.yaml --ignore-checks W1001
     - stage: test
-      script: taskcat -c ci/taskcat.yaml -P admincentral.cfservice --tag owner=travis
+      script: taskcat -c ci/taskcat.yaml --tag owner=travis
     - stage: deploy
       script:
         - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
