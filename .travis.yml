@@ -19,10 +19,10 @@ jobs:
   include:
     - stage: validate
       script: 
-        - cfn-lint ./templates/**/*.yaml --ignore-checks W1001
-        - cfn-lint ./lambdas/**/*.yaml --ignore-checks W1001
+        - cfn-lint ./templates/**/*.yaml
+        - cfn-lint ./lambdas/**/*.yaml
     - stage: test
-      script: taskcat -c ci/taskcat.yaml --tag owner=travis
+      script: taskcat -c ci/taskcat.yaml --tag owner=taskcat
     - stage: deploy
       script:
         - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw

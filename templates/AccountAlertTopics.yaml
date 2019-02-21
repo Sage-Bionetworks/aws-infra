@@ -56,6 +56,7 @@ Resources:
         Protocol: sms
   SNSAlertsCritical:
     Type: AWS::SNS::Topic
+    Condition: cDeployLambda
     Properties:
       Subscription:
       - Endpoint: !Ref 'InitialSubscriberEmail'
@@ -64,6 +65,7 @@ Resources:
         Protocol: lambda
   SNSAlertsError:
     Type: AWS::SNS::Topic
+    Condition: cDeployLambda
     Properties:
       Subscription:
       - Endpoint: !Ref 'InitialSubscriberEmail'
@@ -72,6 +74,7 @@ Resources:
         Protocol: lambda
   SNSAlertsInfo:
     Type: AWS::SNS::Topic
+    Condition: cDeployLambda
     Properties:
       Subscription:
       - Endpoint: !Ref 'InitialSubscriberEmail'
@@ -81,6 +84,7 @@ Resources:
 
   SNSAlertPolicy:
     Type: AWS::SNS::TopicPolicy
+    Condition: cDeployLambda
     Properties:
       PolicyDocument:
         Id: AlertTopicPolicy
@@ -100,6 +104,7 @@ Resources:
 
   SpendingAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: cDeployLambda
     Properties:
       AlarmDescription: !Join ['', [Alarm if AWS spending is over $, !Ref 'BillingThreshold']]
       Namespace: AWS/Billing
@@ -252,13 +257,16 @@ Outputs:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SNSAlertsNightmare'
   SNSAlertsCriticalArn:
     Value: !Ref 'SNSAlertsCritical'
+    Condition: cDeployLambda
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SNSAlertsCriticalArn'
   SNSAlertsErrorArn:
+    Condition: cDeployLambda
     Value: !Ref 'SNSAlertsError'
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SNSAlertsErrorArn'
   SNSAlertsInfoArn:
+    Condition: cDeployLambda
     Value: !Ref 'SNSAlertsInfo'
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SNSAlertsInfoArn'
