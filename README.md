@@ -7,9 +7,10 @@ Sage Bionetworks infrastructure on AWS.
 We have setup cfn-lint to validate templates on every pull request.
 
 ## Tests
-We have setup the CI to test cloudformation templates with
-[taskcat](https://github.com/aws-quickstart/taskcat).  Tests get run in the
-AWS Admincentral account.
+We have setup [taskcat](https://github.com/aws-quickstart/taskcat) to test
+that shared templates can actually deploy resources to our AWS accounts.
+The test runs in our Admincentral account.  We only validate on `us-east-1`
+region.
 
 ## Continuous Integration
 We have configured the CI to deploy CF template to a public S3 bucket on the
