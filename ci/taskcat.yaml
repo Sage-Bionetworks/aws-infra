@@ -51,3 +51,8 @@ tests:
     regions:
       - us-east-1
     template_file: vpc.yaml
+  s3-bucket:
+    parameter_input: s3-bucket-input.json
+    regions:
+      - us-east-1
+    template_file: s3-bucket.yaml
