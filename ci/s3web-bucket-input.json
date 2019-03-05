@@ -1,0 +1,22 @@
+[
+    {
+        "ParameterKey": "DomainName",
+        "ParameterValue": "$[taskcat_random-string]"
+    },
+    {
+        "ParameterKey": "SubDomainName",
+        "ParameterValue": "$[taskcat_random-string]"
+    },
+    {
+        "ParameterKey": "Department",
+        "ParameterValue": "$[taskcat_random-string]"
+    },
+    {
+        "ParameterKey": "Project",
+        "ParameterValue": "$[taskcat_random-string]"
+    },
+    {
+        "ParameterKey": "OwnerEmail",
+        "ParameterValue": "jsmith@sagebase.org"
+    }
+]
