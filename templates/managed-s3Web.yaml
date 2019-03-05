@@ -1,0 +1,102 @@
+# From https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-s3.html#scenario-s3-bucket-website-customdomain
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Provision a S3 static website (HTTP only)
+Parameters:
+  DomainName:
+    Description: Domain name for your website (example.org)
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  SubDomainName:
+    Description: The sub domain name e.g. ('my' in my.example.org)
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  Department:
+    Description: The department for this resource (i.e. CompOnc, SysBio, Platform, etc..)
+    Type: String
+  Project:
+    Description: The project for this resource (i.e. NTAP, BSMN, DREAM, etc..)
+    Type: String
+  OwnerEmail:
+    Type: String
+    Description: The resource owner's email address
+Resources:
+  WebsiteLogBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: LogDeliveryWrite
+      BucketName: !Join
+        - '.'
+        - [!Ref SubDomainName, !Ref DomainName, 'logs']
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Join
+        - '.'
+        - [!Ref SubDomainName, !Ref DomainName]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      LoggingConfiguration:
+        DestinationBucketName: !Ref WebsiteLogBucket
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id: MyPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref WebsiteBucket
+                - /*
+      Bucket: !Ref WebsiteBucket
+Outputs:
+  BucketWebsiteUrl:
+    Value: !GetAtt
+      - WebsiteBucket
+      - WebsiteURL
+    Description: URL for website hosted on S3
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BucketWebsiteUrl'
+  BucketWebsiteUrlSecureUrl:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt
+          - WebsiteBucket
+          - DomainName
+    Description: Name of S3 bucket to hold website content
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BucketWebsiteUrlSecureUrl'
+  WebsiteBucket:
+    Value: !Ref WebsiteBucket
+    Description: The bucket containing the website content
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-WebsiteBucket'
