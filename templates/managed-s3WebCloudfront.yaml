@@ -1,0 +1,146 @@
+# From https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-s3.html#scenario-s3-bucket-website-customdomain
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Provision a S3 static website (HTTPS) with cloudfront
+Parameters:
+  DomainName:
+    Description: Domain name for your website (example.org)
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  SubDomainName:
+    Description: The sub domain name e.g. ('my' in my.example.org)
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  AcmCertificateArn:
+    Type: String
+    Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
+    AllowedPattern: "arn:aws:acm:.*"
+    ConstraintDescription: must be a valid certificate ARN.
+  Department:
+    Description: The department for this resource (i.e. CompOnc, SysBio, Platform, etc..)
+    Type: String
+  Project:
+    Description: The project for this resource (i.e. NTAP, BSMN, DREAM, etc..)
+    Type: String
+  OwnerEmail:
+    Type: String
+    Description: The resource owner's email address
+Resources:
+  WebsiteLogBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: LogDeliveryWrite
+      BucketName: !Join
+        - '.'
+        - [!Ref SubDomainName, !Ref DomainName, 'logs']
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Join
+        - '.'
+        - [!Ref SubDomainName, !Ref DomainName]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      LoggingConfiguration:
+        DestinationBucketName: !Ref WebsiteLogBucket
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id: MyPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref WebsiteBucket
+                - /*
+      Bucket: !Ref WebsiteBucket
+  Cloudfront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Cloudfront Distribution pointing to S3 bucket
+        Origins:
+          - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
+            Id: S3Origin
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+        Enabled: true
+        HttpVersion: 'http2'
+        DefaultRootObject: index.html
+        Aliases:
+          - !Join
+            - '.'
+            - - !Ref SubDomainName
+              - !Ref DomainName
+        DefaultCacheBehavior:
+          DefaultTTL: 3600
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          SslSupportMethod: sni-only
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+Outputs:
+  CloudfrontEndpoint:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt Cloudfront.DomainName
+    Description: URL for cloudfront
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontEndpoint'
+  BucketWebsiteUrl:
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Description: URL for website hosted in S3 bucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BucketWebsiteUrl'
+  WebsiteBucket:
+    Value: !Ref WebsiteBucket
+    Description: The bucket containing the website content
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-WebsiteBucket'

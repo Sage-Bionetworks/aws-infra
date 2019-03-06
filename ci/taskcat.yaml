@@ -56,3 +56,16 @@ tests:
     regions:
       - us-east-1
     template_file: s3-bucket.yaml
+  # Stack deletion fails when taskcat attempts to delete bucket
+  # s3web-bucket:
+  #   parameter_input: s3web-bucket-input.json
+  #   regions:
+  #     - us-east-1
+  #   template_file: managed-s3Web.yaml
+  # Cloudfront adds to much time to the test (~60 mins to deploy and cleanup). Also taskcat fails to cleanup.
+  # s3web-cloudfront-bucket:
+  #   parameter_input: s3web-cloudfront-bucket-input.json
+  #   regions:
+  #     - us-east-1
+  #   template_file: managed-s3WebCloudfront.yaml
+
