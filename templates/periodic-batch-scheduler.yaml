@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Lambda to schedule periodic execution of a batch job
+Parameters:
+  Department:
+    Description: The department for this resource (i.e. Computational Oncology)
+    Type: String
+  Project:
+    Description: The name of the project that this resource is used for (i.e. Resilience)
+    Type: String
+  OwnerEmail:
+    Description: The owner's email address for this resource (i.e. jsmith@sagebase.org)
+    Type: String
+  JobName:
+    Description: The batch job name (i.e. MyBatchJob)
+    Type: String
+  JobQueue:
+    Description: Run the batch job on this job queue
+    Type: String
+  JobDefinition:
+    Description: The job definition (i.e. MyBatchJob:1)
+    Type: String
+  ScheduleExpression:  #https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
+    Description: The schedule (cron) expression to trigger the batch job
+    Type: String
+    Default: "rate(1 day)"
+  LambdaFailureAlarmAction:
+    Description: The alarm failure action
+    Type: String
+    Default: "us-east-1-AccountAlertTopics-SNSAlertsErrorArn"
+Resources:
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: PublishToCloudwatch
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+        - PolicyName: BatchJobAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - batch:DescribeJobs
+                  - batch:ListJobs
+                  - batch:SubmitJob
+                Resource: "*"
+  SubmitBatchJobLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.6
+      Timeout: 5
+      Handler: index.lambda_handler
+      Environment:
+        Variables:
+          JOB_NAME: !Ref JobName
+          JOB_QUEUE: !Ref JobQueue
+          JOB_DEFINITION: !Ref JobDefinition
+      Code:
+        ZipFile: |
+          from __future__ import print_function
+          import json
+          import logging
+          import os
+          import boto3
+          from botocore.exceptions import ClientError
+
+          logger = logging.getLogger(__name__)
+          logger.setLevel(logging.DEBUG)
+
+          def lambda_handler(event, context):
+              # Log the received event
+              logger.debug("Received event: " + json.dumps(event, indent=2))
+
+              # Get parameters for the SubmitJob call
+              # http://docs.aws.amazon.com/batch/latest/APIReference/API_SubmitJob.html
+              # These should be passed in via Lambda Environment Variables
+              try:
+                  jobName = os.environ['JOB_NAME']
+                  jobQueue = os.environ['JOB_QUEUE']
+                  jobDefinition = os.environ['JOB_DEFINITION']
+              except (KeyError, ValueError, Exception) as e:
+                  logger.error(e.response['Error']['Message'])
+
+              # containerOverrides and parameters are optional
+              if event.get('containerOverrides'):
+                  containerOverrides = event['containerOverrides']
+              else:
+                  containerOverrides = {}
+              if event.get('parameters'):
+                  parameters = event['parameters']
+              else:
+                  parameters = {}
+
+              try:
+                  batch = boto3.client('batch')
+                  # Submit a Batch Job
+                  response = batch.submit_job(jobQueue=jobQueue, jobName=jobName, jobDefinition=jobDefinition,
+                                              containerOverrides=containerOverrides, parameters=parameters)
+                  # Return the jobId
+                  jobId = response['jobId']
+
+                  # Log response from AWS Batch
+                  logger.debug("Job: " + jobId + " Response: " + json.dumps(response, indent=2))
+                  return {
+                      'jobId': jobId
+                  }
+              except ClientError as e:
+                  logger.error(e.response['Error']['Message'])
+      Tags:
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  LambdaPeriodicEvent:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: !Ref ScheduleExpression
+      Targets:
+        - Arn: !GetAtt SubmitBatchJobLambda.Arn
+          Id: !Ref SubmitBatchJobLambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt SubmitBatchJobLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt LambdaPeriodicEvent.Arn
+  LambdaFailureAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - 'Fn::ImportValue': !Sub '${LambdaFailureAlarmAction}'
+      MetricName: !Sub "${SubmitBatchJobLambda}-FailureAlarm"
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SubmitBatchJobLambda
+      EvaluationPeriods: 1
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+Outputs:
+  LambdaFailureAlarm:
+    Value: !Ref 'LambdaFailureAlarm'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaFailureAlarm'
+  SubmitBatchJobLambda:
+    Value: !Ref 'SubmitBatchJobLambda'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SubmitBatchJobLambda'
+  LambdaExecutionRole:
+    Value: !Ref 'LambdaExecutionRole'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaExecutionRole'

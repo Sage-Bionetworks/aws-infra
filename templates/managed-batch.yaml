@@ -1,0 +1,249 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Managed High Priority and Low Priority Batch Job Queue using simple EC2
+  and Spot Compute Environments.
+Parameters:
+  VpcName:
+    Description: Name of an existing VPC to run the instance in.
+    Type: String
+  Department:
+    Description: The department for this resource (i.e. Computational Oncology)
+    Type: String
+  Project:
+    Description: The name of the project that this resource is used for (i.e. Resilience)
+    Type: String
+  OwnerEmail:
+    Description: The owner's email address for this resource (i.e. jsmith@sagebase.org)
+    Type: String
+  ContainerImage:
+    Description: The container image (i.e. 137112412989.dkr.ecr.us-east-1.amazonaws.com/amazonlinux:latest)
+    Type: String
+    Default: "137112412989.dkr.ecr.us-east-1.amazonaws.com/amazonlinux:latest"
+  ContainerCommands:
+    Type: CommaDelimitedList
+    Description: Container command to execute
+    ConstraintDescription: "List of commands (i.e. ['echo', 'Hello World'])"
+  PeriodicSchedule:
+    Type: String
+    Description: "Execute batch job on a periodic schehdule"
+    Default: "Enabled"
+    AllowedValues:
+      - "Enabled"
+      - "Disabled"
+    ConstraintDescription: "Valid values are Enabled (default) and Disabled"
+  ScheduleExpression:  #https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
+    Description: The schedule (cron) expression to trigger the batch job
+    Type: String
+    Default: "rate(1 day)"
+Conditions:
+  EnablePeriodicSchedule: !Equals [!Ref PeriodicSchedule, "Enabled"]
+Resources:
+  BatchServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: batch.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
+  IamInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref 'EcsInstanceRole'
+  EcsInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2008-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+  SpotIamFleetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: spotfleet.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole
+  HighPriorityJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - "high-priority-job"
+      ContainerProperties:
+        Image: !Ref ContainerImage
+        Vcpus: 2
+        Memory: 2000
+        Command: !Ref ContainerCommands
+      RetryStrategy:
+        Attempts: 1
+  LowPriorityJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - "low-priority-job"
+      ContainerProperties:
+        Image: !Ref ContainerImage
+        Vcpus: 2
+        Memory: 2000
+        Command: !Ref ContainerCommands
+      RetryStrategy:
+        Attempts: 1
+  HighPriorityJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - "high-priority-queue"
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref 'OnDemandComputeEnvironment'
+        - Order: 2
+          ComputeEnvironment: !Ref 'SpotComputeEnvironment'
+  LowPriorityJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - "low-priority-queue"
+      Priority: 2
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref 'SpotComputeEnvironment'
+  OnDemandComputeEnvironment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      ComputeResources:
+        Type: EC2
+        MinvCpus: 0
+        DesiredvCpus: 0
+        MaxvCpus: 64
+        InstanceTypes:
+          - optimal
+        SecurityGroupIds:
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-VpnSecurityGroup
+        Subnets:
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-PrivateSubnet
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-PrivateSubnet1
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-PrivateSubnet2
+        InstanceRole: !Ref 'IamInstanceProfile'
+        Tags:
+          Name: !Ref 'AWS::StackName'
+          Department: !Ref Department
+          Project: !Ref Project
+          OwnerEmail: !Ref OwnerEmail
+      ServiceRole: !Ref 'BatchServiceRole'
+  SpotComputeEnvironment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      ComputeResources:
+        Type: SPOT
+        MinvCpus: 0
+        DesiredvCpus: 0
+        MaxvCpus: 64
+        InstanceTypes:
+          - optimal
+        SecurityGroupIds:
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-VpnSecurityGroup
+        Subnets:
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-PrivateSubnet
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-PrivateSubnet1
+          - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-PrivateSubnet2
+        InstanceRole: !Ref 'IamInstanceProfile'
+        BidPercentage: 40
+        SpotIamFleetRole: !Ref 'SpotIamFleetRole'
+        Tags:
+          Name: !Ref 'AWS::StackName'
+          Department: !Ref Department
+          Project: !Ref Project
+          OwnerEmail: !Ref OwnerEmail
+      ServiceRole: !Ref 'BatchServiceRole'
+  PeriodicSchedulerLambda:
+    Condition: EnablePeriodicSchedule
+    DependsOn:
+      - HighPriorityJobDefinition
+      - LowPriorityJobDefinition
+      - HighPriorityJobQueue
+      - LowPriorityJobQueue
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      # template uploaded from Sage-Bionetworks/aws-infra repo
+      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/periodic-batch-scheduler.yaml'
+      Parameters:
+        Department: !Ref Department
+        Project: !Ref Project
+        OwnerEmail: !Ref OwnerEmail
+        JobName: !Join
+          - '-'
+          - - !Ref AWS::StackName
+            - "high-priority-job"
+        JobQueue: !Join
+          - '-'
+          - - !Ref AWS::StackName
+            - "high-priority-queue"
+        JobDefinition: !Join
+          - '-'
+          - - !Ref AWS::StackName
+            - "high-priority-job:1"
+        ScheduleExpression: !Ref ScheduleExpression
+      Tags:
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+Outputs:
+  HighPriorityJobDefinitionArn:
+    Value: !Ref 'HighPriorityJobDefinition'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-HighPriorityJobDefinitionArn'
+  LowPriorityJobDefinitionArn:
+    Value: !Ref 'LowPriorityJobDefinition'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LowPriorityJobDefinitionArn'
+  HighPriorityJobQueueArn:
+    Value: !Ref 'HighPriorityJobQueue'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-HighPriorityJobQueueArn'
+  LowPriorityJobQueueArn:
+    Value: !Ref 'LowPriorityJobQueue'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LowPriorityJobQueueArn'
+  OnDemandComputeEnvironmentArn:
+    Value: !Ref 'OnDemandComputeEnvironment'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-OnDemandComputeEnvironmentArn'
+  SpotComputeEnvironmentArn:
+    Value: !Ref 'SpotComputeEnvironment'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SpotComputeEnvironmentArn'

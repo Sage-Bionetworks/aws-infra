@@ -1,7 +1,7 @@
 ---
 global:
   package-lambda: true
-  owner: zaro0508@sagebase.org
+  owner: tcisagebio@sagebase.org
   qsname: aws-infra
   regions:
     - ap-northeast-1
@@ -61,6 +61,11 @@ tests:
     regions:
       - us-east-1
     template_file: ec2-backup.yaml
+  managed-batch:
+    parameter_input: managed-batch-input.json
+    regions:
+      - us-east-1
+    template_file: managed-batch.yaml
   # Stack deletion fails when taskcat attempts to delete bucket
   # s3web-bucket:
   #   parameter_input: s3web-bucket-input.json
