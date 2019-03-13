@@ -11,14 +11,11 @@ Parameters:
   OwnerEmail:
     Description: The owner's email address for this resource (i.e. jsmith@sagebase.org)
     Type: String
-  JobName:
-    Description: The batch job name (i.e. MyBatchJob)
+  JobDefinitionArn:
+    Description: Job definition ARN (i.e. arn:aws:batch:us-east-1:111111111111:job-definition/my-job:1)
     Type: String
-  JobQueue:
-    Description: Run the batch job on this job queue
-    Type: String
-  JobDefinition:
-    Description: The job definition (i.e. MyBatchJob:1)
+  JobQueueArn:
+    Description: Job queue ARN (i.e. arn:aws:batch:us-east-1:111111111111:job-queue/my-job-queue)
     Type: String
   ScheduleExpression:  #https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
     Description: The schedule (cron) expression to trigger the batch job
@@ -71,9 +68,8 @@ Resources:
       Handler: index.lambda_handler
       Environment:
         Variables:
-          JOB_NAME: !Ref JobName
-          JOB_QUEUE: !Ref JobQueue
-          JOB_DEFINITION: !Ref JobDefinition
+          JOB_DEFINITION_ARN: !Ref JobDefinitionArn
+          JOB_QUEUE_ARN: !Ref JobQueueArn
       Code:
         ZipFile: |
           from __future__ import print_function
@@ -94,9 +90,12 @@ Resources:
               # http://docs.aws.amazon.com/batch/latest/APIReference/API_SubmitJob.html
               # These should be passed in via Lambda Environment Variables
               try:
-                  jobName = os.environ['JOB_NAME']
-                  jobQueue = os.environ['JOB_QUEUE']
-                  jobDefinition = os.environ['JOB_DEFINITION']
+                  jobDefinitionArn = os.environ['JOB_DEFINITION_ARN']
+                  jobQueueArn = os.environ['JOB_QUEUE_ARN']
+                  jobName = jobDefinitionArn.split(":")[-2].split("/")[-1]
+                  jobRevision = jobDefinitionArn.split(":")[-1]
+                  jobDefinition = jobName + ":" + jobRevision
+                  jobQueue = jobQueueArn.split(":")[-1].split("/")[-1]
               except (KeyError, ValueError, Exception) as e:
                   logger.error(e.response['Error']['Message'])
 

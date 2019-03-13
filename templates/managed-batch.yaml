@@ -187,11 +187,6 @@ Resources:
       ServiceRole: !Ref 'BatchServiceRole'
   PeriodicSchedulerLambda:
     Condition: EnablePeriodicSchedule
-    DependsOn:
-      - HighPriorityJobDefinition
-      - LowPriorityJobDefinition
-      - HighPriorityJobQueue
-      - LowPriorityJobQueue
     Type: 'AWS::CloudFormation::Stack'
     Properties:
       # template uploaded from Sage-Bionetworks/aws-infra repo
@@ -200,18 +195,8 @@ Resources:
         Department: !Ref Department
         Project: !Ref Project
         OwnerEmail: !Ref OwnerEmail
-        JobName: !Join
-          - '-'
-          - - !Ref AWS::StackName
-            - "high-priority-job"
-        JobQueue: !Join
-          - '-'
-          - - !Ref AWS::StackName
-            - "high-priority-queue"
-        JobDefinition: !Join
-          - '-'
-          - - !Ref AWS::StackName
-            - "high-priority-job:1"
+        JobDefinitionArn: !Ref 'HighPriorityJobDefinition'
+        JobQueueArn: !Ref 'HighPriorityJobQueue'
         ScheduleExpression: !Ref ScheduleExpression
       Tags:
         - Key: "Name"
