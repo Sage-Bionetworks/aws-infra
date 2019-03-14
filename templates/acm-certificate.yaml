@@ -1,0 +1,54 @@
+# Setting up a certificate requires a manual step to enter the DNS Validation on godaddy.
+Description: Setup an ACM Certificate
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Department:
+    Description: The department for this resource (i.e. Computational Oncology)
+    Type: String
+  Project:
+    Description: The name of the project that this resource is used for (i.e. Resilience)
+    Type: String
+  OwnerEmail:
+    Type: String
+    Description: The bucket owner's email address
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html#cfn-certificatemanager-certificate-domainname
+  DnsDomainName:
+    Description: Domain to secure with the certificate (i.e. sagebionetworks.org)
+    Type: String
+  DnsSubDomainName:
+    Description: Sub domain (default is '*') to secure with certificate (i.e. "cancer" of cancer.sagebionetworks.org)
+    Type: String
+    Default: "*"
+Resources:
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Join
+        - '.'
+        - - !Ref DnsSubDomainName
+          - !Ref DnsDomainName
+      DomainValidationOptions:
+        - DomainName: !Join
+            - '.'
+            - - !Ref DnsSubDomainName
+              - !Ref DnsDomainName
+          ValidationDomain: !Ref DnsDomainName
+      ValidationMethod: "DNS"
+      Tags:
+        -
+          Key: "Name"
+          Value: !Ref AWS::StackName
+        -
+          Key: "Department"
+          Value: !Ref Department
+        -
+          Key: "Project"
+          Value: !Ref Project
+        -
+          Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+Outputs:
+  CertificateArn:
+    Value: !Ref Certificate
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CertificateArn'
