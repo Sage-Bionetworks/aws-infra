@@ -1,0 +1,3 @@
+[submodule "lambdas/cloudformation-ami"]
+	path = lambdas/cloudformation-ami
+	url = https://github.com/Sage-Bionetworks/cloudformation-ami.git

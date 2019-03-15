@@ -3,6 +3,8 @@ language: python
 python: 3.6
 cache: pip
 fast_finish: true
+env:
+  - LAMBDA_ARTIFACTS_BUCKET="essentials-awss3lambdaartifactsbucket-x29ftznj6pqw"
 install:
   - pip install cfn-lint
   - pip install taskcat
@@ -25,6 +27,7 @@ jobs:
       script: taskcat -c ci/taskcat.yaml --tag owner=taskcat
     - stage: deploy
       script:
-        - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
+        - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket $LAMBDA_ARTIFACTS_BUCKET
+        - aws cloudformation package --template-file ./lambdas/cloudformation-ami/cloudformation-ami.yaml --output-template-file templates/packaged-ami.yaml --s3-bucket $LAMBDA_ARTIFACTS_BUCKET
         - ./deploy_lambdas.sh || travis_terminate 1
         - ./deploy-templates.sh || travis_terminate 1
