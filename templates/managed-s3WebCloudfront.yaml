@@ -126,6 +126,11 @@ Resources:
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
 Outputs:
+  CloudfrontId:
+    Value: !Ref Cloudfront
+    Description: ID of the Cloudfront distribution
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontId'
   CloudfrontEndpoint:
     Value: !Join
       - ''
