@@ -36,6 +36,7 @@ Parameters:
   SynapseUserName:
     Type: String
     Description: Synapse user for read-write bucket
+    Default: ""
   Department:
     Description: The department for this resource (i.e. Computational Oncology)
     Type: String
@@ -79,6 +80,7 @@ Conditions:
   EnableEncryption: !Equals [!Ref EncryptBucket, true]
   DisableEncryption: !Not [!Condition EnableEncryption]
   CreateIPAddressRestrictionLambda: !Equals [!Ref SameRegionResourceAccessToBucket, true]
+  HasSynapseUserName: !Not [!Equals [!Ref SynapseUserName, ""]]
 Resources:
   SynapseExternalBucket:
     Type: "AWS::S3::Bucket"
@@ -200,6 +202,7 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucket'
   SynapseUserName:
+    Condition: HasSynapseUserName
     Value: !Ref SynapseUserName
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseUserName'
