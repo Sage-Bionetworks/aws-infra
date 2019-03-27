@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterKey": "StackName",
+        "ParameterValue": "$[taskcat_random-string]"
+    },
+    {
+        "ParameterKey": "SnapshotCount",
+        "ParameterValue": "1"
+    }
+]
