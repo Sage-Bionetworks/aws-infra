@@ -319,6 +319,39 @@ Resources:
           - !Ref AWS::StackName
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
+  # Allow instances to apply tags to its root volume
+  TagRootVolumeRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: "TagInstanceVolume"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "ec2:Describe*"
+                  - "ec2:CreateTags"
+                Resource: "*"
+  TagRootVolumeProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref TagRootVolumeRole
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
@@ -345,4 +378,9 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
+  TagRootVolumeProfile:
+    Description: Profile to allow instances to tag its root volume
+    Value: !Ref TagRootVolumeProfile
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeProfile'
 
