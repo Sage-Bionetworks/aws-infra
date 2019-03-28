@@ -56,6 +56,11 @@ tests:
     regions:
       - us-east-1
     template_file: s3-bucket.yaml
+  ec2-backup:
+    parameter_input: ec2-backup-input.json
+    regions:
+      - us-east-1
+    template_file: ec2-backup.yaml
   # Stack deletion fails when taskcat attempts to delete bucket
   # s3web-bucket:
   #   parameter_input: s3web-bucket-input.json

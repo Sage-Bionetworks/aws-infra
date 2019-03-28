@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Backup EC2 with the Data Lifecycle Manager
+Parameters:
+  StackName:
+    Description: The stack name, used as the backup target tag
+    Type: String
+  SnapshotCount:
+    Description: The number of snapshots to keep
+    Type: Number
+    MinValue: 1
+    MaxValue: 180
+    Default: 7
+    ConstraintDescription: Valid values is 1-180
+Resources:
+  Ec2DataLifecyclePolicy:
+    Type: "AWS::DLM::LifecyclePolicy"
+    Properties:
+      Description: "EC2 back up policy"
+      State: "ENABLED"
+      ExecutionRoleArn: !ImportValue
+        'Fn::Sub': ${AWS::Region}-essentials-AWSDataLifecycleManagerDefaultRoleArn
+      PolicyDetails:
+        ResourceTypes:
+          - "VOLUME"
+        # This policy will be applied to volumes with any of the following tags.
+        # You cannot use tags that are in use by another enabled or disabled lifecycle policy
+        TargetTags:
+          -
+            Key: "cloudformation:stack-name"
+            Value: !Ref StackName
+        Schedules:
+          -
+            Name: "Daily Snapshots"
+            TagsToAdd:
+              -
+                Key: "Type"
+                Value: "DailySnapshot"
+            CreateRule:
+              Interval: 24
+              IntervalUnit: "HOURS"
+              Times:
+                - "13:00"
+            RetainRule:
+              Count: !Ref SnapshotCount
+            CopyTags: true
+
