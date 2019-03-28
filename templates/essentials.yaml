@@ -352,6 +352,36 @@ Resources:
       Path: "/"
       Roles:
         - !Ref TagRootVolumeRole
+  # Role for Data Lifecycle Manager (DLM)
+  # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
+  AWSDataLifecycleManagerDefaultRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "dlm.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: "DefaultDLM"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "ec2:CreateSnapshot"
+                  - "ec2:DeleteSnapshot"
+                  - "ec2:DescribeVolumes"
+                  - "ec2:DescribeSnapshots"
+                Resource:
+                  - '*'
+              - Effect: "Allow"
+                Action:
+                  - "ec2:CreateTags"
+                Resource:
+                  - 'arn:aws:ec2:*::snapshot/*'
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
@@ -383,4 +413,8 @@ Outputs:
     Value: !Ref TagRootVolumeProfile
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeProfile'
-
+  AWSDataLifecycleManagerDefaultRoleArn:
+    Description: Default Data Lifecycle Manager role arn
+    Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSDataLifecycleManagerDefaultRoleArn'
