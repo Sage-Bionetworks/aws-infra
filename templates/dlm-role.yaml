@@ -11,7 +11,8 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: "dlm.amazoneaws.com"
+              Service:
+                - "dlm.amazonaws.com"
             Action: 'sts:AssumeRole'
       Policies:
         - PolicyName: "DefaultDLM"
@@ -36,4 +37,3 @@ Outputs:
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSDataLifecycleManagerDefaultRoleArn'
-
