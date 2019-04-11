@@ -158,7 +158,7 @@ Resources:
           Department: !Ref Department
           Project: !Ref Project
           OwnerEmail: !Ref OwnerEmail
-      ServiceRole: !Ref 'BatchServiceRole'
+      ServiceRole: !GetAtt BatchServiceRole.Arn
   SpotComputeEnvironment:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
@@ -178,13 +178,13 @@ Resources:
           - 'Fn::ImportValue': !Sub us-east-1-${VpcName}-PrivateSubnet2
         InstanceRole: !Ref 'IamInstanceProfile'
         BidPercentage: 40
-        SpotIamFleetRole: !Ref 'SpotIamFleetRole'
+        SpotIamFleetRole: !GetAtt SpotIamFleetRole.Arn
         Tags:
           Name: !Ref 'AWS::StackName'
           Department: !Ref Department
           Project: !Ref Project
           OwnerEmail: !Ref OwnerEmail
-      ServiceRole: !Ref 'BatchServiceRole'
+      ServiceRole: !GetAtt BatchServiceRole.Arn
   PeriodicSchedulerLambda:
     Condition: EnablePeriodicSchedule
     Type: 'AWS::CloudFormation::Stack'
