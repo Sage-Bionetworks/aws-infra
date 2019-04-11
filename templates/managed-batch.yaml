@@ -35,8 +35,13 @@ Parameters:
     Description: The schedule (cron) expression to trigger the batch job
     Type: String
     Default: "rate(1 day)"
+  AMIId:
+    Description: ID of the AMI to deploy
+    Type: String
+    Default: ""
 Conditions:
   EnablePeriodicSchedule: !Equals [!Ref PeriodicSchedule, "Enabled"]
+  HasAMIId: !Not [!Equals [!Ref AMIId, ""]]
 Resources:
   BatchServiceRole:
     Type: AWS::IAM::Role
@@ -168,6 +173,7 @@ Resources:
         MinvCpus: 0
         DesiredvCpus: 0
         MaxvCpus: 64
+        ImageId: !If [HasAMIId, !Ref AMIId, !Ref "AWS::NoValue"]
         InstanceTypes:
           - optimal
         SecurityGroupIds:
