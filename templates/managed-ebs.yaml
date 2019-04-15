@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Provision a custom EBS volume and attach it to an instance
+Parameters:
+  Department:
+    Description: The department for this resource (i.e. Computational Oncology)
+    Type: String
+  Project:
+    Description: The name of the project that this resource is used for (i.e. Resilience)
+    Type: String
+  OwnerEmail:
+    Description: The owner's email address for this resource (i.e. jsmith@sagebase.org)
+    Type: String
+  AvailabilityZone:
+    Description: Availability Zone for the volume
+    Type: String
+    AllowedValues:
+      - "us-east-1a"
+      - "us-east-1b"
+      - "us-east-1c"
+    Default: "us-east-1a"
+  Encrypt:
+    Type: String
+    Description: true to encrypt volume, false for no encryption
+    AllowedValues:
+      - true
+      - false
+    Default: true
+  VolumeType:
+    Type: String
+    Description: the volume type
+    AllowedValues:
+      - io1
+      - gp2
+      - sc1
+      - st1
+    Default: gp2
+  Size:
+    Description: The EBS volume size (in GB)
+    Type: Number
+    Default: 8
+    MinValue: 8
+    MaxValue: 2000
+  Iops:
+    Description: The number of I/O operations per second (IOPS)
+    Type: Number
+    Default: 1000
+    MinValue: 99
+    MaxValue: 64000
+  SnapshotId:
+    Description: The snapshot from which to create the new volume
+    Type: String
+    Default: ""
+  KmsKeyId:
+    Description: The Amazon Resource Name (ARN) of the AWS Key Management Service master key that is used to create the encrypted volume
+    Type: String
+    Default: ""
+  Ec2InstanceId:
+    Description: The ID of the instance to which the volume attaches
+    Type: String
+  AttachmentDevice:
+    Description: How the device is exposed to the instance (e.g., /dev/sdh, or xvdh)
+    Type: String
+    Default: "/dev/xvda"
+Conditions:
+  HasIops: !Not [!Equals ["99", !Ref Iops]]
+  HasSnapshotId: !Not [!Equals ["", !Ref SnapshotId]]
+  HasKmsKeyId: !Not [!Equals ["", !Ref KmsKeyId]]
+Resources:
+  EbsVolume:
+    Type: 'AWS::EC2::Volume'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone
+      Encrypted: !Ref Encrypt
+      VolumeType: !Ref VolumeType
+      Iops: !If [HasIops, !Ref Iops, !Ref 'AWS::NoValue']
+      Size: !Ref Size
+      SnapshotId: !If [HasSnapshotId, !Ref SnapshotId, !Ref 'AWS::NoValue']
+      KmsKeyId: !If [HasKmsKeyId, !Ref KmsKeyId, !Ref 'AWS::NoValue']
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - '-'
+            - - !Ref Ec2InstanceId
+              - !Ref AttachmentDevice
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  EbsAttachment:
+    Type: AWS::EC2::VolumeAttachment
+    Properties:
+      Device: !Ref AttachmentDevice
+      InstanceId: !Ref Ec2InstanceId
+      VolumeId: !Ref EbsVolume
+Outputs:
+  EbsVolume:
+    Value: !Ref EbsVolume
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-EbsVolume'
