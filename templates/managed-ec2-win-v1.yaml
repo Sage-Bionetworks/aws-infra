@@ -492,7 +492,7 @@ Resources:
     DependsOn: Ec2Instance
     Properties:
       Handle: !Ref WindowsServerWaitHandle
-      Timeout: '800'
+      Timeout: '900'
   Ec2Backup:
     Type: 'AWS::CloudFormation::Stack'
     Condition: EnableEc2Backup
