@@ -467,7 +467,7 @@ Resources:
             - !Ref 'AWS::Region'
             - |+
 
-            - 'cfn-signal.exe -e %ERRORLEVEL% '
+            - 'cfn-signal.exe -e 0 '
             - !Base64
               Ref: WindowsServerWaitHandle
             - |+
