@@ -517,7 +517,7 @@ Resources:
           Value: !Ref OwnerEmail
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT5M
+        Timeout: PT8M
   Ec2Backup:
     Type: 'AWS::CloudFormation::Stack'
     Condition: EnableEc2Backup
