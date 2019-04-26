@@ -1,0 +1,558 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Provision EC2 instance, connect to Jumpcloud, and associate with a jumpcloud systems group.
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    Default: ""
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.nano
+    AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - t2.xlarge
+      - t2.2xlarge
+      - t3.nano
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.12xlarge
+      - m5.24xlarge
+      - m5d.large
+      - m5d.xlarge
+      - m5d.2xlarge
+      - m5d.4xlarge
+      - m5d.12xlarge
+      - m5d.24xlarge
+      - c1.medium
+      - c1.xlarge
+      - c3.large
+      - c3.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - c5.large
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.18xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - r4.large
+      - r4.xlarge
+      - r4.2xlarge
+      - r4.4xlarge
+      - r4.8xlarge
+      - r4.16xlarge
+      - i2.xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - hs1.8xlarge
+      - cr1.8xlarge
+      - cc2.8xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+  JcConnectKey:
+    Description: Connection key used to let JC agent connect to a Jumpcloud account.
+    Type: String
+    NoEcho: true
+  JcServiceApiKey:
+    Description: The Jumpcloud service user API key
+    Type: String
+    NoEcho: true
+  JcSystemsGroupId:
+    Description: Put EC2 into this Jumpcloud systems group
+    Type: String
+    NoEcho: true
+  VpcSubnet:
+    Description: Name of an existing VPC subnet to run the instance in.
+    Type: String
+    Default: PrivateSubnet
+    ConstraintDescription: >-
+      Allowed values (PrivateSubnet, PrivateSubnet1, PrivateSubnet2, PublicSubnet, PublicSubnet1, PublicSubnet2)
+    AllowedValues:
+      - PrivateSubnet
+      - PrivateSubnet1
+      - PrivateSubnet2
+      - PublicSubnet
+      - PublicSubnet1
+      - PublicSubnet2
+  VpcName:
+    Description: Name of an existing VPC to run the instance in.
+    Type: String
+    Default: sandcastlevpc
+  Department:
+    Description: The department for this resource (i.e. Computational Oncology)
+    Type: String
+  Project:
+    Description: The name of the project that this resource is used for (i.e. Resilience)
+    Type: String
+  OwnerEmail:
+    Description: The owner's email address for this resource (i.e. jsmith@sagebase.org)
+    Type: String
+  ParkMyCloudManaged:
+    Description: Allow ParkMyCloud service to start/stop resources
+    Type: String
+    Default: 'yes'
+  AMIId:
+    Description: ID of the AMI to deploy
+    Type: String
+  VolumeSize:
+    Description: The EC2 volume size (in GB)
+    Type: Number
+    Default: 8
+    MinValue: 8
+    MaxValue: 1000
+  OpenPort:
+    Description: Open a TCP port to incoming traffic
+    ConstraintDescription: A port number in the range 1 to 65535
+    Type: Number
+    Default: 0
+    MinValue: 0
+    MaxValue: 65535
+  BackupEc2:
+    Type: String
+    Description: true to enable daily EC2 backup, false (default) for no backup
+    AllowedValues:
+      - true
+      - false
+    Default: false
+  SnapshotCount:
+    Description: The number of snapshots to keep, only used if BackupEc2=true
+    Type: Number
+    MinValue: 1
+    MaxValue: 180
+    Default: 7
+    ConstraintDescription: Valid values are 1-180
+Conditions:
+  PublicEc2Resources: !Or [!Equals [ !Ref VpcSubnet, PublicSubnet ], !Equals [ !Ref VpcSubnet, PublicSubnet1 ], !Equals [ !Ref VpcSubnet, PublicSubnet2 ] ]
+  HasKeyName: !Not [!Equals ["", !Ref KeyName]]
+  HasAMIId: !Not [!Equals ["", !Ref AMIId]]
+  EnableOpenPort: !Not [!Equals ["0", !Ref OpenPort]]
+  AllowPortAccess: !And [!Condition PublicEc2Resources, !Condition EnableOpenPort]
+  EnableEc2Backup: !Equals [!Ref BackupEc2, true]
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: PV64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+    t2.xlarge:
+      Arch: HVM64
+    t2.2xlarge:
+      Arch: HVM64
+    t3.nano:
+      Arch: HVM64
+    t3.micro:
+      Arch: HVM64
+    t3.small:
+      Arch: HVM64
+    t3.medium:
+      Arch: HVM64
+    t3.large:
+      Arch: HVM64
+    t3.xlarge:
+      Arch: HVM64
+    t3.2xlarge:
+      Arch: HVM64
+    m1.small:
+      Arch: PV64
+    m1.medium:
+      Arch: PV64
+    m1.large:
+      Arch: PV64
+    m1.xlarge:
+      Arch: PV64
+    m2.xlarge:
+      Arch: PV64
+    m2.2xlarge:
+      Arch: PV64
+    m2.4xlarge:
+      Arch: PV64
+    m3.medium:
+      Arch: HVM64
+    m3.large:
+      Arch: HVM64
+    m3.xlarge:
+      Arch: HVM64
+    m3.2xlarge:
+      Arch: HVM64
+    m4.large:
+      Arch: HVM64
+    m4.xlarge:
+      Arch: HVM64
+    m4.2xlarge:
+      Arch: HVM64
+    m4.4xlarge:
+      Arch: HVM64
+    m4.10xlarge:
+      Arch: HVM64
+    m5.large:
+      Arch: HVM64
+    m5.xlarge:
+      Arch: HVM64
+    m5.2xlarge:
+      Arch: HVM64
+    m5.4xlarge:
+      Arch: HVM64
+    m5.12xlarge:
+      Arch: HVM64
+    m5.24xlarge:
+      Arch: HVM64
+    m5d.large:
+      Arch: HVM64
+    m5d.xlarge:
+      Arch: HVM64
+    m5d.2xlarge:
+      Arch: HVM64
+    m5d.4xlarge:
+      Arch: HVM64
+    m5d.12xlarge:
+      Arch: HVM64
+    m5d.24xlarge:
+      Arch: HVM64
+    c1.medium:
+      Arch: PV64
+    c1.xlarge:
+      Arch: PV64
+    c3.large:
+      Arch: HVM64
+    c3.xlarge:
+      Arch: HVM64
+    c3.2xlarge:
+      Arch: HVM64
+    c3.4xlarge:
+      Arch: HVM64
+    c3.8xlarge:
+      Arch: HVM64
+    c4.large:
+      Arch: HVM64
+    c4.xlarge:
+      Arch: HVM64
+    c4.2xlarge:
+      Arch: HVM64
+    c4.4xlarge:
+      Arch: HVM64
+    c4.8xlarge:
+      Arch: HVM64
+    c5.large:
+      Arch: HVM64
+    c5.xlarge:
+      Arch: HVM64
+    c5.2xlarge:
+      Arch: HVM64
+    c5.4xlarge:
+      Arch: HVM64
+    c5.9xlarge:
+      Arch: HVM64
+    c5.18xlarge:
+      Arch: HVM64
+    g2.2xlarge:
+      Arch: HVMG2
+    g2.8xlarge:
+      Arch: HVMG2
+    r3.large:
+      Arch: HVM64
+    r3.xlarge:
+      Arch: HVM64
+    r3.2xlarge:
+      Arch: HVM64
+    r3.4xlarge:
+      Arch: HVM64
+    r3.8xlarge:
+      Arch: HVM64
+    r4.large:
+      Arch: HVM64
+    r4.xlarge:
+      Arch: HVM64
+    r4.2xlarge:
+      Arch: HVM64
+    r4.4xlarge:
+      Arch: HVM64
+    r4.8xlarge:
+      Arch: HVM64
+    r4.16xlarge:
+      Arch: HVM64
+    i2.xlarge:
+      Arch: HVM64
+    i2.2xlarge:
+      Arch: HVM64
+    i2.4xlarge:
+      Arch: HVM64
+    i2.8xlarge:
+      Arch: HVM64
+    d2.xlarge:
+      Arch: HVM64
+    d2.2xlarge:
+      Arch: HVM64
+    d2.4xlarge:
+      Arch: HVM64
+    d2.8xlarge:
+      Arch: HVM64
+    hs1.8xlarge:
+      Arch: HVM64
+    cr1.8xlarge:
+      Arch: HVM64
+    cc2.8xlarge:
+      Arch: HVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      PV64:  NOT_SUPPORTED
+      HVM64: ami-0080e4c5bc078760e
+      HVMG2: NOT_SUPPORTED
+    us-west-2:
+      PV64: NOT_SUPPORTED
+      HVM64: ami-01e24be29428c15b2
+      HVMG2: NOT_SUPPORTED
+    us-west-1:
+      PV64: NOT_SUPPORTED
+      HVM64: ami-0ec6517f6edbf8044
+      HVMG2: NOT_SUPPORTED
+    us-east-2:
+      PV64: NOT_SUPPORTED
+      HVM64: ami-0cd3dfa4e37921605
+      HVMG2: NOT_SUPPORTED
+Resources:
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Condition: AllowPortAccess
+    Properties:
+      GroupDescription: "Open a port for incoming traffic"
+      VpcId: !ImportValue
+        'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: !Ref OpenPort
+          ToPort: !Ref OpenPort
+          IpProtocol: tcp
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+  Ec2Instance:
+    Type: 'AWS::EC2::Instance'
+    Metadata:
+      'AWS::CloudFormation::Init':
+        configSets:
+          SetupJumpcloud:
+            - Install_JC
+            - Config_JC
+          SetupVolume:
+            - TagRootVolume
+        Install_JC:
+          packages:
+            yum:
+              jq: []
+          commands:
+            01_jumpcloud_agent:
+              command: !Join
+                - ''
+                - - "curl --silent --show-error --header 'x-connect-key: "
+                  - !Ref JcConnectKey
+                  - "' https://kickstart.jumpcloud.com/Kickstart | sudo bash"
+        Config_JC:
+          commands:
+            # allow agent time to register with jumpcloud account
+            01_wait_registeration:
+              command: "sleep 10"
+            # get the jumpcloud host id
+            02_get_jc_system_id:
+              command: !Join
+                - ''
+                - - "export systemKey=$(sudo cat /opt/jc/jcagent.conf|jq -r '.systemKey') && "
+                  - "echo JC_SYSTEM_ID=$systemKey > /tmp/jc_info"
+            # add this host to a jumpcloud system group
+            03_associate_jc_systems:
+              command: !Join
+                - ''
+                - - "source /tmp/jc_info && curl -X POST 'https://console.jumpcloud.com/api/v2/systemgroups/"
+                  - !Ref JcSystemsGroupId
+                  - "/members' -H 'Accept: application/json' -H 'Content-Type: application/json' -H 'x-api-key: "
+                  - !Ref JcServiceApiKey
+                  - "' -d '{\"op\": \"add\",\"type\": \"system\",\"id\": \"'$JC_SYSTEM_ID'\"}'"
+        TagRootVolume:
+          commands:
+            01_get_instance_id:
+              command: !Join
+                - ''
+                - - "export Ec2InstanceId=$(curl -s http://169.254.169.254/latest/meta-data/instance-id) && "
+                  - "echo EC2_INSTANCE_ID=$Ec2InstanceId > /tmp/instance_info"
+            02_get_root_disk_id:
+              command: !Join
+                - ''
+                - - "source /tmp/instance_info && "
+                  - "export RootDiskId=$(aws ec2 describe-volumes --region $AWS_REGION "
+                  - "--filters Name=attachment.instance-id,Values=$EC2_INSTANCE_ID "
+                  - "--query Volumes[].VolumeId --out text) "
+                  - "&& echo ROOT_DISK_ID=$RootDiskId >> /tmp/instance_info"
+              env:
+                AWS_REGION: !Ref AWS::Region
+            03_tag_root_disk:
+              command: !Join
+                - ''
+                - - "source /tmp/instance_info && "
+                  - "aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
+                  - "--tags Key=Name,Value=$EC2_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "
+                  - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"
+              env:
+                AWS_REGION: !Ref AWS::Region
+                STACK_NAME: !Ref AWS::StackName
+                DEPARTMENT: !Ref Department
+                PROJECT: !Ref Project
+                OWNER_EMAIL: !Ref OwnerEmail
+    Properties:
+      ImageId: !If [HasAMIId, !Ref AMIId, !FindInMap [AWSRegionArch2AMI, !Ref 'AWS::Region', !FindInMap [AWSInstanceType2Arch, !Ref InstanceType, Arch]]]
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKeyName, !Ref KeyName, !Ref 'AWS::NoValue']
+      BlockDeviceMappings:
+        -
+          DeviceName: "/dev/xvda"
+          Ebs:
+            DeleteOnTermination: true
+            VolumeSize: !Ref VolumeSize
+      NetworkInterfaces:
+        - DeleteOnTermination: true
+          DeviceIndex: "0"
+          GroupSet:
+            - !ImportValue
+              'Fn::Sub': '${AWS::Region}-${VpcName}-VpnSecurityGroup'
+            - !If [PublicEc2Resources, 'Fn::ImportValue': !Sub '${AWS::Region}-${VpcName}-BastianSecurityGroup', !Ref 'AWS::NoValue']
+            - !If [AllowPortAccess, !GetAtt InstanceSecurityGroup.GroupId, !Ref "AWS::NoValue"]
+          SubnetId: !ImportValue
+            'Fn::Sub': '${AWS::Region}-${VpcName}-${VpcSubnet}'
+      IamInstanceProfile: !ImportValue
+        'Fn::Sub': '${AWS::Region}-essentials-TagRootVolumeProfile'
+      UserData: !Base64
+        'Fn::Join':
+          - ''
+          - - |
+              #!/bin/bash -xe
+            - |
+              yum update -y aws-cfn-bootstrap
+            - |
+              # Install the files and packages from the metadata
+            - '/opt/aws/bin/cfn-init -v '
+            - '         --stack '
+            - !Ref 'AWS::StackName'
+            - '         --resource Ec2Instance '
+            - '         --configsets SetupJumpcloud,SetupVolume '
+            - '         --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+            - |
+              # Signal the status from cfn-init
+            - '/opt/aws/bin/cfn-signal -e $? '
+            - '         --stack '
+            - !Ref 'AWS::StackName'
+            - '         --resource Ec2Instance '
+            - '         --region '
+            - !Ref 'AWS::Region'
+            - |+
+      Tags:
+        - Key: "parkmycloud"
+          Value: !Ref ParkMyCloudManaged
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT8M
+  Ec2Backup:
+    Type: 'AWS::CloudFormation::Stack'
+    Condition: EnableEc2Backup
+    Properties:
+      # template uploaded from Sage-Bionetworks/aws-infra repo
+      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/ec2-backup.yaml'
+      Parameters:
+        StackName: !Ref AWS::StackName
+        SnapshotCount: !Ref SnapshotCount
+      Tags:
+        - Key: "parkmycloud"
+          Value: !Ref ParkMyCloudManaged
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+Outputs:
+  Ec2InstanceId:
+    Value: !Ref Ec2Instance
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-Ec2InstanceId'
+  Ec2InstancePrivateIp:
+    Value: !GetAtt Ec2Instance.PrivateIp
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-Ec2InstancePrivateIp'
+  Ec2InstancePublicIp:
+    Condition: PublicEc2Resources
+    Value: !GetAtt Ec2Instance.PublicIp
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-Ec2InstancePublicIp'
+  OwnerEmail:
+    Value: !Ref OwnerEmail
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-OwnerEmail'
