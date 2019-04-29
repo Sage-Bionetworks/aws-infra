@@ -348,9 +348,9 @@ Resources:
         configSets:
           GeneralSetup:
             - auto_reloader
+            - install_apps
           JumpcloudSetup:
-            - install_tools
-            - setup_jc
+            - install_jc
         auto_reloader:
           files:
             'c:\cfn\cfn-hup.conf':
@@ -388,14 +388,10 @@ Resources:
                 files:
                   - 'c:\cfn\cfn-hup.conf'
                   - 'c:\cfn\hooks.d\cfn-auto-reloader.conf'
-        install_tools:
+        install_apps:
           files:
             'c:\scripts\install-chocolatey.ps1':
               source: "https://chocolatey.org/install.ps1"
-            'c:\scripts\install-ms-vc.ps1':
-              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-ms-vc.ps1"
-            'c:\scripts\install-jc-agent.ps1':
-              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-jc-agent.ps1"
           commands:
             1-install-chocolatey:
               command: !Join
@@ -404,12 +400,23 @@ Resources:
                   - 'Powershell.exe C:\scripts\install-chocolatey.ps1 > C:\scripts\install-chocolatey.log'
             2-install-jq:
               command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install jq --yes'
-            3-install-ms-vc:
+            3-install-googlechrome:
+              command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install googlechrome  --yes'
+        install_jc:
+          files:
+            'c:\scripts\install-ms-vc.ps1':
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-ms-vc.ps1"
+            'c:\scripts\install-jc-agent.ps1':
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-jc-agent.ps1"
+            'c:\scripts\associate-jc-system.ps1':
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/associate-jc-system.ps1"
+          commands:
+            1-install-ms-vc:
               command: !Join
                 - ''
                 - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
                   - 'Powershell.exe C:\scripts\install-ms-vc.ps1 > C:\scripts\install-ms-vc.log'
-            4-install-jc-agent:
+            2-install-jc-agent:
               command: !Join
                 - ''
                 - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
@@ -417,12 +424,7 @@ Resources:
                   - ' -JcConnectKey '
                   - !Ref JcConnectKey
                   - ' > C:\scripts\install-jc-agent.log'
-        setup_jc:
-          files:
-            'c:\scripts\associate-jc-system.ps1':
-              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/associate-jc-system.ps1"
-          commands:
-            1-associate-jc-system:
+            3-associate-jc-system:
               command: !Join
                 - ''
                 - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
@@ -492,7 +494,7 @@ Resources:
     DependsOn: Ec2Instance
     Properties:
       Handle: !Ref WindowsServerWaitHandle
-      Timeout: '900'
+      Timeout: '1000'
   Ec2Backup:
     Type: 'AWS::CloudFormation::Stack'
     Condition: EnableEc2Backup
