@@ -19,8 +19,8 @@ jobs:
   include:
     - stage: validate
       script: 
-        - cfn-lint ./templates/**/*.yaml
-        - cfn-lint ./lambdas/**/*.yaml
+        - cfn-lint ./templates/**/*.yaml -i W1020
+        - cfn-lint ./lambdas/**/*.yaml -i W1020
     - stage: test
       script: taskcat -c ci/taskcat.yaml --tag owner=taskcat
     - stage: deploy
