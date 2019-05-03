@@ -61,7 +61,7 @@ Parameters:
   AttachmentDevice:
     Description: How the device is exposed to the instance (e.g., /dev/sdh, or xvdh)
     Type: String
-    Default: "/dev/xvda"
+    Default: "/dev/xvdm"     # xvda is reserved for root volume
 Conditions:
   HasIops: !Not [!Equals ["99", !Ref Iops]]
   HasSnapshotId: !Not [!Equals ["", !Ref SnapshotId]]
