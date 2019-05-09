@@ -76,7 +76,7 @@ Parameters:
     Default: 365000
 Conditions:
   AllowWrite: !Equals [!Ref AllowWriteBucket, true]
-  AllowUserAccess: !Not [!Equals [!Join ['', !Ref GrantAccess], "[]"]]
+  AllowUserAccess: !Not [!Equals [!Ref GrantAccess, "[]"]]
   EnableEncryption: !Equals [!Ref EncryptBucket, true]
   DisableEncryption: !Not [!Condition EnableEncryption]
   CreateIPAddressRestrictionLambda: !Equals [!Ref SameRegionResourceAccessToBucket, true]
