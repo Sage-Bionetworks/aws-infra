@@ -424,7 +424,7 @@ Resources:
               owner: root
               group: root
             /lib/systemd/system/cfn-hup.service:
-              content: |
+              content: !Sub |
                 [Unit]
                 Description=cfn-hup daemon
 
