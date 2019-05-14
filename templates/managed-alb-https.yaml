@@ -5,6 +5,7 @@
 # Note: This does not fully automate the load balancer setup.  An additional step
 #       of applying the provisioned Ec2SecurityGroup to the instance is required.
 #       Applying security group to a running instance will not provision a new instance.
+#       The security group looks like this: https://pasteboard.co/IeIAzkJ.png
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Provision an application load balancer listening on https
