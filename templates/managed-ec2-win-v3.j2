@@ -157,6 +157,7 @@ Parameters:
     ConstraintDescription: Valid values are 1-180
 Conditions:
   PublicEc2Resources: !Or [!Equals [ !Ref VpcSubnet, PublicSubnet ], !Equals [ !Ref VpcSubnet, PublicSubnet1 ], !Equals [ !Ref VpcSubnet, PublicSubnet2 ] ]
+  HasKeyName: !Not [!Equals ["", !Ref KeyName]]
   HasAMIId: !Not [!Equals ["", !Ref AMIId]]
   EnableEc2Backup: !Equals [!Ref BackupEc2, true]
 Mappings:
