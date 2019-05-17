@@ -12,7 +12,6 @@ Parameters:
     Type: String
     Default: t2.nano
     AllowedValues:
-      - t1.micro
       - t2.nano
       - t2.micro
       - t2.small
@@ -185,8 +184,6 @@ Conditions:
   EnableEc2Backup: !Equals [!Ref BackupEc2, true]
 Mappings:
   AWSInstanceType2Arch:
-    t1.micro:
-      Arch: PV64
     t2.nano:
       Arch: HVM64
     t2.micro:
