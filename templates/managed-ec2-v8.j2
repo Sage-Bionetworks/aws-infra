@@ -12,11 +12,7 @@ Parameters:
     Type: String
     Default: t2.nano
     AllowedValues:
-      - a1.medium
-      - a1.large
-      - a1.xlarge
-      - a1.2xlarge
-      - a1.4xlarge
+      - t1.micro
       - t2.nano
       - t2.micro
       - t2.small
@@ -180,16 +176,8 @@ Conditions:
   EnableEc2Backup: !Equals [!Ref BackupEc2, true]
 Mappings:
   AWSInstanceType2Arch:
-    a1.medium:
-      Arch: HVM64
-    a1.large:
-      Arch: HVM64
-    a1.xlarge:
-      Arch: HVM64
-    a1.2xlarge:
-      Arch: HVM64
-    a1.4xlarge:
-      Arch: HVM64
+    t1.micro:
+      Arch: PV64
     t2.nano:
       Arch: HVM64
     t2.micro:
