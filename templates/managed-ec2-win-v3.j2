@@ -347,77 +347,73 @@ Resources:
     Metadata:
       'AWS::CloudFormation::Init':
         configSets:
-          GeneralSetup:
-            - auto_reloader
+          SetupCfn:
+            - cfn_hup_service
+          SetupApps:
             - install_apps
-          JumpcloudSetup:
+          SetupJumpcloud:
             - install_jc
-        auto_reloader:
+            - config_jc
+          SetupVolume:
+            - tag_volume
+        # Cfn-hup setting, it is to monitor the change of metadata.
+        # When there is change in the contents of json file in the metadata section, cfn-hup will call cfn-init.
+        cfn_hup_service:
           files:
-            'c:\cfn\cfn-hup.conf':
-              content: !Join
-                - ''
-                - - |
-                    [main]
-                  - stack=
-                  - !Ref 'AWS::StackId'
-                  - |+
-
-                  - region=
-                  - !Ref 'AWS::Region'
-                  - |+
-            'c:\cfn\hooks.d\cfn-auto-reloader.conf':
-              content: !Join
-                - ''
-                - - |
-                    [cfn-auto-reloader-hook]
-                  - |
-                    triggers=post.update
-                  - |
-                    path=Resources.Ec2Instance.Metadata.AWS::CloudFormation::Init
-                  - 'action=cfn-init.exe -v -s '
-                  - !Ref 'AWS::StackId'
-                  - ' -r Ec2Instance'
-                  - ' --region '
-                  - !Ref 'AWS::Region'
-                  - |+
+             "c:\\cfn\\cfn-hup.conf":
+               content: !Sub |
+                 [main]
+                 stack=${AWS::StackId}
+                 region=${AWS::Region}
+                 interval=1
+             "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf":
+               content: !Sub |
+                 [cfn-auto-reloader-hook]
+                 triggers=post.update
+                 path=Resources.Ec2Instance.Metadata.AWS::CloudFormation::Init
+                 action=cfn-init.exe -v --stack ${AWS::StackId} --resource Ec2Instance --region ${AWS::Region} --configsets SetupCfn,SetupApps,SetupJumpcloud,SetupVolume
           services:
             windows:
               cfn-hup:
-                enabled: true
-                ensureRunning: true
+                enabled: 'true'
+                ensureRunning: 'true'
                 files:
-                  - 'c:\cfn\cfn-hup.conf'
-                  - 'c:\cfn\hooks.d\cfn-auto-reloader.conf'
+                  - "c:\\cfn\\cfn-hup.conf"
+                  - "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
         install_apps:
           files:
-            'c:\scripts\install-chocolatey.ps1':
+            'c:\\scripts\\install-chocolatey.ps1':
               source: "https://chocolatey.org/install.ps1"
+              mode: "0664"
           commands:
-            1-install-chocolatey:
+            01_install_nuget:
+              command: 'Powershell.exe Install-PackageProvider -Name NuGet -Force'
+            02_install_chocolatey:
               command: !Join
                 - ''
                 - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
                   - 'Powershell.exe C:\scripts\install-chocolatey.ps1 > C:\scripts\install-chocolatey.log'
-            2-install-jq:
+            03_install_jq:
               command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install jq --yes'
-            3-install-googlechrome:
+            04_install_awscli:
+              command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install awscli --yes'
+            05_install_googlechrome:
               command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install googlechrome  --yes'
         install_jc:
           files:
             'c:\scripts\install-ms-vc.ps1':
               source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-ms-vc.ps1"
-            'c:\scripts\install-jc-agent.ps1':
+              mode: "0664"
+            'c:\\scripts\\install-jc-agent.ps1':
               source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-jc-agent.ps1"
-            'c:\scripts\associate-jc-system.ps1':
-              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/associate-jc-system.ps1"
+              mode: "0664"
           commands:
-            1-install-ms-vc:
+            01_install_ms_vc:
               command: !Join
                 - ''
                 - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
                   - 'Powershell.exe C:\scripts\install-ms-vc.ps1 > C:\scripts\install-ms-vc.log'
-            2-install-jc-agent:
+            02_install_jc_agent:
               command: !Join
                 - ''
                 - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
@@ -425,7 +421,13 @@ Resources:
                   - ' -JcConnectKey '
                   - !Ref JcConnectKey
                   - ' > C:\scripts\install-jc-agent.log'
-            3-associate-jc-system:
+        config_jc:
+          files:
+            'c:\\scripts\\associate-jc-system.ps1':
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/associate-jc-system.ps1"
+              mode: "0664"
+          commands:
+            01_associate_jc_systems:
               command: !Join
                 - ''
                 - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
@@ -435,6 +437,28 @@ Resources:
                   - ' -JcSystemsGroupId '
                   - !Ref JcSystemsGroupId
                   - ' > C:\scripts\associate-jc-system.log'
+        tag_volume:
+          files:
+             "c:\\scripts\\tag-instance-volume.ps1":
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/tag-instance-volume.ps1"
+              mode: "0664"
+          commands:
+            01_tag_instance_volume:
+              command: !Join
+                - ''
+                - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
+                  - 'Powershell.exe C:\scripts\tag-instance-volume.ps1 '
+                  - ' -AwsRegion '
+                  - !Ref AWS::Region
+                  - ' -StackName '
+                  - !Ref AWS::StackName
+                  - ' -Department '
+                  - !Ref Department
+                  - ' -Project '
+                  - !Ref Project
+                  - ' -OwnerEmail '
+                  - !Ref OwnerEmail
+                  - ' > C:\scripts\tag-instance-volume.log'
     Properties:
       ImageId: !If [HasAMIId, !Ref AMIId, !FindInMap [AWSRegionArch2AMI, !Ref 'AWS::Region', !FindInMap [AWSInstanceType2Arch, !Ref InstanceType, Arch]]]
       InstanceType: !Ref InstanceType
@@ -459,26 +483,12 @@ Resources:
             'Fn::Sub': '${AWS::Region}-${VpcName}-${VpcSubnet}'
       IamInstanceProfile: !ImportValue
         'Fn::Sub': '${AWS::Region}-essentials-TagRootVolumeProfile'
-      UserData: !Base64
-        'Fn::Join':
-          - ''
-          - - |
-              <script>
-            - 'cfn-init.exe -v -s '
-            - !Ref 'AWS::StackName'
-            - ' -r Ec2Instance '
-            - ' --configsets GeneralSetup,JumpcloudSetup '
-            - ' --region '
-            - !Ref 'AWS::Region'
-            - |+
-
-            - 'cfn-signal.exe -e 0 '
-            - !Base64
-              Ref: WindowsServerWaitHandle
-            - |+
-
-            - |
-              </script>
+      UserData:
+        Fn::Base64: !Sub |
+          <script>
+          cfn-init.exe -v --stack ${AWS::StackId} --resource Ec2Instance --region ${AWS::Region} --configsets SetupCfn,SetupApps,SetupJumpcloud,SetupVolume
+          cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource Ec2Instance --region ${AWS::Region}
+          </script>
       Tags:
         - Key: "parkmycloud"
           Value: !Ref ParkMyCloudManaged
@@ -490,14 +500,10 @@ Resources:
           Value: !Ref Project
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
-  WindowsServerWaitHandle:
-    Type: 'AWS::CloudFormation::WaitConditionHandle'
-  WindowsServerWaitCondition:
-    Type: 'AWS::CloudFormation::WaitCondition'
-    DependsOn: Ec2Instance
-    Properties:
-      Handle: !Ref WindowsServerWaitHandle
-      Timeout: '1000'
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: "PT30M"
   Ec2Backup:
     Type: 'AWS::CloudFormation::Stack'
     Condition: EnableEc2Backup
