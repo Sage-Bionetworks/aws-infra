@@ -387,13 +387,13 @@ Resources:
       'AWS::CloudFormation::Init':
         configSets:
           SetupCfn:
-            - configure_cfn
+            - cfn_hup_service
           SetupJumpcloud:
-            - Install_JC
-            - Config_JC
+            - install_jc
+            - config_jc
           SetupVolume:
-            - TagRootVolume
-        configure_cfn:
+            - tag_volume
+        cfn_hup_service:
           files:
             /etc/cfn/cfn-hup.conf:
               content: !Sub |
@@ -434,7 +434,7 @@ Resources:
               command: "/bin/systemctl enable cfn-hup.service"
             02_start_cfn-hup:
               command: "/bin/systemctl start cfn-hup.service"
-        Install_JC:
+        install_jc:
           packages:
             yum:
               jq: []
@@ -445,7 +445,7 @@ Resources:
                 - - "/usr/bin/curl --silent --show-error --header 'x-connect-key: "
                   - !Ref JcConnectKey
                   - "' https://kickstart.jumpcloud.com/Kickstart | sudo bash"
-        Config_JC:
+        config_jc:
           commands:
             # allow agent time to register with jumpcloud account
             01_wait_registeration:
@@ -458,7 +458,7 @@ Resources:
                   - "/members' -H 'Accept: application/json' -H 'Content-Type: application/json' -H 'x-api-key: "
                   - !Ref JcServiceApiKey
                   - "' -d '{\"op\": \"add\",\"type\": \"system\",\"id\": \"'$JC_SYSTEM_ID'\"}'"
-        TagRootVolume:
+        tag_volume:
           commands:
             01_tag_root_disk:
               command: !Join
