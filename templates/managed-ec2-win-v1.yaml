@@ -393,9 +393,9 @@ Resources:
             'c:\scripts\install-chocolatey.ps1':
               source: "https://chocolatey.org/install.ps1"
             'c:\scripts\install-ms-vc.ps1':
-              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-ms-vc.ps1"
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/v1.0.0/aws/install-ms-vc.ps1"
             'c:\scripts\install-jc-agent.ps1':
-              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/install-jc-agent.ps1"
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/v1.0.0/aws/install-jc-agent.ps1"
           commands:
             1-install-chocolatey:
               command: !Join
@@ -420,7 +420,7 @@ Resources:
         setup_jc:
           files:
             'c:\scripts\associate-jc-system.ps1':
-              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/master/aws/associate-jc-system.ps1"
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/v1.0.0/aws/associate-jc-system.ps1"
           commands:
             1-associate-jc-system:
               command: !Join
