@@ -242,7 +242,6 @@ Resources:
           GroupSet:
             - !ImportValue
               'Fn::Sub': '${AWS::Region}-${VpcName}-VpnSecurityGroup'
-            - !If [PublicEc2Resources, 'Fn::ImportValue': !Sub '${AWS::Region}-${VpcName}-BastianSecurityGroup', !Ref 'AWS::NoValue']
           {% if sceptre_user_data.OpenPorts is defined %}
             - !GetAtt InstanceSecurityGroup.GroupId
           {% endif %}
