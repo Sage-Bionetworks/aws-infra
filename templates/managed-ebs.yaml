@@ -13,7 +13,7 @@ Parameters:
     Type: String
   AvailabilityZone:
     Description: Availability Zone for the volume
-    Type: String
+    Type: "AWS::EC2::AvailabilityZone::Name"
     AllowedValues:
       - "us-east-1a"
       - "us-east-1b"
