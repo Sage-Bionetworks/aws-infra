@@ -2,9 +2,5 @@
     {
         "ParameterKey": "JcServiceApiKey",
         "ParameterValue": "$[taskcat_random-numbers]"
-    },
-    {
-        "ParameterKey": "LambdaBucket",
-        "ParameterValue": "essentials-awss3lambdaartifactsbucket-x29ftznj6pqw"
     }
 ]
