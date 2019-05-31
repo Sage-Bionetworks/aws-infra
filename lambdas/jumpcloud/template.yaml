@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Automation to periodically clean up systems from jumpcloud
+Globals:
+    Function:
+        Timeout: 30
+Parameters:
+  JcServiceApiKey:
+    Description: The Jumpcloud service user API key
+    Type: String
+    NoEcho: true
+
+Resources:
+  LambdaFunction:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        Role: !GetAtt LambdaExecutionRole.Arn
+        Runtime: python3.6
+        CodeUri: clean_systems/
+        Handler: app.lambda_handler
+        Events:
+          CheckAccessKeyScheduledEvent:
+            Type: Schedule
+            Properties:
+              Schedule: rate(1 day)
+        Environment:
+          Variables:
+            JC_SERVICE_API_KEY: !Ref JcServiceApiKey
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: PublishToCloudwatch
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+        - PolicyName: SendEmails
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                Resource: "*"
+        - PolicyName: PublishSnsTopic
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsInfoArn
+  LambdaFunctionFailureAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue us-east-1-AccountAlertTopics-SNSAlertsErrorArn
+      MetricName: !Sub "${LambdaFunction}-FailureAlarm"
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunction
+      EvaluationPeriods: 1
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+
+Outputs:
+  LambdaFunction:
+    Value: !Ref LambdaFunction
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaFunction'
