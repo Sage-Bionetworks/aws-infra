@@ -25,6 +25,7 @@ jobs:
       script: taskcat -c ci/taskcat.yaml --tag owner=taskcat
     - stage: deploy
       script:
+        - aws cloudformation package --template-file ./lambdas/jumpcloud/template.yaml --output-template-file templates/jumpcloud.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
         - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
         - ./deploy_lambdas.sh || travis_terminate 1
         - ./deploy-templates.sh || travis_terminate 1
