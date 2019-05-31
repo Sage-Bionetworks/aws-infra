@@ -22,7 +22,10 @@ jobs:
         - cfn-lint ./templates/**/*.yaml -i W1020
         - cfn-lint ./lambdas/**/*.yaml -i W1020
     - stage: test
-      script: taskcat -c ci/taskcat.yaml --tag owner=taskcat
+      script:
+        - aws cloudformation package --template-file ./lambdas/jumpcloud/template.yaml --output-template-file templates/jumpcloud.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
+        - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
+        - taskcat -c ci/taskcat.yaml --tag owner=taskcat
     - stage: deploy
       script:
         - aws cloudformation package --template-file ./lambdas/jumpcloud/template.yaml --output-template-file templates/jumpcloud.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
