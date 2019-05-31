@@ -51,21 +51,25 @@ tests:
     regions:
       - us-east-1
     template_file: vpc.yaml
-  s3-bucket:
-    parameter_input: s3-bucket-input.json
-    regions:
-      - us-east-1
-    template_file: s3-bucket.yaml
   ec2-backup:
     parameter_input: ec2-backup-input.json
     regions:
       - us-east-1
     template_file: ec2-backup.yaml
-  managed-batch:
-    parameter_input: managed-batch-input.json
-    regions:
-      - us-east-1
-    template_file: managed-batch.yaml
+
+  # Tests disabled due to issue: https://github.com/aws-quickstart/taskcat/issues/278
+  #  s3-bucket:
+  #    parameter_input: s3-bucket-input.json
+  #    regions:
+  #      - us-east-1
+  #    template_file: s3-bucket.yaml
+  #  managed-batch:
+  #    parameter_input: managed-batch-input.json
+  #    regions:
+  #      - us-east-1
+  #    template_file: managed-batch.yaml
+
+
   # Stack deletion fails when taskcat attempts to delete bucket
   # s3web-bucket:
   #   parameter_input: s3web-bucket-input.json
