@@ -8,7 +8,7 @@ Parameters:
   GracePeriod:
     Description: How many days to send the user a warning email before the lockout occurs
     Type: Number
-    Default: 14
+    Default: 7
   DisableKeys:
     Description: Set to True if you want to disabled expired IAM access keys
     Type: String
