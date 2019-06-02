@@ -3,6 +3,9 @@ language: python
 python: 3.6
 cache: pip
 fast_finish: true
+branches:
+  only:
+  - master
 install:
   - pip install cfn-lint
   - pip install taskcat
