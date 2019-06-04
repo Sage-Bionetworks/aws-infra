@@ -9,6 +9,11 @@ Parameters:
     Description: The Jumpcloud service user API key
     Type: String
     NoEcho: true
+  Schedule:
+    Description: Schedule to execute this lambda
+    Type: String
+    Default: rate(30 days)
+    ConstraintDescription: "Use schedule format: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.htm"
 
 Resources:
   LambdaFunction:
@@ -22,7 +27,7 @@ Resources:
           CheckAccessKeyScheduledEvent:
             Type: Schedule
             Properties:
-              Schedule: rate(1 day)
+              Schedule: !Ref Schedule
         Environment:
           Variables:
             JC_SERVICE_API_KEY: !Ref JcServiceApiKey
