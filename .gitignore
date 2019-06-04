@@ -109,11 +109,11 @@ git-crypt.key
 # MAC crap
 .DS_Store
 
-# AWS lambdas
-lambdas/*.zip
-
 # taskcat
 /taskcat_outputs
 
 # temp files
 /temp
+
+# lambda build dir
+lambdas/build
