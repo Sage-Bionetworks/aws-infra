@@ -12,6 +12,7 @@ install:
   - wget https://github.com/Sage-Bionetworks/infra-utils/archive/master.zip -O /tmp/infra-utils.zip
   - unzip -j -n /tmp/infra-utils.zip -x "infra-utils-master/.gitignore" "infra-utils-master/LICENSE" "infra-utils-master/*.md" "infra-utils-master/aws/*"
   - ./setup_aws_cli.sh || travis_terminate 1
+  - pip install aws-sam-cli
 stages:
   - name: validate
   - name: test
@@ -24,14 +25,19 @@ jobs:
       script: 
         - cfn-lint ./templates/**/*.yaml -i W1020
         - cfn-lint ./lambdas/**/*.yaml -i W1020
+        - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
+        - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
     - stage: test
       script:
-        - aws cloudformation package --template-file ./lambdas/jumpcloud/template.yaml --output-template-file templates/jumpcloud.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
-        - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
+        - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
+        - sam package --template-file lambdas/build/jumpcloud/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/jumpcloud.yaml
+        - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
+        - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
         - taskcat -c ci/taskcat.yaml --tag owner=taskcat
     - stage: deploy
       script:
-        - aws cloudformation package --template-file ./lambdas/jumpcloud/template.yaml --output-template-file templates/jumpcloud.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
-        - aws cloudformation package --template-file ./lambdas/rotate-credentials/template.yaml --output-template-file templates/rotate-credentials.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw
-        - ./deploy_lambdas.sh || travis_terminate 1
+        - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
+        - sam package --template-file lambdas/build/jumpcloud/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/jumpcloud.yaml
+        - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
+        - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
         - ./deploy-templates.sh || travis_terminate 1
