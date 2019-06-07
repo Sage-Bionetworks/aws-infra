@@ -413,6 +413,11 @@ Outputs:
     Value: !Ref TagRootVolumeProfile
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeProfile'
+  TagRootVolumeRole:
+    Description: Role to allow instances to tag its root volume
+    Value: !Ref TagRootVolumeRole
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeRole'  
   AWSDataLifecycleManagerDefaultRoleArn:
     Description: Default Data Lifecycle Manager role arn
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
