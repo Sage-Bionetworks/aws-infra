@@ -244,6 +244,7 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          export DEBIAN_FRONTEND=noninteractive
           /usr/bin/apt-get update -y
           /usr/bin/apt-get install -y python-pip
           /usr/bin/apt-get install -y python-setuptools
