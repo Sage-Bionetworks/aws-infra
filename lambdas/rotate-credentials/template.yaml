@@ -49,6 +49,9 @@ Resources:
         Runtime: python2.7
         CodeUri: expire_access_key/
         Handler: app.lambda_handler
+        DeadLetterQueue:
+          Type: SNS
+          TargetArn: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsErrorArn
         Events:
           CheckAccessKeyScheduledEvent:
             Type: Schedule
