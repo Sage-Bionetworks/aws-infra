@@ -132,7 +132,10 @@ Resources:
               - Effect: Allow
                 Action:
                   - sns:Publish
-                Resource: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsInfoArn
+                Resource:
+                  - !ImportValue us-east-1-AccountAlertTopics-SNSAlertsInfoArn
+                  - !ImportValue us-east-1-AccountAlertTopics-SNSAlertsErrorArn
+                  - !ImportValue us-east-1-AccountAlertTopics-SNSAlertsCriticalArn
   ExpireAccessKeyFunctionFailureAlarm:
     Type: "AWS::CloudWatch::Alarm"
     Properties:
