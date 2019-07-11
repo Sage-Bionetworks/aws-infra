@@ -182,6 +182,10 @@ Resources:
         - TargetGroupArn: !Ref ElbTargetGroup
           Type: forward
 Outputs:
+  LoadBalancerName:
+    Value: !GetAtt LoadBalancer.LoadBalancerName
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LoadBalancerName'
   LoadBalancerArn:
     Value: !Ref LoadBalancer
     Export:
