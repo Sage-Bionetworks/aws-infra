@@ -18,7 +18,9 @@ stages:
   - name: test
     if: branch = master AND type = push
   - name: deploy
-    if: type = push AND branch = master OR tag IS present
+    if: type = push AND branch = master
+  - name: deploy
+    if: type = push AND tag IS present
 jobs:
   include:
     - stage: validate
