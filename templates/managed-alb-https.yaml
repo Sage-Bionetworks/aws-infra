@@ -67,6 +67,13 @@ Resources:
           FromPort: !Ref AppPort
           ToPort: !Ref AppPort
           SourceSecurityGroupId: !GetAtt ElbSecurityGroup.GroupId
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
 
 # We need to attach Ec2SecurityGroup to the Ec2InstanceId.  CFN does
 # not allow attaching to SG to the default ENI.  A workaround is to
@@ -117,6 +124,13 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
   ElbTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
