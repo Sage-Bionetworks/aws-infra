@@ -208,3 +208,15 @@ Outputs:
     Value: !GetAtt LoadBalancer.DNSName
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-LoadBalancerDnsName'
+  ElbTargetGroupFullName:
+    Value: !GetAtt ElbTargetGroup.TargetGroupFullName
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TargetGroupFullName'
+  ElbTargetGroupName:
+    Value: !GetAtt ElbTargetGroup.TargetGroupName
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TargetGroupName'
+  ElbTargetGroupArn:
+    Value: !Ref ElbTargetGroup
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ElbTargetGroupArn'
