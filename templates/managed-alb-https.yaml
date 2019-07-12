@@ -211,11 +211,11 @@ Outputs:
   ElbTargetGroupFullName:
     Value: !GetAtt ElbTargetGroup.TargetGroupFullName
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-TargetGroupFullName'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ElbTargetGroupFullName'
   ElbTargetGroupName:
     Value: !GetAtt ElbTargetGroup.TargetGroupName
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-TargetGroupName'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ElbTargetGroupName'
   ElbTargetGroupArn:
     Value: !Ref ElbTargetGroup
     Export:
