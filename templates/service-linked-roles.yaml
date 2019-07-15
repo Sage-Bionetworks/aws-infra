@@ -8,31 +8,21 @@ Resources:
   # EC2 requires a special service-linked role named `AWSServiceRoleForEC2Spot` to launch and manage Spot Instances
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html#service-linked-roles-spot-instance-requests
   AWSServiceRoleForEC2Spot:
-    Type: AWS::IAM::Role
+    Type: "AWS::IAM::ServiceLinkedRole"
     Properties:
-      RoleName: AWSServiceRoleForEC2Spot
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - spot.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: "/"
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/aws-service-role/AWSEC2SpotServiceRolePolicy
+      AWSServiceName: "spot.amazonaws.com"
+      Description: "SLR for EC2 Spot"
+  AWSServiceRoleForEC2SpotFleet:
+    Type: "AWS::IAM::ServiceLinkedRole"
+    Properties:
+      AWSServiceName: "spotfleet.amazonaws.com"
+      Description: "SLR for EC2 Spot Fleet"
 Outputs:
-  AWSServiceRoleForEC2SpotName:
+  AWSServiceRoleForEC2SpotId:
     Value: !Ref AWSServiceRoleForEC2Spot
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotName'
-  AWSServiceRoleForEC2SpotArn:
-    Value: !GetAtt AWSServiceRoleForEC2Spot.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotArn'
-  AWSServiceRoleForEC2SpotId:
-    Value: !GetAtt AWSServiceRoleForEC2Spot.RoleId
-    Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotId'
+  AWSServiceRoleForEC2SpotFleetId:
+    Value: !Ref AWSServiceRoleForEC2SpotFleet
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotFleetId'
