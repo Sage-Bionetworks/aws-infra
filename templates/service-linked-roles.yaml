@@ -1,0 +1,38 @@
+# A service-linked role is a unique type of IAM role that is linked directly to an AWS service.
+# Service-linked roles are predefined by the service and include all the permissions that the
+# service requires to call other AWS services on your behalf.
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Provision AWS service linked roles
+Resources:
+  # EC2 requires a special service-linked role named `AWSServiceRoleForEC2Spot` to launch and manage Spot Instances
+  # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html#service-linked-roles-spot-instance-requests
+  AWSServiceRoleForEC2Spot:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AWSServiceRoleForEC2Spot
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - spot.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/aws-service-role/AWSEC2SpotServiceRolePolicy
+Outputs:
+  AWSServiceRoleForEC2SpotName:
+    Value: !Ref AWSServiceRoleForEC2Spot
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotName'
+  AWSServiceRoleForEC2SpotArn:
+    Value: !GetAtt AWSServiceRoleForEC2Spot.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotArn'
+  AWSServiceRoleForEC2SpotId:
+    Value: !GetAtt AWSServiceRoleForEC2Spot.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotId'
