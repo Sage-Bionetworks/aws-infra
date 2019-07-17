@@ -76,6 +76,10 @@ Parameters:
     Type: Number
     Description: Number of days (from creation) when objects are deleted from S3 and the LifecycleDataStorageClass
     Default: 365000
+  BucketName:
+    Type: String
+    Description: (Optional) Name of the created bucket.
+    Default: ""
 Conditions:
   AllowWrite: !Equals [!Ref AllowWriteBucket, true]
   AllowUserAccess: !Not [!Equals [!Join ['', !Ref GrantAccess], "[]"]]
@@ -83,11 +87,13 @@ Conditions:
   DisableEncryption: !Not [!Condition EnableEncryption]
   CreateIPAddressRestrictionLambda: !Equals [!Ref SameRegionResourceAccessToBucket, true]
   HasSynapseUserName: !Not [!Equals [!Ref SynapseUserName, ""]]
+  HasBucketName: !Not [!Equals [!Ref BucketName, ""]]
 Resources:
   SynapseExternalBucket:
     Type: "AWS::S3::Bucket"
     Condition: DisableEncryption
     Properties:
+      BucketName: !If [HasBucketName, !Ref BucketName, !Ref 'AWS::NoValue']
       VersioningConfiguration:
         Status: !Ref BucketVersioning
       CorsConfiguration:
@@ -118,6 +124,7 @@ Resources:
     Type: "AWS::S3::Bucket"
     Condition: EnableEncryption
     Properties:
+      BucketName: !If [HasBucketName, !Ref BucketName, !Ref 'AWS::NoValue']
       VersioningConfiguration:
         Status: !Ref BucketVersioning
       BucketEncryption:
