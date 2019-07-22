@@ -134,7 +134,7 @@ Parameters:
     Type: Number
     Default: 30
     MinValue: 10
-    MaxValue: 1000
+    MaxValue: 2000
   OpenPort:
     Description: Open a TCP port to incoming traffic
     ConstraintDescription: A port number in the range 1 to 65535
