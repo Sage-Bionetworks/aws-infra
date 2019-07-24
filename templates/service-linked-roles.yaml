@@ -12,11 +12,32 @@ Resources:
     Properties:
       AWSServiceName: "spot.amazonaws.com"
       Description: "SLR for EC2 Spot"
+  # Role for EC2 Spot Fleet to bid on, launch, tag, and terminate instances on your behalf
+  # https://docs.aws.amazon.com/batch/latest/userguide/spot_fleet_IAM_role.html
   AWSServiceRoleForEC2SpotFleet:
     Type: "AWS::IAM::ServiceLinkedRole"
     Properties:
       AWSServiceName: "spotfleet.amazonaws.com"
       Description: "SLR for EC2 Spot Fleet"
+  # Role to grant the Spot Fleet permission to request, launch, terminate, and tag instances on your behalf
+  # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-requests.html
+  AWSEC2SpotFleetTaggingRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: "aws-ec2-spot-fleet-tagging-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - spotfleet.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
 Outputs:
   AWSServiceRoleForEC2SpotId:
     Value: !Ref AWSServiceRoleForEC2Spot
@@ -26,3 +47,11 @@ Outputs:
     Value: !Ref AWSServiceRoleForEC2SpotFleet
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotFleetId'
+  AWSEC2SpotFleetTaggingRoleArn:
+    Value: !GetAtt AWSEC2SpotFleetTaggingRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSEC2SpotFleetTaggingRoleArn'
+  AWSEC2SpotFleetTaggingRoleId:
+    Value: !GetAtt AWSEC2SpotFleetTaggingRole.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSEC2SpotFleetTaggingRoleId'
