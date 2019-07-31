@@ -20,6 +20,24 @@ Parameters:
       - Enabled
       - Suspended
     Default: Suspended
+  Department:
+    Description: 'The department for this resource'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Platform'
+  Project:
+    Description: 'The name of the project that this resource is used for'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Infrastructure'
+  OwnerEmail:
+    Description: 'Email address of the owner of this resource'
+    Type: String
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
+    Default: 'it@sagebase.org'
 Resources:
   # resources for cloudtrail
   AWSLogsCloudtrailLogGroup:
@@ -30,7 +48,14 @@ Resources:
   AWSS3CloudtrailBucket:
     DeletionPolicy: Retain
     Type: "AWS::S3::Bucket"
-    Properties: {}
+    Properties:
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
   AWSIAMS3CloudtrailBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
@@ -130,6 +155,10 @@ Resources:
       EnableLogFileValidation: true
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
+      Tags:
+        Department: !Ref Department
+        Project: !Ref Project
+        OwnerEmail: !Ref OwnerEmail
   # AWS Config service, https://github.com/awslabs/aws-cloudformation-templates/blob/master/aws/services/Config/Config.yaml
   AWSConfigConfigurationRecorder:
     Type: AWS::Config::ConfigurationRecorder
@@ -147,6 +176,14 @@ Resources:
       S3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
   AWSS3ConfigBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
   # Bucket for lambda artifacts
   AWSS3LambdaArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -155,6 +192,13 @@ Resources:
       AccessControl: PublicRead
       VersioningConfiguration:
         Status: !Ref LambdaBucketVersioning
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
   AWSIAMS3LambdaArtifactsBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
@@ -310,6 +354,13 @@ Resources:
               - "kms:GenerateDataKey*"
               - "kms:DescribeKey"
             Resource: "*"
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
   AWSKmsInfraKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
