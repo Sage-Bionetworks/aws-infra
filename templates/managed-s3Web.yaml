@@ -14,14 +14,20 @@ Parameters:
     AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
     ConstraintDescription: must be a valid DNS zone name.
   Department:
-    Description: The department for this resource (i.e. CompOnc, SysBio, Platform, etc..)
+    Description: 'The department for this resource'
     Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
   Project:
-    Description: The project for this resource (i.e. NTAP, BSMN, DREAM, etc..)
+    Description: 'The name of the project that this resource is used for'
     Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
   OwnerEmail:
+    Description: 'Email address of the owner of this resource'
     Type: String
-    Description: The resource owner's email address
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
 Resources:
   WebsiteLogBucket:
     Type: 'AWS::S3::Bucket'

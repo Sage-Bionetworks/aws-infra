@@ -399,6 +399,13 @@ Resources:
           FromPort: -1
           ToPort: -1
           IpProtocol: "-1"
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
   Ec2Instance:
     Type: 'AWS::EC2::Instance'
     Metadata:
