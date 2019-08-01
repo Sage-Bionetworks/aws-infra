@@ -85,12 +85,9 @@ Resources:
             REPORT_TOPIC_ARN: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsInfoArn
             MAX_ACCESS_KEY_AGE: !Ref MaxAccessKeyAge
         Tags:
-          - Key: "Department"
-            Value: !Ref Department
-          - Key: "Project"
-            Value: !Ref Project
-          - Key: "OwnerEmail"
-            Value: !Ref OwnerEmail
+          Department: !Ref Department
+          Project: !Ref Project
+          OwnerEmail: !Ref OwnerEmail
   LambdaExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
