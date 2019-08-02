@@ -155,13 +155,6 @@ Resources:
       EnableLogFileValidation: true
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
-      Tags:
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
   # AWS Config service, https://github.com/awslabs/aws-cloudformation-templates/blob/master/aws/services/Config/Config.yaml
   AWSConfigConfigurationRecorder:
     Type: AWS::Config::ConfigurationRecorder
