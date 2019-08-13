@@ -75,6 +75,11 @@ Resources:
             Type: Schedule
             Properties:
               Schedule: rate(1 day)
+          ExpireAccessKeyFunctionApi:
+            Type: Api
+            Properties:
+              Path: /check
+              Method: get
         Environment:
           Variables:
             GRACE_PERIOD: !Ref GracePeriod
@@ -179,3 +184,13 @@ Outputs:
     Value: !Ref ExpireAccessKeyFunction
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-ExpireAccessKeyFunction'
+  ExpireAccessKeyFunctionArn:
+    Description: "Expire access key lambda Function ARN"
+    Value: !GetAtt ExpireAccessKeyFunction.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ExpireAccessKeyFunctionArn'
+  ExpireAccessKeyFunctionApi:
+    Description: "API Gateway endpoint URL for Expire Access Key function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/check/"
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ExpireAccessKeyFunctionApi'
