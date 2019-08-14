@@ -63,67 +63,81 @@ def lambda_handler(event, context):
     report_message_expired_key = '\n\tAccess key {} for user {} has expired.'
 
     max_age = MAX_ACCESS_KEY_AGE  # access key expiration setting
-    credential_report = get_credential_report()
+    try:
+        credential_report = get_credential_report()
 
-    aws_account_identity = get_aws_account_identity()  # either account name or id
-    logger.debug('aws_account_identity: {}'.format(aws_account_identity))
+        aws_account_identity = get_aws_account_identity()  # either account name or id
+        logger.debug('aws_account_identity: {}'.format(aws_account_identity))
 
-    report = ''     # a report summary for account admins
-    # Iterate over the credential report, use the report to determine the expiration date
-    # Then query for access keys, and use the key creation data to determine key expiration
-    iam_client = boto3.client('iam')
-    for row in credential_report:
-        logger.debug('processing iam account: ' + row['user'])
-        # Skip IAM Users without passwords (service accounts), root user should not have access keys
-        if row['password_enabled'] != "true": continue
-        user_notice = ''     # notices for the IAM users
-        try:
-            # IAM client will fail if root user contains active keys because list_access_keys
-            # method will fail for root username '<root_account>'
-            response = iam_client.list_access_keys(UserName=row['user'])
-            logger.debug("list_access_key response: " + json.dumps(response, default = obj_converter))
-            for key in response['AccessKeyMetadata'] :
-                logger.debug('processing access key: ' + key['AccessKeyId'])
-                if key['Status'] == "Inactive" : continue
-                days_till_expire = get_days_until_key_expires(key['CreateDate'], max_age)
-                logger.debug('days_till_expire: ' + str(days_till_expire))
-                if days_till_expire <= 0:  # key has expired
-                    logger.debug('access key {}:{}:{} has expired'.
-                                 format(aws_account_identity, row['user'], key['AccessKeyId']))
-                    if DISABLE_KEYS:
-                        disable_key(key['AccessKeyId'], row['user'])
-                        logger.debug('deactivated access key {}:{}:{}'.
+        report = ''     # a report summary for account admins
+        # Iterate over the credential report, use the report to determine the expiration date
+        # Then query for access keys, and use the key creation data to determine key expiration
+        iam_client = boto3.client('iam')
+        for row in credential_report:
+            logger.debug('processing iam account: ' + row['user'])
+            # Skip IAM Users without passwords (service accounts), root user should not have access keys
+            if row['password_enabled'] != "true": continue
+            user_notice = ''     # notices for the IAM users
+            try:
+                # IAM client will fail if root user contains active keys because list_access_keys
+                # method will fail for root username '<root_account>'
+                iam_response = iam_client.list_access_keys(UserName=row['user'])
+                logger.debug("list_access_key iam_response: " + json.dumps(iam_response, default = obj_converter))
+                for key in iam_response['AccessKeyMetadata'] :
+                    logger.debug('processing access key: ' + key['AccessKeyId'])
+                    if key['Status'] == "Inactive" : continue
+                    days_till_expire = get_days_until_key_expires(key['CreateDate'], max_age)
+                    logger.debug('days_till_expire: ' + str(days_till_expire))
+                    if days_till_expire <= 0:  # key has expired
+                        logger.debug('access key {}:{}:{} has expired'.
                                      format(aws_account_identity, row['user'], key['AccessKeyId']))
-                        user_notice = user_notice + user_message_deactivated_key.format(key['AccessKeyId'])
-                        report = report + report_message_deactivated_key.format(key['AccessKeyId'], row['user'])
+                        if DISABLE_KEYS:
+                            disable_key(key['AccessKeyId'], row['user'])
+                            logger.debug('deactivated access key {}:{}:{}'.
+                                         format(aws_account_identity, row['user'], key['AccessKeyId']))
+                            user_notice = user_notice + user_message_deactivated_key.format(key['AccessKeyId'])
+                            report = report + report_message_deactivated_key.format(key['AccessKeyId'], row['user'])
 
-                    else:
-                        logger.debug('expired access key {}:{}:{}'.
+                        else:
+                            logger.debug('expired access key {}:{}:{}'.
+                                         format(aws_account_identity, row['user'], key['AccessKeyId']))
+                            user_notice = user_notice + user_message_expired_key.format(key['AccessKeyId'])
+                            report = report + report_message_expired_key.format(key['AccessKeyId'], row['user'])
+
+                    elif days_till_expire < GRACE_PERIOD:
+                        logger.debug('expiring access key {}:{}:{}'.
                                      format(aws_account_identity, row['user'], key['AccessKeyId']))
-                        user_notice = user_notice + user_message_expired_key.format(key['AccessKeyId'])
-                        report = report + report_message_expired_key.format(key['AccessKeyId'], row['user'])
+                        user_notice = user_notice + user_message_expiring_key.format(key['AccessKeyId'],
+                                                                                     days_till_expire)
 
-                elif days_till_expire < GRACE_PERIOD:
-                    logger.debug('expiring access key {}:{}:{}'.
-                                 format(aws_account_identity, row['user'], key['AccessKeyId']))
-                    user_notice = user_notice + user_message_expiring_key.format(key['AccessKeyId'],
-                                                                                 days_till_expire)
+            except ClientError as e:
+                logger.error(e.response['Error']['Message'])
 
-        except ClientError as e:
-            logger.error(e.response['Error']['Message'])
+            if user_notice != '' and SEND_EMAIL and isValidEmail(row['user']):     # email to iam users
+                logger.info("Emailing user " + row['user'])
+                subject = "Notification from AWS account {}".format(aws_account_identity)
+                footer = '\n\tAWS account policy requires rotating access keys every {} days.'.format(max_age)
+                body = user_notice + footer
+                email_user(SENDER_EMAIL, row['user'], subject, body)
 
-        if user_notice != '' and SEND_EMAIL and isValidEmail(row['user']):     # email to iam users
-            logger.info("Emailing user " + row['user'])
-            subject = "Notification from AWS account {}".format(aws_account_identity)
-            footer = '\n\tAWS account policy requires rotating access keys every {} days.'.format(max_age)
-            body = user_notice + footer
-            email_user(SENDER_EMAIL, row['user'], subject, body)
+        if report != '' and SEND_REPORT:      # send reports to an SNS topic
+            logger.info("Publishing report to " + REPORT_TOPIC_ARN)
+            publish_sns_topic(REPORT_TOPIC_ARN,
+                              "Notification from AWS account {}".format(aws_account_identity),
+                              report)
+        return response({'message': 'Success'}, 200)
+    except Exception as e:
+        return response({'message': e.message}, 400)
 
-    if report != '' and SEND_REPORT:      # send reports to an SNS topic
-        logger.info("Publishing report to " + REPORT_TOPIC_ARN)
-        publish_sns_topic(REPORT_TOPIC_ARN,
-                          "Notification from AWS account {}".format(aws_account_identity),
-                          report)
+def response(message, status_code):
+    return {
+        'statusCode': str(status_code),
+        'body': json.dumps(message),
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+            },
+        }
 
 # format objects to strings (for debugging only)
 def obj_converter(o):
