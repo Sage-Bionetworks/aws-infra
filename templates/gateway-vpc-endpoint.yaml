@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Private connection between a VPC and a service
+Parameters:
+  VpcName:
+    Description: 'Name of an existing VPC'
+    Type: String
+  ServiceName:
+    Description: 'Name of an the AWS Service'
+    Type: String
+Resources:
+  GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: "*"
+            Resource: "*"
+            Principal: "*"
+      RouteTableIds:
+        - !ImportValue {'Fn::Sub': '${AWS::Region}-${VpcName}-PrivateRouteTable'}
+      ServiceName: !Ref ServiceName
+      VpcId: !ImportValue {'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'}
+Outputs:
+  GatewayEndpointId:
+    Description: VPC Gateway endpoint ID
+    Value: !Ref GatewayEndpoint
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-GatewayEndpointId'
