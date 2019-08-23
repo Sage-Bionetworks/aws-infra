@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Resources for Packer to build AMIs
+Parameters:
+  Department:
+    Description: 'The department for this resource'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+  Project:
+    Description: 'The name of the project that this resource is used for'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+  OwnerEmail:
+    Description: 'Email address of the owner of this resource'
+    Type: String
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
+Resources:
+  BuilderSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Open a port for incoming traffic"
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+Outputs:
+  BuilderSecurityGroup:
+    Value: !Ref BuilderSecurityGroup
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BuilderSecurityGroup'
+  BuilderSecurityGroupId:
+    Value: !GetAtt BuilderSecurityGroup.GroupId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BuilderSecurityGroupId'
+  BuilderVpcId:
+    Value: !GetAtt BuilderSecurityGroup.VpcId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BuilderVpcId'
