@@ -127,8 +127,7 @@ Resources:
                                            'Principal': '*',
                                            'Action': 's3:GetObject',
                                            'Resource': 'arn:aws:s3:::'+bucket_name+'/*',
-                                           'Condition': {
-                                            'NotIpAddress': {'aws:SourceIp': region_ip_addresses}}
+                                           'Condition': {'NotIpAddress': {'aws:SourceIp': region_ip_addresses}}
                                            }
                 if vpc_ids:
                   # allows listed VPCs to bypass the ip restriction
