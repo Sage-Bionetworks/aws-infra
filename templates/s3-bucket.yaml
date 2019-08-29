@@ -26,6 +26,10 @@ Parameters:
       - true
       - false
     Default: false
+  SameRegionResourceAccessToBucketGrantVpcAccess:
+    Type: CommaDelimitedList
+    Description: Grant bucket access to VPC endpoints (i.e. vpc-111bbb22, vpc-123add45 ). This will allow access via the listed VPCs if SameRegionResourceAccessToBucket is set
+    ConstraintDescription: Comma separated VPC IDs (i.e. vpc-111bbb22, vpc-123add45 )
   BucketVersioning:
     Type: String
     Description: Enabled to enable bucket versionsing, default is Suspended
@@ -57,10 +61,6 @@ Parameters:
     Default: "[]"
     Description: Grant bucket access to accounts, groups, and users.
     ConstraintDescription: List of ARNs (i.e. [arn:aws:iam::011223344556:user/jsmith, arn:aws:iam::544332211006:user/rjones']
-  GrantVpcAccess:
-    Type: CommaDelimitedList
-    Description: Grant bucket access to VPC endpoints (i.e. vpc-111bbb22, vpc-123add45 ). This will allow access via the listed VPCs even if SameRegionResourceAccessToBucket==true
-    ConstraintDescription: Comma separated VPC IDs (i.e. vpc-111bbb22, vpc-123add45 )
   EnableDataLifeCycle:
     Type: String
     Description: Enabled to enable bucket lifecycle rule, default is Disabled
