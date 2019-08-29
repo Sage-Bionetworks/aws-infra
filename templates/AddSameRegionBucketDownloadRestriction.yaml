@@ -27,6 +27,10 @@ Parameters:
     AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
+  GrantVpcAccess:
+    Type: CommaDelimitedList
+    Description: Grant bucket access to VPC endpoints (i.e. vpc-111bbb22, vpc-123add45 ). This will allow access via the listed VPCs even if SameRegionResourceAccessToBucket==true
+    ConstraintDescription: Comma separated VPC IDs (i.e. vpc-111bbb22, vpc-123add45 )
 Resources:
   ExternalBucketGroupPolicyUpdateRole:
     Type: "AWS::IAM::Role"
@@ -69,7 +73,8 @@ Resources:
       Timeout: 10
       Environment:
         Variables:
-          BUCKET_NAME: !Ref BucketName
+          BUCKET_NAME: !Ref "BucketName"
+          VPC_IDS: !Join [ ",", !Ref "GrantVpcAccess"]
           REGION: !Ref "AWS::Region"
       Code:
         ZipFile: |
@@ -79,22 +84,35 @@ Resources:
           import cfnresponse
           from botocore.vendored import requests
 
+          DEFAULT_EMPTY_POLICY = {
+            "Version": "2012-10-17",
+            "Statement": []
+          }
+
           bucket_name = os.environ['BUCKET_NAME']
           region = os.environ['REGION']
           policy_statement_id="DenyGetObjectForNonMatchingIp"
+
 
           # have to put in a not None value for repsonseData or error will be thrown
           custom_resource_response_data = {'Data':''}
 
           def handler(event, context):
             try:
+
+              vpc_ids = [x.strip() for x in str.split(os.environ.get('VPC_IDS', '[]'), sep=',') if x.strip()]
+
               #for the case when this lambda is triggered by aws custom resource
               custom_resource_request_type = event.get('RequestType')
 
               s3_client = boto3.client('s3')
 
               #get current bucket_policy from the s3 bucket and remove old policy if it exists
-              bucket_policy = json.loads(s3_client.get_bucket_policy(Bucket=bucket_name)['Policy'])
+              try:
+                bucket_policy = json.loads(s3_client.get_bucket_policy(Bucket=bucket_name)['Policy'])
+              except:
+                bucket_policy = DEFAULT_EMPTY_POLICY.copy()
+
               bucket_policy['Statement'] = [statement for statement in bucket_policy['Statement'] if (policy_statement_id != statement.get("Sid"))]
 
               # when custom_resource_request_type is None, this lambda is being triggered by the SNS topic, not the CloudFormation custom resource
@@ -109,10 +127,15 @@ Resources:
                                            'Principal': '*',
                                            'Action': 's3:GetObject',
                                            'Resource': 'arn:aws:s3:::'+bucket_name+'/*',
-                                           'Condition': {'NotIpAddress': {'aws:SourceIp': region_ip_addresses}}}
-
-
-
+                                           'Condition': {
+                                            'NotIpAddress': {'aws:SourceIp': region_ip_addresses}}
+                                           }
+                if vpc_ids:
+                  # allows listed VPCs to bypass the ip restriction
+                  new_ip_policy_statement['Condition']['StringNotEquals']={ 'aws:sourceVpc': vpc_ids }
+                else:
+                  # remove existing vpc condition if it exists
+                  new_ip_policy_statement['Condition'].pop('StringNotEquals', {})
 
                 #add new IP address policy statement
                 bucket_policy['Statement'].append(new_ip_policy_statement)
