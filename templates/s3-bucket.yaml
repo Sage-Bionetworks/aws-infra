@@ -26,10 +26,6 @@ Parameters:
       - true
       - false
     Default: false
-  SameRegionResourceAccessToBucketGrantVpcAccess:
-    Type: CommaDelimitedList
-    Description: Grant bucket access to VPC endpoints (i.e. vpc-111bbb22, vpc-123add45 ). This will allow access via the listed VPCs if SameRegionResourceAccessToBucket is set
-    ConstraintDescription: Comma separated VPC IDs (i.e. vpc-111bbb22, vpc-123add45 )
   BucketVersioning:
     Type: String
     Description: Enabled to enable bucket versionsing, default is Suspended
