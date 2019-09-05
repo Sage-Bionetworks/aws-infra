@@ -27,10 +27,12 @@ Parameters:
     AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
+  # This lambda, by default, restricts access to buckets when Gateway VPC Endpoints are enabled on an AWS account
+  # This parameter overrides that by explicitly granting bucket access to resources in this list of VPCs.
   SameRegionResourceAccessToBucketGrantVpcAccess:
     Type: CommaDelimitedList
-    Description: Grant bucket access to VPC endpoints (i.e. vpc-111bbb22, vpc-123add45 ). This will allow access via the listed VPCs if SameRegionResourceAccessToBucket is set
-    ConstraintDescription: Comma separated VPC IDs (i.e. vpc-111bbb22, vpc-123add45 )
+    Description: Allow resources in a VPC (i.e. ["vpc-111bbb22, vpc-123add45"]) to access the bucket
+    ConstraintDescription: Comma separated list of VPC IDs (i.e. ["vpc-111bbb22, vpc-123add45"])
 Resources:
   ExternalBucketGroupPolicyUpdateRole:
     Type: "AWS::IAM::Role"
