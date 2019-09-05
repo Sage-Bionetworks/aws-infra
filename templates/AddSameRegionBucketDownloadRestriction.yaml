@@ -31,8 +31,8 @@ Parameters:
   # This parameter overrides that by explicitly granting bucket access to resources in this list of VPCs.
   SameRegionResourceAccessToBucketGrantVpcAccess:
     Type: CommaDelimitedList
-    Description: Allow resources in a VPC (i.e. ["vpc-111bbb22, vpc-123add45"]) to access the bucket
-    ConstraintDescription: Comma separated list of VPC IDs (i.e. ["vpc-111bbb22, vpc-123add45"])
+    Description: Allow resources in a VPC (i.e. ["vpc-111bbb22", "vpc-123add45"]) to access the bucket
+    ConstraintDescription: Comma separated list of VPC IDs (i.e. ["vpc-111bbb22", "vpc-123add45"])
 Resources:
   ExternalBucketGroupPolicyUpdateRole:
     Type: "AWS::IAM::Role"
