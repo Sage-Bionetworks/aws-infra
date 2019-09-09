@@ -26,6 +26,12 @@ Parameters:
       - true
       - false
     Default: false
+  # only used with SameRegionResourceAccessToBucket, more info in AddSameRegionBucketDownloadRestriction.yaml
+  SameRegionResourceAccessToBucketGrantVpcAccess:
+    Type: String
+    Default: "[]"
+    Description: Grant bucket access to VPC endpoints (only used with SameRegionResourceAccessToBucket)
+    ConstraintDescription: Comma separated list of VPC IDs (i.e. ["vpc-111bbb22", "vpc-1a2b3c4d5e"])
   BucketVersioning:
     Type: String
     Description: Enabled to enable bucket versionsing, default is Suspended
@@ -56,7 +62,7 @@ Parameters:
     Type: CommaDelimitedList
     Default: "[]"
     Description: Grant bucket access to accounts, groups, and users.
-    ConstraintDescription: List of ARNs (i.e. [arn:aws:iam::011223344556:user/jsmith, arn:aws:iam::544332211006:user/rjones']
+    ConstraintDescription: List of ARNs (i.e. ["arn:aws:iam::011223344556:user/jsmith", "arn:aws:iam::544332211006:user/rjones"]
   EnableDataLifeCycle:
     Type: String
     Description: Enabled to enable bucket lifecycle rule, default is Disabled
@@ -194,9 +200,10 @@ Resources:
     Condition: CreateIPAddressRestrictionLambda
     Properties:
       # template uploaded from Sage-Bionetworks/aws-infra repo
-      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/v0.0.4/AddSameRegionBucketDownloadRestriction.yaml'
+      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/v0.1.0/AddSameRegionBucketDownloadRestriction.yaml'
       Parameters:
         BucketName: !If [EnableEncryption, !Ref SynapseEncryptedExternalBucket, !Ref SynapseExternalBucket]
+        SameRegionResourceAccessToBucketGrantVpcAccess: !Ref SameRegionResourceAccessToBucketGrantVpcAccess
       Tags:
         - Key: "Name"
           Value: !Ref 'AWS::StackName'
