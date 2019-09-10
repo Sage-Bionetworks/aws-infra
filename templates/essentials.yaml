@@ -13,6 +13,7 @@ Parameters:
     Description: The AWS account running the Sophos-VPN
     AllowedPattern: '[0-9]*'
     ConstraintDescription: Must be account number without dashes
+    Default: '745159704268'
   LambdaBucketVersioning:
     Type: String
     Description: Enabled to enable bucket versionsing, default is Suspended
