@@ -40,14 +40,6 @@ Resources:
       UserName: !Ref AWSIAMTravisUser
   AWSIAMTravisUser:
     Type: 'AWS::IAM::User'
-    Properties:
-      Groups:
-        - !Ref AWSIAMCiGroup
-  AWSIAMCiGroup:
-    Type: 'AWS::IAM::Group'
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AdministratorAccess
   # Cloudformation bucket for CF templates
   AWSS3CloudformationBucket:
     Type: "AWS::S3::Bucket"
