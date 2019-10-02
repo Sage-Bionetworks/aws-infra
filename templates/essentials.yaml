@@ -429,6 +429,21 @@ Resources:
                   - "ec2:CreateTags"
                 Resource:
                   - 'arn:aws:ec2:*::snapshot/*'
+  AWSSSMAutomationServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - 'ssm.amazonaws.com'
+            - 'ec2.amazonaws.com'
+          Action: ['sts:AssumeRole']
+      ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole']
+      Path: "/"
+      RoleName: AutomationServiceRole
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
