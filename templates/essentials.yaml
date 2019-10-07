@@ -393,11 +393,13 @@ Resources:
                   - "ec2:Describe*"
                   - "ec2:CreateTags"
                 Resource: "*"
-  TagRootVolumeProfile:
+  # The instance profile includes a list of roles that will apply to the instance stack
+  InstanceRolesProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Path: "/"
       Roles:
+        - !Ref AutomationServiceRole
         - !Ref TagRootVolumeRole
   # Role for Data Lifecycle Manager (DLM)
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
@@ -470,11 +472,16 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
-  TagRootVolumeProfile:
-    Description: Profile to allow instances to tag its root volume
-    Value: !Ref TagRootVolumeProfile
+  EssentialProfile:
+    Description: Profile to allow instances to adopt roles and interact with services
+    Value: !Ref InstanceRolesProfile
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeProfile'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-EssentialProfile'
+  AWSSSMAutomationServiceRole:
+    Description: Role to allow instances to interact with SSM services
+    Value: !Ref AWSSSMAutomationServiceRole
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSSSMAutomationServiceRole'  
   TagRootVolumeRole:
     Description: Role to allow instances to tag its root volume
     Value: !Ref TagRootVolumeRole
