@@ -399,7 +399,7 @@ Resources:
     Properties:
       Path: "/"
       Roles:
-        - !Ref AutomationServiceRole
+        - !Ref AWSSSMAutomationServiceRole
         - !Ref TagRootVolumeRole
   # Role for Data Lifecycle Manager (DLM)
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
