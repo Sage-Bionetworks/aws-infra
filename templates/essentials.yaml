@@ -366,8 +366,7 @@ Resources:
           - !Ref AWS::StackName
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
-  # Allow instances to apply tags to its root volume
-  TagRootVolumeRole:
+  ComputingInstanceRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -381,6 +380,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Path: "/"
+      # Allow instances to apply tags to its root volume
       Policies:
         -
           PolicyName: "TagInstanceVolume"
@@ -393,14 +393,12 @@ Resources:
                   - "ec2:Describe*"
                   - "ec2:CreateTags"
                 Resource: "*"
-  # The instance profile includes a list of roles that will apply to the instance stack
-  InstanceRolesProfile:
+  ComputingInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Path: "/"
       Roles:
-        - !Ref AWSSSMAutomationServiceRole
-        - !Ref TagRootVolumeRole
+        - !Ref ComputingInstanceRole
   # Role for Data Lifecycle Manager (DLM)
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
   AWSDataLifecycleManagerDefaultRole:
@@ -431,21 +429,22 @@ Resources:
                   - "ec2:CreateTags"
                 Resource:
                   - 'arn:aws:ec2:*::snapshot/*'
-  AWSSSMAutomationServiceRole:
-    Type: AWS::IAM::Role
+  AWSSSMManagedInstanceRole:
+    Type: 'AWS::IAM::Role'
     Properties:
+      Path: '/'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
         - Effect: Allow
           Principal:
             Service:
-            - 'ssm.amazonaws.com'
             - 'ec2.amazonaws.com'
-          Action: ['sts:AssumeRole']
-      ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole']
+          Action: 
+            - 'sts:AssumeRole'
+      ManagedPolicyArns: 
+            - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
       Path: "/"
-      RoleName: AutomationServiceRole
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
@@ -492,3 +491,8 @@ Outputs:
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSDataLifecycleManagerDefaultRoleArn'
+  AWSSSMManagedInstanceRoleArn:
+    Description: Managed instance role for Systems Manager
+    Value: !GetAtt AWSSSMManagedInstanceRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSSSMManagedInstanceRoleArn'
