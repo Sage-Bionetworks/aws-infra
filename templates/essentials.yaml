@@ -444,7 +444,6 @@ Resources:
             - 'sts:AssumeRole'
       ManagedPolicyArns: 
             - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
-      Path: "/"
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
