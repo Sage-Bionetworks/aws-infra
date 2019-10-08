@@ -470,21 +470,16 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
-  EssentialProfile:
+  ComputeInstanceProfile:
     Description: Profile to allow instances to adopt roles and interact with services
-    Value: !Ref InstanceRolesProfile
+    Value: !Ref ComputeInstanceProfile
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-EssentialProfile'
-  AWSSSMAutomationServiceRole:
-    Description: Role to allow instances to interact with SSM services
-    Value: !Ref AWSSSMAutomationServiceRole
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSSSMAutomationServiceRole'  
-  TagRootVolumeRole:
+  ComputeInstanceRole:
     Description: Role to allow instances to tag its root volume
-    Value: !Ref TagRootVolumeRole
+    Value: !Ref ComputeInstanceRole
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeRole'  
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputeInstanceRole'  
   AWSDataLifecycleManagerDefaultRoleArn:
     Description: Default Data Lifecycle Manager role arn
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
