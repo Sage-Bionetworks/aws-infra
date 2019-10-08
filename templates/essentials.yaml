@@ -366,7 +366,7 @@ Resources:
           - !Ref AWS::StackName
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
-  ComputingInstanceRole:
+  TagRootVolumeRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -393,12 +393,12 @@ Resources:
                   - "ec2:Describe*"
                   - "ec2:CreateTags"
                 Resource: "*"
-  ComputingInstanceProfile:
+  TagRootVolumeProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Path: "/"
       Roles:
-        - !Ref ComputingInstanceRole
+        - !Ref TagRootVolumeRole
   # Role for Data Lifecycle Manager (DLM)
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
   AWSDataLifecycleManagerDefaultRole:
@@ -440,9 +440,9 @@ Resources:
           Principal:
             Service:
             - 'ec2.amazonaws.com'
-          Action: 
+          Action:
             - 'sts:AssumeRole'
-      ManagedPolicyArns: 
+      ManagedPolicyArns:
             - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
 Outputs:
   AWSS3CloudtrailBucket:
@@ -470,16 +470,16 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
-  ComputingInstanceProfile:
+  TagRootVolumeProfile:
     Description: Profile to allow instances to adopt roles and interact with services
-    Value: !Ref ComputingInstanceProfile
+    Value: !Ref TagRootVolumeProfile
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputingProfile'
-  ComputingInstanceRole:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeProfile'
+  TagRootVolumeRole:
     Description: Role to allow instances to tag its root volume
-    Value: !Ref ComputingInstanceRole
+    Value: !Ref TagRootVolumeRole
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputingInstanceRole'  
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeRole'
   AWSDataLifecycleManagerDefaultRoleArn:
     Description: Default Data Lifecycle Manager role arn
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn

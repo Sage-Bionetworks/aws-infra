@@ -247,7 +247,7 @@ Resources:
           SubnetId: !ImportValue
             'Fn::Sub': '${AWS::Region}-${VpcName}-${VpcSubnet}'
       IamInstanceProfile: !ImportValue
-        'Fn::Sub': '${AWS::Region}-essentials-ComputingInstanceProfile'
+        'Fn::Sub': '${AWS::Region}-essentials-TagRootVolumeProfile'
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
