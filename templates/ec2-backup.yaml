@@ -44,4 +44,3 @@ Resources:
             RetainRule:
               Count: !Ref SnapshotCount
             CopyTags: true
-
