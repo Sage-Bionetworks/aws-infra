@@ -82,4 +82,3 @@ tests:
   #   regions:
   #     - us-east-1
   #   template_file: managed-s3WebCloudfront.yaml
-

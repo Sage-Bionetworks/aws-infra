@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 
 Description: Creates a stack to deploy the IAM Role needed to manage
   your AWS resources with ParkMyCloud. Grants the minimum essential
-  permissions needed for proper ParkMyCloud operations. See 
+  permissions needed for proper ParkMyCloud operations. See
   https://parkmycloud.atlassian.net/wiki/x/BYCMAg for more information.
 
 Metadata:
@@ -54,9 +54,9 @@ Resources:
               StringEquals:
                 "sts:ExternalId": !Ref PMCExternalID
             Action:
-              - sts:AssumeRole 
+              - sts:AssumeRole
   ParkMyCloudCrossAccountPolicy:
-    Type: AWS::IAM::Policy  # Change Policy to ManagedPolicy if you want 
+    Type: AWS::IAM::Policy  # Change Policy to ManagedPolicy if you want
                             # to use a standalone IAM policy object
     Properties:
       # If you use a ManagedPolicy, comment-out the PolicyName
