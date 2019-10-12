@@ -484,7 +484,7 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
   TagRootVolumeProfile:
-    Description: Profile to allow instances to adopt roles and interact with services
+    Description: Profile to allow instances to tag its root volume
     Value: !Ref TagRootVolumeProfile
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeProfile'
@@ -494,7 +494,7 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeRole'
   ComputingInstanceProfile:
-    Description: Profile to allow instances to adopt roles and interact with services
+    Description: Profile to allow instances to tag and interact with services
     Value: !Ref ComputingInstanceProfile
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputingInstanceProfile'
