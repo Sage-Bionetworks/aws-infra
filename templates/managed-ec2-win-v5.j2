@@ -17,7 +17,7 @@ Parameters:
   InstanceType:
     Description: WebServer EC2 instance type
     Type: String
-    Default: t3.nano
+    Default: t3.medium
   JcConnectKey:
     Description: Connection key used to let JC agent connect to a Jumpcloud account.
     Type: String
@@ -76,12 +76,12 @@ Parameters:
     Default: 'yes'
   AMIId:
     Description: ID of the AMI to deploy
-    Type: 'AWS::EC2::Image::Id'
+    Type: String
   VolumeSize:
     Description: The EC2 volume size (in GB)
     Type: Number
-    Default: 8
-    MinValue: 8
+    Default: 30
+    MinValue: 10
     MaxValue: 2000
   BackupEc2:
     Type: String
@@ -136,6 +136,8 @@ Resources:
         configSets:
           SetupCfn:
             - cfn_hup_service
+          SetupApps:
+            - install_apps
           SetupJumpcloud:
             - install_jc
             - config_jc
@@ -145,108 +147,114 @@ Resources:
         # When there is change in the contents of json file in the metadata section, cfn-hup will call cfn-init.
         cfn_hup_service:
           files:
-            /etc/cfn/cfn-hup.conf:
-              content: !Sub |
-                [main]
-                stack=${AWS::StackId}
-                region=${AWS::Region}
-                verbose=true
-                interval=5
-              mode: "000400"
-              owner: root
-              group: root
-            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              content: !Sub |
-                [cfn-auto-reloader-hook]
-                triggers=post.update
-                path=Resources.Ec2Instance.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupJumpcloud,SetupVolume --region ${AWS::Region}
-              mode: "000400"
-              owner: root
-              group: root
-            /lib/systemd/system/cfn-hup.service:
-              content: !Sub |
-                [Unit]
-                Description=cfn-hup daemon
-
-                [Service]
-                Type=simple
-                ExecStart=/opt/aws/bin/cfn-hup
-                Restart=always
-
-                [Install]
-                WantedBy=multi-user.target
-              mode: "000400"
-              owner: root
-              group: root
+             "c:\\cfn\\cfn-hup.conf":
+               content: !Sub |
+                 [main]
+                 stack=${AWS::StackId}
+                 region=${AWS::Region}
+                 interval=1
+             "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf":
+               content: !Sub |
+                 [cfn-auto-reloader-hook]
+                 triggers=post.update
+                 path=Resources.Ec2Instance.Metadata.AWS::CloudFormation::Init
+                 action=cfn-init.exe -v --stack ${AWS::StackId} --resource Ec2Instance --region ${AWS::Region} --configsets SetupCfn,SetupApps,SetupJumpcloud,SetupVolume
+          services:
+            windows:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                  - "c:\\cfn\\cfn-hup.conf"
+                  - "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
+        install_apps:
+          files:
+            'c:\\scripts\\install-chocolatey.ps1':
+              source: "https://chocolatey.org/install.ps1"
+              mode: "0664"
           commands:
-            01_enable_cfn-hup:
-              command: "/bin/systemctl enable cfn-hup.service"
-            02_start_cfn-hup:
-              command: "/bin/systemctl start cfn-hup.service"
+            01_install_nuget:
+              command: 'Powershell.exe Install-PackageProvider -Name NuGet -Force'
+            02_install_chocolatey:
+              command: !Join
+                - ''
+                - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
+                  - 'Powershell.exe C:\scripts\install-chocolatey.ps1 > C:\scripts\install-chocolatey.log'
+            03_install_jq:
+              command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install jq --yes'
+            04_install_awscli:
+              command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install awscli --yes'
+            05_install_googlechrome:
+              command: 'Powershell.exe C:\ProgramData\chocolatey\bin\choco install googlechrome  --yes --ignore-checksums'
         install_jc:
-          packages:
-          {% if sceptre_user_data.Distro.lower() == 'aws' %}
-            yum:
-          {% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
-            apt:
-              awscli: []
-          {% endif %}
-              jq: []
+          files:
+            'c:\scripts\install-ms-vc.ps1':
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/v1.0.2/aws/install-ms-vc.ps1"
+              mode: "0664"
+            'c:\\scripts\\install-jc-agent.ps1':
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/v1.0.2/aws/install-jc-agent.ps1"
+              mode: "0664"
           commands:
-            01_jumpcloud_agent:
+            01_install_ms_vc:
               command: !Join
                 - ''
-                - - "/usr/bin/curl --silent --show-error --header 'x-connect-key: "
+                - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
+                  - 'Powershell.exe C:\scripts\install-ms-vc.ps1 > C:\scripts\install-ms-vc.log'
+            02_install_jc_agent:
+              command: !Join
+                - ''
+                - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
+                  - 'Powershell.exe C:\scripts\install-jc-agent.ps1 '
+                  - ' -JcConnectKey '
                   - !Ref JcConnectKey
-                  - "' https://kickstart.jumpcloud.com/Kickstart | sudo bash"
+                  - ' > C:\scripts\install-jc-agent.log'
         config_jc:
+          files:
+            'c:\\scripts\\associate-jc-system.ps1':
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/v1.0.2/aws/associate-jc-system.ps1"
+              mode: "0664"
           commands:
-            # allow agent time to register with jumpcloud account
-            01_wait_registeration:
-              command: "sleep 10"
-            02_associate_jc_systems:
+            01_associate_jc_systems:
               command: !Join
                 - ''
-                - - "JC_SYSTEM_ID=$(sudo cat /opt/jc/jcagent.conf|jq -r '.systemKey'); "
-                  - "JC_USER_ID=$(/usr/bin/curl --silent --show-error -X GET https://console.jumpcloud.com/api/systemusers "
-                  - "-H 'Accept: application/json' -H 'Content-Type: application/json' -H 'x-api-key: "
+                - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
+                  - 'Powershell.exe C:\scripts\associate-jc-system.ps1 '
+                  - ' -JcServiceApiKey '
                   - !Ref JcServiceApiKey
-                  - "' | jq -r '.results | .[] | select(.email==\""
+                  - ' -JcSystemsGroupId '
+                  - !Ref JcSystemsGroupId
+                  - ' -OwnerEmail '
                   - !Ref OwnerEmail
-                  - "\") | .id'); "
-                  - "/usr/bin/curl -X POST https://console.jumpcloud.com/api/v2/users/$JC_USER_ID/associations "
-                  - "-H 'Accept: application/json' -H 'Content-Type: application/json' -H 'x-api-key: "
-                  - !Ref JcServiceApiKey
-                  - "' -d '{\"attributes\":{\"sudo\":{\"enabled\":true,\"withoutPassword\":false}},\"op\":\"add\",\"type\":\"system\",\"id\":\"'$JC_SYSTEM_ID'\"}'"
+                  - ' > C:\scripts\associate-jc-system.log'
         tag_volume:
+          files:
+             "c:\\scripts\\tag-instance-volume.ps1":
+              source: "https://raw.githubusercontent.com/Sage-Bionetworks/infra-utils/v1.0.2/aws/tag-instance-volume.ps1"
+              mode: "0664"
           commands:
-            01_tag_root_disk:
+            01_tag_instance_volume:
               command: !Join
                 - ''
-                - - "EC2_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "
-                  - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "
-                  - "--filters Name=attachment.instance-id,Values=$EC2_INSTANCE_ID "
-                  - "--query Volumes[].VolumeId --out text); "
-                  - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
-                  - "--tags Key=Name,Value=$EC2_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "
-                  - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"
-              env:
-                AWS_REGION: !Ref AWS::Region
-                STACK_NAME: !Ref AWS::StackName
-                DEPARTMENT: !Ref Department
-                PROJECT: !Ref Project
-                OWNER_EMAIL: !Ref OwnerEmail
+                - - 'Powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force;'
+                  - 'Powershell.exe C:\scripts\tag-instance-volume.ps1 '
+                  - ' -AwsRegion '
+                  - !Ref AWS::Region
+                  - ' -StackName '
+                  - !Ref AWS::StackName
+                  - ' -Department '
+                  - !Ref Department
+                  - ' -Project '
+                  - !Ref Project
+                  - ' -OwnerEmail '
+                  - !Ref OwnerEmail
+                  - ' > C:\scripts\tag-instance-volume.log'
+    Properties:
       ImageId: !Ref AMIId
       InstanceType: !Ref InstanceType
       KeyName: !If [HasKeyName, !Ref KeyName, !Ref 'AWS::NoValue']
       BlockDeviceMappings:
         -
-        {% if sceptre_user_data.Distro.lower() == 'aws' %}
-          DeviceName: "/dev/xvda"
-        {% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
           DeviceName: "/dev/sda1"
-        {% endif %}
           Ebs:
             DeleteOnTermination: true
             VolumeSize: !Ref VolumeSize
@@ -266,19 +274,10 @@ Resources:
         'Fn::Sub': '${AWS::Region}-essentials-ComputingInstanceProfile'
       UserData:
         Fn::Base64: !Sub |
-          #!/bin/bash
-        {% if sceptre_user_data.Distro.lower() == 'aws' %}
-          /bin/yum update -y aws-cfn-bootstrap
-        {% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
-          export DEBIAN_FRONTEND=noninteractive
-          /usr/bin/apt-get update -y
-          /usr/bin/apt-get install -y python-pip
-          /usr/bin/apt-get install -y python-setuptools
-          /bin/mkdir -p /opt/aws/bin
-          /usr/bin/python /usr/lib/python2.7/dist-packages/easy_install.py --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
-        {% endif %}
-          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupJumpcloud,SetupVolume --region ${AWS::Region}
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource Ec2Instance --region ${AWS::Region}
+          <script>
+          cfn-init.exe -v --stack ${AWS::StackId} --resource Ec2Instance --region ${AWS::Region} --configsets SetupCfn,SetupApps,SetupJumpcloud,SetupVolume
+          cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource Ec2Instance --region ${AWS::Region}
+          </script>
       Tags:
         - Key: "parkmycloud"
           Value: !Ref ParkMyCloudManaged
@@ -294,11 +293,8 @@ Resources:
           Value: !Ref MaintenanceWindow
     CreationPolicy:
       ResourceSignal:
-      {% if sceptre_user_data.Distro.lower() == 'ubuntu' %}
-        Timeout: PT10M
-      {% else %}
-        Timeout: PT5M
-      {% endif %}
+        Count: 1
+        Timeout: "PT30M"
   Ec2Backup:
     Type: 'AWS::CloudFormation::Stack'
     Condition: EnableEc2Backup

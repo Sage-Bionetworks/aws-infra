@@ -38,6 +38,10 @@ Parameters:
     AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
+  MaintenanceWindow:
+    Description: 'Acceptable outage intervals for Systems Manager changes'
+    Type: String
+    Default: 'Weekly-0400SundayUTC-7'
 Resources:
   # resources for cloudtrail
   AWSLogsCloudtrailLogGroup:
@@ -366,39 +370,63 @@ Resources:
           - !Ref AWS::StackName
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
+  # Allow instances to apply tags to its root volume
+  AWSIAMRootVolumeTaggingManagedPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: "Allow"
+            Action:
+              - "ec2:Describe*"
+              - "ec2:CreateTags"
+            Resource: "*"
   TagRootVolumeRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Effect: "Allow"
+          - Effect: "Allow"
             Principal:
               Service:
                 - "ec2.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Path: "/"
-      # Allow instances to apply tags to its root volume
-      Policies:
-        -
-          PolicyName: "TagInstanceVolume"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              -
-                Effect: "Allow"
-                Action:
-                  - "ec2:Describe*"
-                  - "ec2:CreateTags"
-                Resource: "*"
+      ManagedPolicyArns:
+        - !Ref AWSIAMRootVolumeTaggingManagedPolicy
+  ComputingInstanceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: '/'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - !Ref AWSIAMRootVolumeTaggingManagedPolicy
+  #TagRootVolumeProfile is for currently deployed EC2 instances and should not be used for future ones
   TagRootVolumeProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Path: "/"
       Roles:
         - !Ref TagRootVolumeRole
+  ComputingInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref ComputingInstanceRole
   # Role for Data Lifecycle Manager (DLM)
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
   AWSDataLifecycleManagerDefaultRole:
@@ -429,21 +457,6 @@ Resources:
                   - "ec2:CreateTags"
                 Resource:
                   - 'arn:aws:ec2:*::snapshot/*'
-  AWSSSMManagedInstanceRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      Path: '/'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - 'ec2.amazonaws.com'
-          Action:
-            - 'sts:AssumeRole'
-      ManagedPolicyArns:
-            - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
 Outputs:
   AWSS3CloudtrailBucket:
     Value: !Ref AWSS3CloudtrailBucket
@@ -480,13 +493,22 @@ Outputs:
     Value: !Ref TagRootVolumeRole
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeRole'
+  ComputingInstanceProfile:
+    Description: Profile to allow instances to adopt roles and interact with services
+    Value: !Ref ComputingInstanceProfile
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputingInstanceProfile'
+  ComputingInstanceRole:
+    Description: Role to allow instances tag and receive management via Systems Manager
+    Value: !Ref ComputingInstanceRole
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputingInstanceRole'
+  MaintenanceWindow:
+    Value: !Ref MaintenanceWindow
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-MaintenanceWindow'
   AWSDataLifecycleManagerDefaultRoleArn:
     Description: Default Data Lifecycle Manager role arn
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSDataLifecycleManagerDefaultRoleArn'
-  AWSSSMManagedInstanceRoleArn:
-    Description: Managed instance role for Systems Manager
-    Value: !GetAtt AWSSSMManagedInstanceRole.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSSSMManagedInstanceRoleArn'
