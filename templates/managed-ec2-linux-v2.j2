@@ -237,6 +237,7 @@ Resources:
                 DEPARTMENT: !Ref Department
                 PROJECT: !Ref Project
                 OWNER_EMAIL: !Ref OwnerEmail
+    Properties:
       ImageId: !Ref AMIId
       InstanceType: !Ref InstanceType
       KeyName: !If [HasKeyName, !Ref KeyName, !Ref 'AWS::NoValue']
