@@ -25,7 +25,6 @@ Parameters:
     Type: String
     AllowedPattern: '^tgw-[a-z0-9]+$'
     ConstraintDescription: 'Must be a transit gateway Id (i.e. tgw-1111148306e2d3b5)'
-    Default: 'tgw-03447748306e2d3b5'   # ID for sage-tgw transit gateway
   VpcName:
     Description: 'The transit gateway will attach to this VPC Id'
     Type: String
