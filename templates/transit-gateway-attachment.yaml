@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Setup an AWS transit gateway attachment
+Parameters:
+  Department:
+    Description: 'The department for this resource'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Platform'
+  Project:
+    Description: 'The name of the project that this resource is used for'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Infrastructure'
+  OwnerEmail:
+    Description: 'Email address of the owner of this resource'
+    Type: String
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
+    Default: 'it@sagebase.org'
+  TransitGatewayId:
+    Description: 'The transit gateway Id'
+    Type: String
+    AllowedPattern: '^tgw-[a-z0-9]+$'
+    ConstraintDescription: 'Must be a transit gateway Id (i.e. tgw-1111148306e2d3b5)'
+  VpcName:
+    Description: 'The transit gateway will attach to this VPC Id'
+    Type: String
+Resources:
+  TransitGatewayAttachment:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties:
+      SubnetIds:
+        - !ImportValue
+          'Fn::Sub': '${AWS::Region}-${VpcName}-PrivateSubnet'
+        - !ImportValue
+          'Fn::Sub': '${AWS::Region}-${VpcName}-PrivateSubnet1'
+        - !ImportValue
+          'Fn::Sub': '${AWS::Region}-${VpcName}-PrivateSubnet2'
+      Tags:
+        - Key: Name
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+      TransitGatewayId: !Ref TransitGatewayId
+      VpcId: !ImportValue
+        'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
+
+Outputs:
+  TransitGatewayAttachment:
+    Description: This Is the transit gateway attachment
+    Value: !Ref TransitGatewayAttachment
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TransitGatewayAttachment'
