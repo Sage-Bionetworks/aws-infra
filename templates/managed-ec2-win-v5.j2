@@ -2,13 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Provision EC2 instance, connect to Jumpcloud, and associate with a jumpcloud systems group.
 Parameters:
-  MaintenanceWindow:
-    Description: 'Acceptable outage intervals for Systems Manager changes'
-    Type: String
-    #    TODO @ahayden - update with pattern
-    #    AllowedPattern: '^(Weekly|Monthly)+(????)+(Tuesday|Sunday)+(UTC'
-    ContraintDescription: Must define an interval and time zone for an hourly window
-    Default: 'Weekly-0400SundayUTC-7'
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
     Type: 'AWS::EC2::KeyPair::KeyName'
@@ -289,8 +282,6 @@ Resources:
           Value: !Ref Project
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
-        - Key: "MaintenanceWindow"
-          Value: !Ref MaintenanceWindow
     CreationPolicy:
       ResourceSignal:
         Count: 1
