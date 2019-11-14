@@ -15,7 +15,9 @@ global:
     - us-west-1
     - us-west-2
   tags:
-    - "taskcat"
+    -
+      Key: "owner"
+      Value: "taskcat"
 tests:
   sumologic-role:
     parameter_input: sumologic-role-input.json
