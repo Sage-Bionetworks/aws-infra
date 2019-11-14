@@ -1,5 +1,5 @@
 ---
-project:
+general:
   package-lambda: true
   owner: tcisagebio@sagebase.org
   qsname: aws-infra
