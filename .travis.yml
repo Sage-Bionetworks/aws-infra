@@ -29,7 +29,7 @@ jobs:
         - sam package --template-file lambdas/build/jumpcloud/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/jumpcloud.yaml
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
-        - taskcat test run -p . --tag owner=taskcat
+        - taskcat test run -i ci/taskcat.yaml --tag owner=taskcat
     - stage: deploy
       script:
         - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
