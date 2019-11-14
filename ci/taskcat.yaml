@@ -14,8 +14,8 @@ global:
     - us-east-1
     - us-west-1
     - us-west-2
-  tags: 
-    - taskcat
+  tags:
+    - "taskcat"
 tests:
   sumologic-role:
     parameter_input: sumologic-role-input.json
