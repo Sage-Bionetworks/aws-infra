@@ -20,33 +20,33 @@ tests:
     parameter_input: sumologic-role-input.json
     regions:
       - us-east-1
-    template: sumologic-role.yaml
+    template: ../templates/sumologic-role.yaml
   ParkMyCloud:
     parameter_input: ParkMyCloud-input.json
     regions:
       - us-east-1
-    template: ParkMyCloud.yaml
+    template: ../templates/ParkMyCloud.yaml
   AccountAlertTopics:
     parameter_input: AccountAlertTopics-input.json
     regions:
       - us-east-1
-    template: AccountAlertTopics.yaml
+    template: ../templates/AccountAlertTopics.yaml
   jumpcloud:
     parameter_input: jumpcloud-input.json
     regions:
       - us-east-1
-    template: jumpcloud.yaml
+    template: ../templates/jumpcloud.yaml
   # test depends on resources in Sage-Bionetworks/admincentral-infra/config/prod/taskcat.yaml
   AddSameRegionBucketDownloadRestriction:
     parameter_input: AddSameRegionBucketDownloadRestriction-input.json
     regions:
       - us-east-1
-    template: AddSameRegionBucketDownloadRestriction.yaml
+    template: ../templates/AddSameRegionBucketDownloadRestriction.yaml
   bootstrap:
     parameter_input: bootstrap-input.json
     regions:
       - us-east-1
-    template: bootstrap.yaml
+    template: ../templates/bootstrap.yaml
   vpc:
     parameter_input: vpc-input.json
     regions:
@@ -56,7 +56,7 @@ tests:
     parameter_input: ec2-backup-input.json
     regions:
       - us-east-1
-    template: ec2-backup.yaml
+    template: ../templates/ec2-backup.yaml
 
   # Tests disabled due to issue: https://github.com/aws-quickstart/taskcat/issues/278
   #  s3-bucket:
