@@ -17,43 +17,43 @@ project:
     owner: "taskcat"
 tests:
   sumologic-role:
-    parameters: sumologic-role-input.json
+    parameter_input: sumologic-role-input.json
     regions:
       - us-east-1
     template: sumologic-role.yaml
   ParkMyCloud:
-    parameters: ParkMyCloud-input.json
+    parameter_input: ParkMyCloud-input.json
     regions:
       - us-east-1
     template: ParkMyCloud.yaml
   AccountAlertTopics:
-    parameters: AccountAlertTopics-input.json
+    parameter_input: AccountAlertTopics-input.json
     regions:
       - us-east-1
     template: AccountAlertTopics.yaml
   jumpcloud:
-    parameters: jumpcloud-input.json
+    parameter_input: jumpcloud-input.json
     regions:
       - us-east-1
     template: jumpcloud.yaml
   # test depends on resources in Sage-Bionetworks/admincentral-infra/config/prod/taskcat.yaml
   AddSameRegionBucketDownloadRestriction:
-    parameters: AddSameRegionBucketDownloadRestriction-input.json
+    parameter_input: AddSameRegionBucketDownloadRestriction-input.json
     regions:
       - us-east-1
     template: AddSameRegionBucketDownloadRestriction.yaml
   bootstrap:
-    parameters: bootstrap-input.json
+    parameter_input: bootstrap-input.json
     regions:
       - us-east-1
     template: bootstrap.yaml
   vpc:
-    parameters: vpc-input.json
+    parameter_input: vpc-input.json
     regions:
       - us-east-1
     template: vpc.yaml
   ec2-backup:
-    parameters: ec2-backup-input.json
+    parameter_input: ec2-backup-input.json
     regions:
       - us-east-1
     template: ec2-backup.yaml
