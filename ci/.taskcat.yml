@@ -1,8 +1,7 @@
 ---
 project:
-  package-lambda: true
-  owner: tcisagebio@sagebase.org
   name: aws-infra
+  owner: tcisagebio@sagebase.org
   regions:
     - ap-northeast-1
     - ap-northeast-2
