@@ -13,10 +13,7 @@ project:
     - us-east-1
     - us-west-1
     - us-west-2
-  tags:
-    -
-      Key: owner
-      Value: taskcat
+  tags: "owner=taskcat"
 tests:
   sumologic-role:
     parameter_input: sumologic-role-input.json
