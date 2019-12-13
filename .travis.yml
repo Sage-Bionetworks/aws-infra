@@ -1,8 +1,6 @@
-sudo: false
 language: python
 python: 3.6
 cache: pip
-fast_finish: true
 install:
   - pip install cfn-lint taskcat==0.8.50
   - wget https://github.com/Sage-Bionetworks/infra-utils/archive/master.zip -O /tmp/infra-utils.zip
@@ -16,6 +14,7 @@ stages:
   - name: deploy
     if: (tag =~ ^v) OR (branch = master AND type = push)
 jobs:
+  fast_finish: true
   include:
     - stage: validate
       script:
@@ -29,7 +28,7 @@ jobs:
         - sam package --template-file lambdas/build/jumpcloud/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/jumpcloud.yaml
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
-        - taskcat -c ci/taskcat.yml --tag owner=taskcat
+        - taskcat -c ci/taskcat.yml --tag owner=taskcat || travis_terminate 1
     - stage: deploy
       script:
         - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
