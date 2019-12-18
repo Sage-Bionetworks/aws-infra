@@ -117,3 +117,6 @@ git-crypt.key
 
 # lambda build dir
 lambdas/build
+
+# pipenv
+Pipfile*
