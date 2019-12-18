@@ -1,0 +1,43 @@
+# from https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/services/CloudFormation/MacrosExamples/Explode
+Transform: AWS::Serverless-2016-10-31
+Description: CFN Macro to create same resources multiple times
+Parameters:
+  Department:
+    Description: 'The department for this resource'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Platform'
+  Project:
+    Description: 'The name of the project that this resource is used for'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Infrastructure'
+  OwnerEmail:
+    Description: 'Email address of the owner of this resource'
+    Type: String
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
+    Default: 'it@sagebase.org'
+
+Resources:
+  MacroFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        Runtime: python3.6
+        CodeUri: explode/
+        Handler: app.handler
+        DeadLetterQueue:
+          Type: SNS
+          TargetArn: !ImportValue us-east-1-AccountAlertTopics-SNSAlertsErrorArn
+        Tags:
+          Department: !Ref Department
+          Project: !Ref Project
+          OwnerEmail: !Ref OwnerEmail
+
+  Macro:
+    Type: AWS::CloudFormation::Macro
+    Properties:
+      Name: Explode
+      FunctionName: !GetAtt MacroFunction.Arn
