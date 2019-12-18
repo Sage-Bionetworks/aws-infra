@@ -46,7 +46,6 @@ Resources:
       LogGroupName: !Sub '/aws/cloudtrail/${AWS::StackName}.log'
       RetentionInDays: 90
   AWSS3CloudtrailBucket:
-    DeletionPolicy: Retain
     Type: "AWS::S3::Bucket"
     Properties:
       Tags:
