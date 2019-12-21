@@ -1,0 +1,47 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Transform": "Explode",
+    "Metadata": {
+        "cfn-lint": {
+            "config": {
+                "ignore_checks": [
+                    "E3001",
+                    "E3012",
+                    "W7001"
+                ]
+            }
+        }
+    },
+    "Parameters": {
+        "Ports": {
+            "Description": "The ports to open",
+            "Type": "List<Number>",
+            "Default": "[]"
+        }
+    },
+    "Resources": {
+        "SecurityGroup": {
+            "ExplodeParam": "Ports",
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Instance security group",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "!Explode Port",
+                        "ToPort": "!Explode Port",
+                        "IpProtocol": "tcp"
+                    }
+                ],
+                "SecurityGroupEgress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": -1,
+                        "ToPort": -1,
+                        "IpProtocol": "-1"
+                    }
+                ]
+            }
+        }
+    }
+}
