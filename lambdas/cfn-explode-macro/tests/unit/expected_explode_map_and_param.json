@@ -1,0 +1,78 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Mappings": {
+        "BucketMap": {
+            "Monthly": {
+                "ResourceName": "MyThirtyDayBucket",
+                "Retention": 30
+            },
+            "Yearly": {
+                "Retention": 365
+            }
+        }
+    },
+    "Parameters": {
+        "Ports": {
+            "Default": "[]",
+            "Description": "The ports to open",
+            "Type": "CommaDelimitedList"
+        }
+    },
+    "Resources": {
+        "BucketYearly": {
+            "Properties": {
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "ExpirationInDays": 365,
+                            "Status": "Enabled"
+                        }
+                    ]
+                }
+            },
+            "Type": "AWS::S3::Bucket"
+        },
+        "MyThirtyDayBucket": {
+            "Properties": {
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "ExpirationInDays": 30,
+                            "Status": "Enabled"
+                        }
+                    ]
+                }
+            },
+            "Type": "AWS::S3::Bucket"
+        },
+        "SecurityGroupPort22": {
+            "Properties": {
+                "GroupDescription": "Instance security group",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": 22,
+                        "IpProtocol": "tcp",
+                        "ToPort": 22
+                    }
+                ]
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "SecurityGroupPort80": {
+            "Properties": {
+                "GroupDescription": "Instance security group",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": 80,
+                        "IpProtocol": "tcp",
+                        "ToPort": 80
+                    }
+                ]
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        }
+    },
+    "Transform": "Explode"
+}

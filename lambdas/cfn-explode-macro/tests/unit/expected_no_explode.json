@@ -1,0 +1,30 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Mappings": {
+        "BucketMap": {
+            "Monthly": {
+                "ResourceName": "MyThirtyDayBucket",
+                "Retention": 30
+            },
+            "Yearly": {
+                "Retention": 365
+            }
+        }
+    },
+    "Resources": {
+        "Bucket": {
+            "Properties": {
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "ExpirationInDays": 10,
+                            "Status": "Enabled"
+                        }
+                    ]
+                }
+            },
+            "Type": "AWS::S3::Bucket"
+        }
+    },
+    "Transform": "Explode"
+}

@@ -51,20 +51,23 @@ def replace_explode_in_string(value, map_data):
     return value
 
 
-def handle_transform(template):
+def handle_transform(template, parameters):
     """Go through template and explode resources."""
-    mappings = template['Mappings']
     resources = template['Resources']
     new_resources = {}
     for resource_name, resource in resources.items():
         try:
             explode_map = resource['ExplodeMap']
+            mappings = template['Mappings']
             del resource['ExplodeMap']
         except KeyError:
-            # This resource does not have an ExplodeMap, so copy it verbatim
-            # and move on
-            new_resources[resource_name] = resource
-            continue
+            try:
+                explode_map = resource['ExplodeParam']
+                mappings = format_params(parameters, explode_map)
+                del resource['ExplodeParam']
+            except KeyError:
+                new_resources[resource_name] = resource
+                continue
         try:
             explode_map_data = mappings[explode_map]
         except KeyError:
@@ -83,14 +86,28 @@ def handle_transform(template):
     template['Resources'] = new_resources
     return template
 
+def format_params(parameters, name):
+    """Format parameters from a list to a dict"""
+    items = parameters[name]
+    new_params = {}
+    new_params.update({name:{}})
+    for item in items:
+        temp = {}
+        key_name = name[:-1]
+        key_list_name = key_name + str(item)
+        temp.update({key_list_name: {key_name: item}})
+        new_params[name].update(temp)
+
+    return new_params
 
 def handler(event, _context):
     """Handle invocation in Lambda (when CloudFormation processes the Macro)"""
     fragment = event["fragment"]
+    parameters = event["templateParameterValues"]
     status = "success"
 
     try:
-        fragment = handle_transform(event["fragment"])
+        fragment = handle_transform(event["fragment"], parameters)
     except:
         status = "failure"
 
