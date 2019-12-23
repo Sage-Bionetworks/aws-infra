@@ -1,0 +1,36 @@
+{
+    "fragment": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Mappings": {
+            "BucketMap": {
+                "Monthly": {
+                    "ResourceName": "MyThirtyDayBucket",
+                    "Retention": 30
+                },
+                "Yearly": {
+                    "Retention": 365
+                }
+            }
+        },
+        "Resources": {
+            "Bucket": {
+                "ExplodeMap": "BucketMap",
+                "Properties": {
+                    "LifecycleConfiguration": {
+                        "Rules": [
+                            {
+                                "ExpirationInDays": "!Explode Retention",
+                                "Status": "Enabled"
+                            }
+                        ]
+                    }
+                },
+                "Type": "AWS::S3::Bucket"
+            }
+        },
+        "Transform": "Explode"
+    },
+    "region": "us-east-1",
+    "requestId": "testRequest",
+    "templateParameterValues": {}
+}

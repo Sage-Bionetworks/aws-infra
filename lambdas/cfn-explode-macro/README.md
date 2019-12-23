@@ -8,32 +8,44 @@ Mapping or a Parameter.
 
 ### Deploying
 
-1. You will need an S3 bucket to store the CloudFormation artifacts. If you don't have one already, create one with `aws s3 mb s3://<bucket name>`
+1. You will need an S3 bucket to store the CloudFormation artifacts. If you don't have one already, create one
+with `aws s3 mb s3://<bucket name>`
 
-2. Package the Macro CloudFormation template. The provided template uses [the AWS Serverless Application Model](https://aws.amazon.com/about-aws/whats-new/2016/11/introducing-the-aws-serverless-application-model/) so must be transformed before you can deploy it.
+2. Build the lambda
 
 ```shell
-aws cloudformation package \
-    --template-file macro.yml \
-    --s3-bucket <your bucket name here> \
-    --output-template-file packaged.yaml
+sam build \
+    --build-dir lambdas/build/cfn-explode-macro \
+    --base-dir lambdas/cfn-explode-macro \
+    --template lambdas/cfn-explode-macro/template.yaml
 ```
 
-3. Deploy the packaged CloudFormation template to a CloudFormation stack:
+3. Package the Macro and deploy it to a S3 bucket
 
 ```shell
-aws cloudformation deploy \
-    --stack-name Explode-macro \
-    --template-file packaged.yaml \
+sam package \
+    --template-file lambdas/build/cfn-explode-macro/template.yaml \
+    --output-template-file templates/cfn-explode-macro.yaml
+    --s3-bucket <bucket name> \
+```
+
+4. Deploy the packaged CloudFormation template to a CloudFormation stack:
+
+```shell
+sam deploy \
+    --stack-name cfn-explode-macro \
+    --template-file templates/cfn-explode-macro.yaml \
     --capabilities CAPABILITY_IAM
 ```
 
-4. To test out the macro's capabilities, try launching the provided example template:
+5. To test out the macro's capabilities, try launching the provided example template in the
+Mapping or Parameters section:
 
 ```shell
 aws cloudformation deploy \
-    --stack-name Explode-test \
-    --template-file test.yaml \
+    --stack-name test-ExplodeParam \
+    --template-file ExampleMapping.yaml \
+    --parameters ParameterKey=Ports,ParameterValue=["22","80"] \
     --capabilities CAPABILITY_IAM
 ```
 
@@ -155,6 +167,25 @@ Metadata:
       - W7001
       - W2001
 ```
+### Testing
+
+#### Unit tests
+ 1. pip install jsondiff
+ 2. cd lambdas/cfn-explode-macro
+ 3. run `python -m pytest tests/ -v`
+
+#### SAM local tests
+1. Build the lambda
+2. cd lambdas/build/cfn-explode-macro
+3. pip install jq
+4. run
+
+```shell
+sam local invoke MacroFunction \
+    --template lambdas/build/cfn-explode-macro/template.yaml
+    --event lambdas/cfn-explode-macro/tests/events/explode_map.json|jq .
+```
+Then verify the output is what you expect
 
 ## Author
 

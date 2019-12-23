@@ -1,0 +1,38 @@
+{
+    "fragment": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Parameters": {
+            "Ports": {
+                "Default": "[]",
+                "Description": "The ports to open",
+                "Type": "CommaDelimitedList"
+            }
+        },
+        "Resources": {
+            "SecurityGroup": {
+                "ExplodeParam": "Ports",
+                "Properties": {
+                    "GroupDescription": "Instance security group",
+                    "SecurityGroupIngress": [
+                        {
+                            "CidrIp": "0.0.0.0/0",
+                            "FromPort": "!Explode Port",
+                            "IpProtocol": "tcp",
+                            "ToPort": "!Explode Port"
+                        }
+                    ]
+                },
+                "Type": "AWS::EC2::SecurityGroup"
+            }
+        },
+        "Transform": "Explode"
+    },
+    "region": "us-east-1",
+    "requestId": "testRequest",
+    "templateParameterValues": {
+        "Ports": [
+            22,
+            80
+        ]
+    }
+}

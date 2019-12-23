@@ -7,18 +7,9 @@ from explode.app import handler
 class test_app(unittest.TestCase):
 
     def test_no_explode(self):
-        event = \
-            {
-                "requestId": "testRequest",
-                "templateParameterValues": {},
-                "region": "us-east-1"
-            }
-
-        self.event = event
-
-        with open(r'tests/unit/test_no_explode.json') as file:
+        with open(r'tests/events/no_explode.json') as file:
             test_template = json.load(file)
-        self.event["fragment"] = test_template
+        self.event = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
@@ -29,20 +20,9 @@ class test_app(unittest.TestCase):
         self.assertEqual(res, {})
 
     def test_explode_param(self):
-        event = \
-            {
-                "requestId": "testRequest",
-                "templateParameterValues": {
-                    "Ports": [22, 80]
-                },
-                "region": "us-east-1"
-            }
-
-        self.event = event
-
-        with open(r'tests/unit/test_explode_param.json') as file:
+        with open(r'tests/events/explode_param.json') as file:
             test_template = json.load(file)
-        self.event["fragment"] = test_template
+        self.event = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
@@ -53,18 +33,9 @@ class test_app(unittest.TestCase):
         self.assertEqual(res, {})
 
     def test_explode_map(self):
-        event = \
-            {
-                "requestId": "testRequest",
-                "templateParameterValues": {},
-                "region": "us-east-1"
-            }
-
-        self.event = event
-
-        with open(r'tests/unit/test_explode_map.json') as file:
+        with open(r'tests/events/explode_map.json') as file:
             test_template = json.load(file)
-        self.event["fragment"] = test_template
+        self.event = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
@@ -75,18 +46,9 @@ class test_app(unittest.TestCase):
         self.assertEqual(res, {})
 
     def test_explode_no_match(self):
-        event = \
-            {
-                "requestId": "testRequest",
-                "templateParameterValues": {},
-                "region": "us-east-1"
-            }
-
-        self.event = event
-
-        with open(r'tests/unit/test_explode_no_match.json') as file:
+        with open(r'tests/events/explode_no_match.json') as file:
             test_template = json.load(file)
-        self.event["fragment"] = test_template
+        self.event = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
@@ -97,20 +59,9 @@ class test_app(unittest.TestCase):
         self.assertEqual(res, {})
 
     def test_explode_map_and_param(self):
-        event = \
-            {
-                "requestId": "testRequest",
-                "templateParameterValues": {
-                    "Ports": [22, 80]
-                },
-                "region": "us-east-1"
-            }
-
-        self.event = event
-
-        with open(r'tests/unit/test_explode_map_and_param.json') as file:
+        with open(r'tests/events/explode_map_and_param.json') as file:
             test_template = json.load(file)
-        self.event["fragment"] = test_template
+        self.event = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
