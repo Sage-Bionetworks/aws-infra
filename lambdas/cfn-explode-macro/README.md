@@ -1,6 +1,8 @@
 # Explode CloudFormation Macro
 
-The `Explode` macro provides a template-wide `Explode` property for CloudFormation resources. Similar to the Count macro, it will create multiple copies of a template Resource, but looks up values to inject into each copy in a Mapping.
+The `Explode` macro provides a template-wide `Explode` property for CloudFormation resources. Similar to the Count
+macro, it will create multiple copies of a template Resource, but looks up values to inject into each copy in a
+Mapping or a Parameter.
 
 ## How to install and use the Explode macro in your AWS account
 
@@ -85,7 +87,7 @@ be copied into that instance.  The entry name will be appended to the template r
 For the resource you want to explode, add an `ExplodeParam` value at the top level pointing at the entry for your
 Parameter which should be used.
 
-Inside the resource properties, us the singular name of the parameter `!Explode KEY` to .
+Inside the resource properties, us the singular name of the parameter `!Explode KEY`.
 
 An example:
 ```yaml
@@ -108,16 +110,11 @@ Resources:
           FromPort: "!Explode Port"
           ToPort: "!Explode Port"
           IpProtocol: tcp
-      SecurityGroupEgress:
-        - CidrIp: "0.0.0.0/0"
-          FromPort: -1
-          ToPort: -1
-          IpProtocol: "-1"
 ```
 
 The mumber of list values passed to the parameter will generate an equivalent number of security group resources.
-If `Port=[22,80]` then this will result in two security group resources; one named `SecurityGroupPort22`,
-and another named `SecurityGroupPort80`.
+If `--parameters  ParameterKey=Ports,ParameterValue=["22","80"]` is passed in the result will be two security group
+resources; one named `SecurityGroupPort22`, and another named `SecurityGroupPort80`.
 
 
 ### Important - Naming resources
@@ -156,6 +153,7 @@ Metadata:
       - E3001
       - E3012
       - W7001
+      - W2001
 ```
 
 ## Author

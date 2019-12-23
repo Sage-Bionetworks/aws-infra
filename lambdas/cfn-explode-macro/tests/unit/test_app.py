@@ -16,13 +16,13 @@ class test_app(unittest.TestCase):
 
         self.event = event
 
-        with open(r'test_no_explode.json') as file:
+        with open(r'tests/unit/test_no_explode.json') as file:
             test_template = json.load(file)
         self.event["fragment"] = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
-        with open(r'expected_no_explode.json') as file:
+        with open(r'tests/unit/expected_no_explode.json') as file:
             expected_template = json.load(file)
 
         res = jsondiff.diff(fragment, expected_template)
@@ -40,13 +40,13 @@ class test_app(unittest.TestCase):
 
         self.event = event
 
-        with open(r'test_explode_param.json') as file:
+        with open(r'tests/unit/test_explode_param.json') as file:
             test_template = json.load(file)
         self.event["fragment"] = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
-        with open(r'expected_explode_param.json') as file:
+        with open(r'tests/unit/expected_explode_param.json') as file:
             expected_template = json.load(file)
 
         res = jsondiff.diff(fragment, expected_template)
@@ -62,13 +62,13 @@ class test_app(unittest.TestCase):
 
         self.event = event
 
-        with open(r'test_explode_map.json') as file:
+        with open(r'tests/unit/test_explode_map.json') as file:
             test_template = json.load(file)
         self.event["fragment"] = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
-        with open(r'expected_explode_map.json') as file:
+        with open(r'tests/unit/expected_explode_map.json') as file:
             expected_template = json.load(file)
 
         res = jsondiff.diff(fragment, expected_template)
@@ -84,13 +84,13 @@ class test_app(unittest.TestCase):
 
         self.event = event
 
-        with open(r'test_explode_no_match.json') as file:
+        with open(r'tests/unit/test_explode_no_match.json') as file:
             test_template = json.load(file)
         self.event["fragment"] = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
-        with open(r'expected_explode_no_match.json') as file:
+        with open(r'tests/unit/expected_explode_no_match.json') as file:
             expected_template = json.load(file)
 
         res = jsondiff.diff(fragment, expected_template)
@@ -108,13 +108,13 @@ class test_app(unittest.TestCase):
 
         self.event = event
 
-        with open(r'test_explode_map_and_param.json') as file:
+        with open(r'tests/unit/test_explode_map_and_param.json') as file:
             test_template = json.load(file)
         self.event["fragment"] = test_template
         result = handler(self.event, None)
         fragment = result["fragment"]
 
-        with open(r'expected_explode_map_and_param.json') as file:
+        with open(r'tests/unit/expected_explode_map_and_param.json') as file:
             expected_template = json.load(file)
 
         res = jsondiff.diff(fragment, expected_template)

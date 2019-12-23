@@ -12,17 +12,6 @@
             }
         }
     },
-    "Metadata": {
-        "cfn-lint": {
-            "config": {
-                "ignore_checks": [
-                    "E3001",
-                    "E3012",
-                    "W7001"
-                ]
-            }
-        }
-    },
     "Resources": {
         "Bucket": {
             "ExplodeMap": "BucketMap",
