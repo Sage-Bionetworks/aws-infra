@@ -1,0 +1,28 @@
+# from https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/services/CloudFormation/MacrosExamples/S3Objects
+Transform: AWS::Serverless-2016-10-31
+Description: CFN Macro to populate an S3 bucket
+Resources:
+  ResourceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.6
+      CodeUri: s3objects
+      Handler: resource.handler
+      Policies: AmazonS3FullAccess
+
+  MacroFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.6
+      CodeUri: s3objects
+      Handler: macro.handler
+      Policies: AmazonS3FullAccess
+      Environment:
+        Variables:
+          LAMBDA_ARN: !GetAtt ResourceFunction.Arn
+
+  Macro:
+    Type: AWS::CloudFormation::Macro
+    Properties:
+      Name: S3Objects
+      FunctionName: !GetAtt MacroFunction.Arn
