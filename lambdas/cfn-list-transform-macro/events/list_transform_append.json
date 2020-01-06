@@ -1,0 +1,52 @@
+{
+    "fragment": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Parameters": {
+            "TransformString": {
+                "Default": "Foo",
+                "Type": "String"
+            },
+            "InputList": {
+                "Default": [
+                    "Alpha",
+                    "Beta",
+                    "Gamma"
+                ],
+                "Type": "List<String>"
+            }
+        },
+        "Resources": {
+            "EC2Instance": {
+                "Type": "AWS::EC2::Instance",
+                "Properties": {
+                    "ImageId": "ami-00068cd7555f543d5",
+                    "InstanceType": "t3.nano",
+                    "SecurityGroups": {
+                        "Fn::Transform": [
+                            {
+                                "Name": "ListTransform",
+                                "Parameters": {
+                                    "Operation": "TransformList",
+                                    "TransformString": {
+                                        "Ref": "TransformString"
+                                    },
+                                    "List": {
+                                        "Ref": "InputList"
+                                    },
+                                    "Prepend": false
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "requestId": "foo",
+    "params": {
+        "TransformString": "Foo",
+        "Operation": "TransformList",
+        "List": ["Alpha", "Beta", "Gamma"],
+        "Prepend": false
+    }
+}
