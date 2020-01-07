@@ -1,23 +1,65 @@
 # cfn-list-transform-macro
 
-This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
+The `ListTransform` macro allows the manipulation of a list in a CloudFormation
+template. Currently this only supports prepending or appending strings to the
+members of a list.
+
+Inventory of source code and supporting files:
 
 - list_transformm - Code for the application's Lambda function.
 - events - Invocation events that you can use to invoke the function.
 - tests - Unit tests for the application code.
 - template.yaml - A template that defines the application's AWS resources.
 
+## Example
+The following contains an example of how to use the transform and the resulting
+output.
+
+### Before
+This is a segment of a CloudFormation template where security group names are
+being added to an EC2 instance using `Fn::Tranform`.
+
+```yaml
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      SecurityGroups:
+        Fn::Transform:
+          - Name: ListTransform
+            Parameters:
+              Operation: TransformList
+              TransformString: 'MySecurityGroup'
+              List:
+                - 22
+                - 443
+              Prepend: true
+```
+
+### After
+This is what the template segment will look like after the macro runs:
+
+```yaml
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      SecurityGroups:
+        - MySecurityGroup22
+        - MySecurityGroup443
+```
+
 ## Deploy the sample application
 
 The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
+
+## Use the SAM CLI to build and test locally
 
 To use the SAM CLI, you need the following tools.
 
 * SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 * [Python 3 installed](https://www.python.org/downloads/)
 * Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
-
-## Use the SAM CLI to build and test locally
 
 Build your application with the `sam build --use-container` command.
 
@@ -64,6 +106,6 @@ To delete the sample application that you created, use the AWS CLI. Assuming you
 aws cloudformation delete-stack --stack-name cfn-list-transform-macro
 ```
 
-## Resources
+## Author
 
-See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
+[Tess Thyer](https://github.com/tthyer); Sr. Data Engineer, Sage Bionetworks
