@@ -7,6 +7,8 @@ def handle_transform(parameters):
   transform_string = parameters['TransformString']
   fragment = []
   input_list = parameters['List']
+  if not isinstance(input_list, list):
+    raise ValueError('"List" parameter must be of type list')
   prepend = parameters['Prepend']
   if prepend:
     fragment = [transform_string + item for item in input_list]

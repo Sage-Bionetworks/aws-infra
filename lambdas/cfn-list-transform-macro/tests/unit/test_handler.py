@@ -33,3 +33,14 @@ class test_app(unittest.TestCase):
     fragment = result['fragment']
     expected = ['AlphaFoo', 'BetaFoo', 'GammaFoo']
     self.assertEqual(expected, fragment)
+
+
+  def test_bad_list(self):
+    with open(r'events/list_transform_bad_list.json') as file:
+      test_template = json.load(file)
+    self.event = test_template
+    result = handler(self.event, None)
+    self.assertEqual('failure', result['status'])
+    self.assertEqual(
+      '"List" parameter must be of type list',
+      result['errorMessage'])
