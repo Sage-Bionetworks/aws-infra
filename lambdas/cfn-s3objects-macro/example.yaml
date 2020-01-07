@@ -1,5 +1,5 @@
 Transform: S3Objects
-Description: CFN Macro to populate an S3 bucket
+Description: Create bucket with content
 Resources:
   Bucket:
     Type: AWS::S3::Bucket

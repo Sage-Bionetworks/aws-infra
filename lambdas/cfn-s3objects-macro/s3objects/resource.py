@@ -14,7 +14,6 @@
 from urllib.request import build_opener, HTTPHandler, Request
 import base64
 import boto3
-# import httplib
 import json
 
 s3_client = boto3.client("s3")

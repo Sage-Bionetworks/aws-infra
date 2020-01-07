@@ -4,7 +4,8 @@ The `S3Objects` macro adds a new resource type: `AWS::S3::Object` which you can 
 
 You can either create new S3 objects or copy S3 buckets from other buckets that you have permissions to access.
 
-As with any other CloudFormation resource, if you delete a stack containing S3 objects defined with this macro, those objects will be deleted.
+As with any other CloudFormation resource, if you delete a stack containing S3 objects defined with this macro,
+those objects will be deleted.
 
 A typical use case for this macro might be, for example, to populate an S3 website with static assets.
 
@@ -13,21 +14,23 @@ A typical use case for this macro might be, for example, to populate an S3 websi
 1. You will need an S3 bucket to store the CloudFormation artifacts:
     * If you don't have one already, create one with `aws s3 mb s3://<bucket name>`
 
-2. Package the CloudFormation template. The provided template uses [the AWS Serverless Application Model](https://aws.amazon.com/about-aws/whats-new/2016/11/introducing-the-aws-serverless-application-model/) so must be transformed before you can deploy it.
+2. Package the CloudFormation template. The provided template uses
+[the AWS Serverless Application Model](https://aws.amazon.com/about-aws/whats-new/2016/11/introducing-the-aws-serverless-application-model/)
+so must be transformed before you can deploy it.
 
     ```shell
     aws cloudformation package \
-        --template-file macro.template \
+        --template-file template.yaml \
         --s3-bucket <your bucket name here> \
-        --output-template-file packaged.template
+        --output-template-file cfn-s3objects-macro.yaml
     ```
 
 3. Deploy the packaged CloudFormation template to a CloudFormation stack:
 
     ```shell
     aws cloudformation deploy \
-        --stack-name s3objects-macro \
-        --template-file packaged.template \
+        --stack-name cfn-s3objects-macro \
+        --template-file cfn-s3objects-macro.yaml \
         --capabilities CAPABILITY_IAM
     ```
 
@@ -35,8 +38,8 @@ A typical use case for this macro might be, for example, to populate an S3 websi
 
     ```shell
     aws cloudformation deploy \
-        --stack-name s3objects-macro-example \
-        --template-file example.template \
+        --stack-name cfn-s3objects-macro-example \
+        --template-file example.yaml \
         --capabilities CAPABILITY_IAM
     ```
 
@@ -66,7 +69,8 @@ Resources:
 
 ### Creating a new S3 object
 
-To create a new S3 object, add an `AWS::S3::Object` resource to your template and specify the `Target` and `Body` properties. For example:
+To create a new S3 object, add an `AWS::S3::Object` resource to your template and specify the `Target` and `Body`
+properties. For example:
 
 ```yaml
 NewObject:
@@ -89,9 +93,11 @@ The `Target` property has the following sub-properties:
 
 * `Key` (REQUIRED): The location within the bucket
 
-* `ACL` (OPTIONAL - Default `private`): Sets a [canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) for the new object
+* `ACL` (OPTIONAL - Default `private`): Sets a
+[canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) for the new object
 
-The following sub-properties also apply if you are creating a new object (but not if you are copying an object from another S3 bucket):
+The following sub-properties also apply if you are creating a new object (but not if you are copying an object from
+another S3 bucket):
 
 * `ContentType` (OPTIONAL): Sets a custom content type for the new object
 
