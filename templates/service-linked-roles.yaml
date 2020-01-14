@@ -19,13 +19,6 @@ Resources:
     Properties:
       AWSServiceName: "spotfleet.amazonaws.com"
       Description: "SLR for EC2 Spot Fleet"
-  # Role to grant License Manager to manage licenses on EC2 image builder, only the License Manager can assume this roles.
-  # https://docs.aws.amazon.com/license-manager/latest/userguide/using-service-linked-roles.html
-  AWSServiceRoleForLicenseManager:
-    Type: "AWS::IAM::ServiceLinkedRole"
-    Properties:
-      AWSServiceName: "license-manager.amazonaws.com"
-      Description: "SLR for the AWS License Manager"
   # Role to grant the Spot Fleet permission to request, launch, terminate, and tag instances on your behalf
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-requests.html
   AWSEC2SpotFleetTaggingRole:
@@ -54,10 +47,6 @@ Outputs:
     Value: !Ref AWSServiceRoleForEC2SpotFleet
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForEC2SpotFleetId'
-  AWSServiceRoleForLicenseManager:
-    Value: !Ref AWSServiceRoleForLicenseManager
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-AWSServiceRoleForLicenseManager'
   AWSEC2SpotFleetTaggingRoleArn:
     Value: !GetAtt AWSEC2SpotFleetTaggingRole.Arn
     Export:
