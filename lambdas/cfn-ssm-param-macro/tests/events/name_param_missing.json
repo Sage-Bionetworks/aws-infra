@@ -2,7 +2,6 @@
   "fragment": {},
   "requestId": "foo",
   "params": {
-    "Type": "String",
-    "Name": "tthyer-test-param"
+    "Type": "String"
   }
 }

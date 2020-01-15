@@ -2,17 +2,27 @@ import boto3
 import json
 import traceback
 
+
+SSM_PARAM_TYPES = ['String', 'SecureString', 'StringList']
+MISSING_TYPE_ERROR_MESSAGE = f""""Type" parameter, the type of key in the SSM
+parameter store, is required, and must be one of {SSM_PARAM_TYPES}"""
+MISSING_NAME_ERROR_MESSAGE = """"Name" parameter (name of key in SSM parameter
+store) is required"""
+
+
 def handle_transform(parameters):
-    secure = False
-    if 'Secure' in parameters and parameters['Secure'] is True:
-        secure = True
-    if 'SsmKeyName' not in parameters:
-        raise ValueError('"SsmKeyName" parameter is required')
-    keyname = parameters['SsmKeyName']
+    if 'Type' not in parameters or parameters['Type'] not in SSM_PARAM_TYPES:
+      raise ValueError(MISSING_TYPE_ERROR_MESSAGE)
+    if 'Name' not in parameters:
+        raise ValueError(MISSING_NAME_ERROR_MESSAGE)
+
+    decrypt = True if parameters['Type'] == SSM_PARAM_TYPES[1] else False
+
     client = boto3.client('ssm')
     response = client.get_parameter(
-        Name=keyname,
-        WithDecryption=secure)
+        Name=parameters['Name'],
+        WithDecryption=decrypt)
+
     fragment = response['Parameter']['Value']
     return fragment
 

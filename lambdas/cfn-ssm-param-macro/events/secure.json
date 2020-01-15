@@ -2,7 +2,7 @@
   "fragment": {},
   "requestId": "foo",
   "params": {
-    "Secure": true,
-    "SsmKeyName": "tthyer-secure-test-param"
+    "Type": "SecureString",
+    "Name": "tthyer-secure-test-param"
   }
 }

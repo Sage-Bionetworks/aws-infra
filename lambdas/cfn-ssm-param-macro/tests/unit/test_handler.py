@@ -1,12 +1,12 @@
-import unittest
-from ssm_param.app import handler
-from unittest.mock import patch
-import botocore
 import json
+import unittest
+from unittest.mock import patch
+
+import botocore
+from ssm_param import app
 
 
 class test_handler(unittest.TestCase):
-
 
   def create_mock_response(self, param_type, param_value):
     self.response = {
@@ -33,52 +33,66 @@ class test_handler(unittest.TestCase):
 
   def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == 'GetParameter':
-      print(kwarg)
       return self.response
     else:
       raise ValueError(f'Mock api call fail. Expected operation GetParameter, got {operation_name}')
+
 
   # happy path
   def test_string(self):
     with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
       expected_value = 'first test string'
       self.create_mock_response('String', expected_value)
-      with open(r'tests/events/happy.json') as file:
+      with open(r'tests/events/string.json') as file:
         event = json.load(file)
       self.event = event
-      result = handler(self.event, None)
+      result = app.handler(self.event, None)
       fragment = result["fragment"]
       print(fragment)
 
       self.assertEqual(fragment, expected_value)
 
 
-  # test that this will still work if secure param is left off as it has a default value
-  def test_secure_param_missing(self):
+  # expect failure if Type is missing
+  def test_type_missing(self):
     with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
       expected_value = 'first test string'
       self.create_mock_response('String', expected_value)
-      with open(r'tests/events/secure_param_missing.json') as file:
+      with open(r'tests/events/type_param_missing.json') as file:
         event = json.load(file)
       self.event = event
-      result = handler(self.event, None)
-      fragment = result["fragment"]
-      print(fragment)
-
-      self.assertEqual(fragment, expected_value)
-
-
-  # expect failure if keyname is missing
-  def test_keyname_missing(self):
-    with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
-      expected_value = 'first test string'
-      self.create_mock_response('String', expected_value)
-      with open(r'tests/events/keyname_missing.json') as file:
-        event = json.load(file)
-      self.event = event
-      result = handler(self.event, None)
+      result = app.handler(self.event, None)
       self.assertEqual('failure', result['status'])
       self.assertEqual(
-        '"SsmKeyName" parameter is required',
-        result['errorMessage']
-      )
+        app.MISSING_TYPE_ERROR_MESSAGE,
+        result['errorMessage'])
+
+
+  # expect failure if Type is invalid
+  def test_invalid_type(self):
+    with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
+      expected_value = 'first test string'
+      self.create_mock_response('String', expected_value)
+      with open(r'tests/events/invalid_type.json') as file:
+        event = json.load(file)
+      self.event = event
+      result = app.handler(self.event, None)
+      self.assertEqual('failure', result['status'])
+      self.assertEqual(
+        app.MISSING_TYPE_ERROR_MESSAGE,
+        result['errorMessage'])
+
+
+  # expect failure if Name is missing
+  def test_name_missing(self):
+    with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
+      expected_value = 'first test string'
+      self.create_mock_response('String', expected_value)
+      with open(r'tests/events/name_param_missing.json') as file:
+        event = json.load(file)
+      self.event = event
+      result = app.handler(self.event, None)
+      self.assertEqual('failure', result['status'])
+      self.assertEqual(
+        app.MISSING_NAME_ERROR_MESSAGE,
+        result['errorMessage'])

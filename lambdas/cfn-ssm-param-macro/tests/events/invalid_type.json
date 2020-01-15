@@ -2,7 +2,7 @@
   "fragment": {},
   "requestId": "foo",
   "params": {
-    "Secure": false,
-    "SsmKeyName": "test-param"
+    "Type": "WeirdType",
+    "Name": "test-param"
   }
 }
