@@ -36,7 +36,8 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: lambda.amazonaws.com
+              AWS:
+                - !ImportValue us-east-1-bootstrap-CfServiceRoleArn
             Action:
               - 'sts:AssumeRole'
       Path: /
