@@ -13,7 +13,6 @@ def handle_transform(parameters):
     response = client.get_parameter(
         Name=keyname,
         WithDecryption=secure)
-    print(response)
     fragment = response['Parameter']['Value']
     return fragment
 
