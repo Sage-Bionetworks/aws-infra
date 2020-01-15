@@ -1,0 +1,8 @@
+{
+  "fragment": {},
+  "requestId": "foo",
+  "params": {
+    "Secure": false,
+    "SsmKeyName": "tthyer-test-param"
+  }
+}

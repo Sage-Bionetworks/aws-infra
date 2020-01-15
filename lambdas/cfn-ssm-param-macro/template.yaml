@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  cfn-ssm-param-macro
+
+  Get a parameter from SSM
+
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  SsmParamFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ssm_param/
+      Handler: app.handler
+      Runtime: python3.6
+      Role: !GetAtt SsmParamExecutionRole.Arn
+      Tags:
+        Department: !Ref Department
+        Project: !Ref Project
+        OwnerEmail: !Ref OwnerEmail
+
+  SsmParamMacro:
+    Type: AWS::CloudFormation::Macro
+    Properties:
+      Name: SsmParam
+      FunctionName: !GetAtt SsmParamFunction.Arn
+
+  SsmParamExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - !Ref DecryptSecureKeysPolicy
+
+  DecryptSecureKeysPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DecryptSecureKmsKey
+            Effect: 'Allow'
+            Action: 'kms:Decrypt'
+            Resource: '*'
