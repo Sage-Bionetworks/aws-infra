@@ -1,15 +1,18 @@
 import json
 import unittest
 from unittest.mock import patch
+from unittest.mock import MagicMock
 
-import botocore
+import boto3
+from botocore.stub import Stubber
 from ssm_param import app
 
 
-class test_handler(unittest.TestCase):
+class TestHandler(unittest.TestCase):
+
 
   def create_mock_response(self, param_type, param_value):
-    self.response = {
+    return {
       'Parameter': {
         'Name': 'test-param',
         'Type': param_type,
@@ -31,23 +34,21 @@ class test_handler(unittest.TestCase):
       }
 
 
-  def mock_make_api_call(self, operation_name, kwarg):
-    if operation_name == 'GetParameter':
-      return self.response
-    else:
-      raise ValueError(f'Mock api call fail. Expected operation GetParameter, got {operation_name}')
-
-
   # happy path
   def test_string(self):
-    with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
+    ssm = boto3.client('ssm')
+    with Stubber(ssm) as stubber:
       expected_value = 'first test string'
-      self.create_mock_response('String', expected_value)
+      response = self.create_mock_response('String', expected_value)
+      stubber.add_response('get_parameter', response)
+      app.get_ssm_client = MagicMock(return_value=ssm)
+
       with open(r'tests/events/string.json') as file:
         event = json.load(file)
       self.event = event
       result = app.handler(self.event, None)
-      fragment = result["fragment"]
+      print(result)
+      fragment = result['fragment']
       print(fragment)
 
       self.assertEqual(fragment, expected_value)
@@ -55,44 +56,54 @@ class test_handler(unittest.TestCase):
 
   # expect failure if Type is missing
   def test_type_missing(self):
-    with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
-      expected_value = 'first test string'
-      self.create_mock_response('String', expected_value)
-      with open(r'tests/events/type_param_missing.json') as file:
-        event = json.load(file)
-      self.event = event
-      result = app.handler(self.event, None)
-      self.assertEqual('failure', result['status'])
-      self.assertEqual(
-        app.MISSING_TYPE_ERROR_MESSAGE,
-        result['errorMessage'])
+    with open(r'tests/events/type_param_missing.json') as file:
+      event = json.load(file)
+    self.event = event
+    result = app.handler(self.event, None)
+    self.assertEqual('failure', result['status'])
+    self.assertEqual(
+      app.MISSING_TYPE_ERROR_MESSAGE,
+      result['errorMessage'])
 
 
   # expect failure if Type is invalid
   def test_invalid_type(self):
-    with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
-      expected_value = 'first test string'
-      self.create_mock_response('String', expected_value)
-      with open(r'tests/events/invalid_type.json') as file:
-        event = json.load(file)
-      self.event = event
-      result = app.handler(self.event, None)
-      self.assertEqual('failure', result['status'])
-      self.assertEqual(
-        app.MISSING_TYPE_ERROR_MESSAGE,
-        result['errorMessage'])
+    with open(r'tests/events/invalid_type.json') as file:
+      event = json.load(file)
+    self.event = event
+    result = app.handler(self.event, None)
+    self.assertEqual('failure', result['status'])
+    self.assertEqual(
+      app.MISSING_TYPE_ERROR_MESSAGE,
+      result['errorMessage'])
 
 
   # expect failure if Name is missing
   def test_name_missing(self):
-    with patch('botocore.client.BaseClient._make_api_call', new=self.mock_make_api_call):
-      expected_value = 'first test string'
-      self.create_mock_response('String', expected_value)
-      with open(r'tests/events/name_param_missing.json') as file:
-        event = json.load(file)
-      self.event = event
+    with open(r'tests/events/name_param_missing.json') as file:
+      event = json.load(file)
+    self.event = event
+    result = app.handler(self.event, None)
+    self.assertEqual('failure', result['status'])
+    self.assertEqual(
+      app.MISSING_NAME_ERROR_MESSAGE,
+      result['errorMessage'])
+
+
+  # expect failure if an invalid name is used
+  def test_invalid_name(self):
+    ssm = boto3.client('ssm')
+    with Stubber(ssm) as stubber:
+      stubber.add_client_error(
+        method='get_parameter',
+        service_error_code='ParameterNotFound')
+      app.get_ssm_client = MagicMock(return_value=ssm)
+      with open(r'tests/events/invalid_name.json') as file:
+        self.event = json.load(file)
       result = app.handler(self.event, None)
+      print(result)
       self.assertEqual('failure', result['status'])
+      param_not_found_error = 'An error occurred (ParameterNotFound) when calling the GetParameter operation: '
       self.assertEqual(
-        app.MISSING_NAME_ERROR_MESSAGE,
+        param_not_found_error,
         result['errorMessage'])
