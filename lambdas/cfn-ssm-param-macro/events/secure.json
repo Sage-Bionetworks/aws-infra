@@ -1,0 +1,8 @@
+{
+  "fragment": {},
+  "requestId": "foo",
+  "params": {
+    "Type": "SecureString",
+    "Name": "tthyer-secure-test-param"
+  }
+}
