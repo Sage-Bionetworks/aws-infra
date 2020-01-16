@@ -26,8 +26,8 @@ commands:
         - Fn::Transform
           Name: SsmParam
           Parameters:
-            Secure: true
-            SsmKeyName: my-secret-key
+            Type: SecureString
+            Name: my-secret-key
         - "' https://kickstart.jumpcloud.com/Kickstart | sudo bash"
 ```
 
