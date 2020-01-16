@@ -56,8 +56,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS:
-                - !ImportValue us-east-1-bootstrap-CfServiceRoleArn
+              Service: lambda.amazonaws.com
             Action:
               - 'sts:AssumeRole'
       Path: /
@@ -75,3 +74,16 @@ Resources:
             Effect: 'Allow'
             Action: 'kms:Decrypt'
             Resource: '*'
+
+  SsmParamInvocationPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: InvokeLambda
+            Effect: 'Allow'
+            Action: 'lambda:InvokeFunction'
+            Resource: !GetAtt SsmParamFunction.Arn
+      Roles:
+        - !ImportValue us-east-1-bootstrap-CfServiceRoleArn
