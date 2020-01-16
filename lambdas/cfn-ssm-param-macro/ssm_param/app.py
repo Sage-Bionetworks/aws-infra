@@ -19,7 +19,7 @@ def handle_transform(parameters):
     if 'Type' not in parameters or parameters['Type'] not in SSM_PARAM_TYPES:
       raise ValueError(MISSING_TYPE_ERROR_MESSAGE)
     if 'Name' not in parameters:
-        raise ValueError(MISSING_NAME_ERROR_MESSAGE)
+      raise ValueError(MISSING_NAME_ERROR_MESSAGE)
 
     decrypt = True if parameters['Type'] == SSM_PARAM_TYPES[1] else False
 
@@ -27,8 +27,8 @@ def handle_transform(parameters):
 
     try:
       response = client.get_parameter(
-          Name=parameters['Name'],
-          WithDecryption=decrypt)
+        Name=parameters['Name'],
+        WithDecryption=decrypt)
       fragment = response['Parameter']['Value']
       return fragment
     except ClientError as e:
