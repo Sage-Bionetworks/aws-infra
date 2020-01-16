@@ -75,15 +75,10 @@ Resources:
             Action: 'kms:Decrypt'
             Resource: '*'
 
-  SsmParamInvocationPolicy:
-    Type: 'AWS::IAM::ManagedPolicy'
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
     Properties:
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: InvokeLambda
-            Effect: 'Allow'
-            Action: 'lambda:InvokeFunction'
-            Resource: !GetAtt SsmParamFunction.Arn
-      Roles:
-        - !ImportValue us-east-1-bootstrap-CfServiceRoleArn
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SsmParamFunction
+      Principal: !Ref 'AWS::AccountId'
+      SourceArn: !ImportValue us-east-1-bootstrap-CfServiceRoleArn
