@@ -107,6 +107,7 @@ Resources:
         -
           !Ref AWSIAMCfServiceRole
   # This role is used by the SsmParam Lambda to read keys
+  # See https://github.com/Sage-Bionetworks/aws-infra/tree/master/lambdas/cfn-ssm-param-macro
   AWSIAMSsmParamLambdaExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -153,7 +154,7 @@ Outputs:
     Value: !GetAtt AWSIAMCfServiceRole.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleArn'
-  AWSIAMSsmParamLambdaExecutionRole:
+  AWSIAMSsmParamLambdaExecutionRoleArn:
     Value: !GetAtt AWSIAMSsmParamLambdaExecutionRole.Arn
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-SsmParamLambdaExecutionRole'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SsmParamLambdaExecutionRoleArn'
