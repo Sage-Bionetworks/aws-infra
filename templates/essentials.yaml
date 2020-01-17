@@ -342,6 +342,7 @@ Resources:
               AWS:
                 - !ImportValue us-east-1-bootstrap-TravisUserArn
                 - !ImportValue us-east-1-bootstrap-CfServiceRoleArn
+                - !ImportValue us-east-1-bootstrap-SsmParamLambdaExecutionRole
             Action:
               - "kms:Encrypt"
               - "kms:Decrypt"
