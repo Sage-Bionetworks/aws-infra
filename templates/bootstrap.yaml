@@ -106,6 +106,32 @@ Resources:
       Roles:
         -
           !Ref AWSIAMCfServiceRole
+  # This role is used by the SsmParam Lambda to read keys
+  AWSIAMSsmParamLambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - !Ref DecryptSecureKeysPolicy
+  DecryptSecureKeysPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DecryptSecureKmsKey
+            Effect: 'Allow'
+            Action: 'kms:Decrypt'
+            Resource: '*'
 Outputs:
   AWSIAMTravisUser:
     Value: !Ref AWSIAMTravisUser
@@ -127,3 +153,7 @@ Outputs:
     Value: !GetAtt AWSIAMCfServiceRole.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleArn'
+  AWSIAMSsmParamLambdaExecutionRole:
+    Value: !GetAtt AWSIAMSsmParamLambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SsmParamLambdaExecutionRole'
