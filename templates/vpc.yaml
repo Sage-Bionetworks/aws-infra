@@ -584,3 +584,10 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'BastianSecurityGroup']]
+
+  VpnCidr:
+    Description: "CIDR of the VPN used for the VpnSecurityGroup SecurityIngress"
+    Value: !Ref VpnCidr
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpnCidr']]
