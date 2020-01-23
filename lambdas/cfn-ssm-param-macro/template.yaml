@@ -55,3 +55,13 @@ Resources:
       FunctionName: !Ref SsmParamFunction
       Principal: !Ref 'AWS::AccountId'
       SourceArn: !ImportValue us-east-1-bootstrap-CfServiceRoleArn
+
+Outputs:
+  SsmParamFunctionName:
+    Value: !Ref SsmParamFunction
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SsmParamFunctionName'
+  SsmParamFunctionArn:
+    Value: !GetAtt SsmParamFunction.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SsmParamFunctionArn'
