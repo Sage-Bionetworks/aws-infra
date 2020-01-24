@@ -1,0 +1,55 @@
+# Cloudformation template from: https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#settings:
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Enables CloudWatch in central monitoring accounts to assume permissions to view CloudWatch data in the current account
+
+Parameters:
+  MonitoringAccountIds:
+    Description: Allows one or more monitoring accounts to view your data. Enter AWS account ids, 12 numeric digits in comma-separated list
+    Type: CommaDelimitedList
+
+  Policy:
+    Description: The level of access to give to the Monitoring accounts
+    Type: String
+    Default: CloudWatch-and-AutomaticDashboards
+    AllowedValues:
+      - CloudWatch-and-AutomaticDashboards
+      - CloudWatch-core-permissions
+      - View-Access-for-all-services
+
+Conditions:
+  DoFullReadOnly: !Equals [ !Ref Policy, View-Access-for-all-services ]
+  DoAutomaticDashboards: !Or [ !Equals [ !Ref Policy, CloudWatch-and-AutomaticDashboards ], Condition: DoFullReadOnly ]
+
+Resources:
+  CWCrossAccountSharingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CloudWatch-CrossAccountSharingRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Split
+                - ','
+                - !Sub
+                  - 'arn:aws:iam::${inner}:root'
+                  - inner: !Join
+                      - ':root,arn:aws:iam::'
+                      - Ref: MonitoringAccountIds
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns: !If
+        - DoFullReadOnly
+        -
+          - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+          - arn:aws:iam::aws:policy/CloudWatchAutomaticDashboardsAccess
+          - arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+        - !If
+          - DoAutomaticDashboards
+          -
+            - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+            - arn:aws:iam::aws:policy/CloudWatchAutomaticDashboardsAccess
+          -
+            - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
