@@ -367,6 +367,18 @@ Resources:
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
   # Allow instances to apply tags to its root volume
+  TagRootVolumePolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: TagInstanceVolume
+            Effect: Allow
+            Action:
+              - "ec2:Describe*"
+              - "ec2:CreateTags"
+            Resource: "*"
   TagRootVolumeRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -381,18 +393,8 @@ Resources:
             Action:
               - "sts:AssumeRole"
       Path: "/"
-      Policies:
-        -
-          PolicyName: "TagInstanceVolume"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              -
-                Effect: "Allow"
-                Action:
-                  - "ec2:Describe*"
-                  - "ec2:CreateTags"
-                Resource: "*"
+      ManagedPolicyArns:
+        - !Ref TagRootVolumePolicy
   TagRootVolumeProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
@@ -465,6 +467,11 @@ Outputs:
     Value: !Ref TagRootVolumeRole
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeRole'
+  TagRootVolumePolicy:
+    Description: Policy which allows volume tagging
+    Value: !Ref TagRootVolumePolicy
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumePolicy'
   AWSDataLifecycleManagerDefaultRoleArn:
     Description: Default Data Lifecycle Manager role arn
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
