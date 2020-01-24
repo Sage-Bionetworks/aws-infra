@@ -24,7 +24,6 @@ Resources:
   CWCrossAccountSharingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: CloudWatch-CrossAccountSharingRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -53,3 +52,16 @@ Resources:
             - arn:aws:iam::aws:policy/CloudWatchAutomaticDashboardsAccess
           -
             - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+Outputs:
+  CWCrossAccountSharingRoleName:
+    Value: !Ref CWCrossAccountSharingRole
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CWCrossAccountSharingRoleName'
+  CWCrossAccountSharingRoleArn:
+    Value: !GetAtt CWCrossAccountSharingRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CWCrossAccountSharingRoleArn'
+  CWCrossAccountSharingRoleId:
+    Value: !GetAtt CWCrossAccountSharingRole.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CWCrossAccountSharingRoleId'
