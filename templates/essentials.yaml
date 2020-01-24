@@ -367,62 +367,38 @@ Resources:
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
   # Allow instances to apply tags to its root volume
-  AWSIAMRootVolumeTaggingManagedPolicy:
-    Type: "AWS::IAM::ManagedPolicy"
-    Properties:
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: "Allow"
-            Action:
-              - "ec2:Describe*"
-              - "ec2:CreateTags"
-            Resource: "*"
   TagRootVolumeRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: "Allow"
+          -
+            Effect: "Allow"
             Principal:
               Service:
                 - "ec2.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Path: "/"
-      ManagedPolicyArns:
-        - !Ref AWSIAMRootVolumeTaggingManagedPolicy
-  ComputingInstanceRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      Path: '/'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-              - 'ec2.amazonaws.com'
-            Action:
-              - 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
-        - !Ref AWSIAMRootVolumeTaggingManagedPolicy
-  #TagRootVolumeProfile is for currently deployed EC2 instances and should not be used for future ones
+      Policies:
+        -
+          PolicyName: "TagInstanceVolume"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "ec2:Describe*"
+                  - "ec2:CreateTags"
+                Resource: "*"
   TagRootVolumeProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Path: "/"
       Roles:
         - !Ref TagRootVolumeRole
-  ComputingInstanceProfile:
-    Type: 'AWS::IAM::InstanceProfile'
-    Properties:
-      Path: "/"
-      Roles:
-        - !Ref ComputingInstanceRole
   # Role for Data Lifecycle Manager (DLM)
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
   AWSDataLifecycleManagerDefaultRole:
@@ -489,16 +465,6 @@ Outputs:
     Value: !Ref TagRootVolumeRole
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeRole'
-  ComputingInstanceProfile:
-    Description: Profile to allow instances to tag and interact with services
-    Value: !Ref ComputingInstanceProfile
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputingInstanceProfile'
-  ComputingInstanceRole:
-    Description: Role to allow instances tag and receive management via Systems Manager
-    Value: !Ref ComputingInstanceRole
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ComputingInstanceRole'
   AWSDataLifecycleManagerDefaultRoleArn:
     Description: Default Data Lifecycle Manager role arn
     Value: !GetAtt AWSDataLifecycleManagerDefaultRole.Arn
