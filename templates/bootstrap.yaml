@@ -150,6 +150,10 @@ Outputs:
     Value: !Ref AWSS3CloudformationBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationBucket'
+  AWSS3CloudformationBucketArn:
+    Value: !GetAtt AWSS3CloudformationBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationBucketArn'
   AWSIAMCfServiceRoleArn:
     Value: !GetAtt AWSIAMCfServiceRole.Arn
     Export:

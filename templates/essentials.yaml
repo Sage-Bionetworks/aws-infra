@@ -436,14 +436,26 @@ Outputs:
     Value: !Ref AWSS3CloudtrailBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucket'
+  AWSS3CloudtrailBucketArn:
+    Value: !GetAtt AWSS3CloudtrailBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucketArn'
   AWSS3ConfigBucket:
     Value: !Ref AWSS3ConfigBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AwsConfigBucket'
+  AWSS3ConfigBucketArn:
+    Value: !GetAtt AWSS3ConfigBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AwsConfigBucketArn'
   AWSS3LambdaArtifactsBucket:
     Value: !Ref AWSS3LambdaArtifactsBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaArtifactsBucket'
+  AWSS3LambdaArtifactsBucketArn:
+    Value: !GetAtt AWSS3LambdaArtifactsBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaArtifactsBucketArn'
   VPCPeeringAuthorizerRole:
     Description: Cross Account Role Name
     Value: !Ref VPCPeeringAuthorizerRole
