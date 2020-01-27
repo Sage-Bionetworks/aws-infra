@@ -220,11 +220,21 @@ Outputs:
     Value: !Ref SynapseExternalBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucket'
+  SynapseExternalBucketArn:
+    Condition: DisableEncryption
+    Value: !GetAtt SynapseExternalBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucketArn'
   SynapseEncryptedExternalBucket:
     Condition: EnableEncryption
     Value: !Ref SynapseEncryptedExternalBucket
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucket'
+  SynapseEncryptedExternalBucketArn:
+    Condition: EnableEncryption
+    Value: !GetAtt SynapseEncryptedExternalBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucketArn'
   SynapseUserName:
     Condition: HasSynapseUserName
     Value: !Ref SynapseUserName
