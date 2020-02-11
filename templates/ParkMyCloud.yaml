@@ -4,6 +4,7 @@ Description: Creates a stack to deploy the IAM Role needed to manage
   your AWS resources with ParkMyCloud. Grants the minimum essential
   permissions needed for proper ParkMyCloud operations. See
   https://parkmycloud.atlassian.net/wiki/x/BYCMAg for more information.
+  Updated with latest recommend IAM Role Policy 2019-11-22.
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -26,7 +27,7 @@ Metadata:
 Parameters:
   PMCRoleName:
     Description: Name of the ParkMyCloud IAM Role to create within your AWS account.
-                 Use only alphanumeric characters and/or the following +=,.@_-
+      Use only alphanumeric characters and/or the following +=,.@_-
     Type: String
     Default: 'ParkMyCloud_Cross_Account_Access_CF'
   PMCAccountID:
@@ -61,56 +62,42 @@ Resources:
     Properties:
       # If you use a ManagedPolicy, comment-out the PolicyName
       PolicyName: ParkMyCloudRecommendedPolicy
-      Roles: [!Ref ParkMyCloudIAMRole]
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: 2012-10-17
         Statement:
-        - Sid: ParkMyCloudTaggedOnly
-          Action:
-            - ec2:StartInstances
-            - ec2:StopInstances
-          Condition:
-            StringEquals:
-              ec2:ResourceTag/parkmycloud: 'yes'
-          Resource:
-            - "*"
+        - Action:
+          - autoscaling:Describe*
+          - autoscaling:ResumeProcesses
+          - autoscaling:SuspendProcesses
+          - autoscaling:UpdateAutoScalingGroup
+          - ec2:Describe*
+          - ec2:ModifyInstanceAttribute
+          - ec2:StartInstances
+          - ec2:StopInstances
+          - iam:GetUser
+          - rds:Describe*
+          - rds:ListTagsForResource
+          - rds:ModifyDBInstance
+          - rds:StartDBCluster
+          - rds:StartDBInstance
+          - rds:StopDBCluster
+          - rds:StopDBInstance
           Effect: Allow
-        - Sid: ParkMyCloudManagement
-          Action:
-            - autoscaling:Describe*
-            - autoscaling:UpdateAutoScalingGroup
-            - autoscaling:SuspendProcesses
-            - autoscaling:ResumeProcesses
-            - ec2:Describe*
-            - iam:GetUser
-            - rds:DescribeDBInstances
-            - rds:ListTagsForResource
-            - rds:StartDBInstance
-            - rds:StopDBInstance
-          Resource: "*"
+          Resource: '*'
+        - Action:
+          - kms:CreateGrant
           Effect: Allow
-        - Sid: ParkMyCloudStartInstanceWithEncryptedBoot
-          Effect: Allow
-          Action: kms:CreateGrant
-          Resource: "*"
-        - Sid: ParkMyCloudLogsAccess
-          Effect: Allow
-          Action:
-            - logs:DescribeLogGroups
-            - logs:DescribeLogStreams
-            - logs:GetLogEvents
-            - logs:TestMetricFilter
-            - logs:FilterLogEvents
-          Resource: arn:aws:logs:*:*:*
-        - Sid: ParkMyCloudCloudWatchAccess
-          Effect: Allow
-          Action:
-            - cloudwatch:GetMetricStatistics
-            - cloudwatch:ListMetrics
-          Resource: "*"
+          Resource: '*'
+        - Action:
+          - cloudwatch:GetMetricStatistics
+          - cloudwatch:ListMetrics
           Condition:
             Bool:
-              aws:SecureTransport: 'true'
+              aws:SecureTransport: true
+          Effect: Allow
+          Resource: '*'
+      Roles: [!Ref ParkMyCloudIAMRole]
+
 Outputs:
   RoleArn:
     Description: The ARN of the ParkMyCloud IAM role
