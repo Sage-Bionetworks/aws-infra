@@ -2,10 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
   Provision RDS PostgreSQL instance
 Parameters:
-  DBSubnets:
+  VpcSubnet:
     Type: List<AWS::EC2::Subnet::Id>
-    Description: Select at least 2 subnets across 2 AZs to include in the database
-      subnet group
     ConstraintDescription: must be an existing subnet
     Default: PrivateSubnet
     AllowedValues:
@@ -15,24 +13,10 @@ Parameters:
       - PublicSubnet
       - PublicSubnet1
       - PublicSubnet2
-  DBName:
-    Default: postgres
-    Description: The name of the database to create when the DB instance is created.
-      If this parameter is not specified, the default "postgres" database is created
-      in the DB instance.
+  KmsKeyId:
+    Description: The Amazon Resource Name (ARN) of the AWS Key Management Service master key that is used to create the encrypted volume
     Type: String
-    MinLength: '1'
-    MaxLength: '63'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a letter and contain only alphanumeric
-      characters.
-  DBSubnetGroupName:
-    Description: The name of the subnet group to be created for RDS PostgreSQL
-    Type: String
-    MinLength: '1'
-    MaxLength: '256'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a character
+    Default: ""
   DBPortNumber:
     Description: The port number on which the database accepts connections.
     Type: Number
@@ -67,7 +51,7 @@ Parameters:
     MinValue: '0'
     MaxValue: '10'
     ConstraintDescription: must be a number between 0 and 10.
-  DBAllocatedStorage:
+  VolumeSize:
     Default: '20'
     Description: General Purpose (SSD) storage (gp2). Must be an integer from 20 to
       16384.
@@ -75,6 +59,10 @@ Parameters:
     MinValue: '20'
     MaxValue: '16384'
     ConstraintDescription: Must be an integer from 20 to 16384.
+  EncryptVolume:
+    Default: 'true'
+    Description: Local encryption on the instance
+    Type: Boolean
   DBEngineVersion:
     Description: The database engine version
     Type: String
@@ -89,7 +77,7 @@ Parameters:
       - '10.4'
       - '10.3'
       - '10.1'
-  DBInstanceClass:
+  InstanceType:
     Description: The database instance type
     Type: String
     Default: db.t2.small
@@ -131,23 +119,21 @@ Parameters:
   MultiAZ:
     Description: Multi-AZ master database
     Type: String
-    Default: 'false'
+    Default: 'true'
     AllowedValues:
       - 'true'
       - 'false'
     ConstraintDescription: must be true or false.
+Conditions:
+  PublicDBResource: !Or [!Equals [ !Ref VpcSubnet, PublicSubnet ], !Equals [ !Ref VpcSubnet, PublicSubnet1 ], !Equals [ !Ref VpcSubnet, PublicSubnet2 ] ]
+  PrivateDBResource: !Or [!Equals [ !Ref VpcSubnet, PrivateSubnet ], !Equals [ !Ref VpcSubnet, PrivateSubnet1 ], !Equals [ !Ref VpcSubnet, PrivateSubnet2 ] ]
+  HasMksKeyId: !Not [!Equals ["", !Ref KmsKeyId]]
 Resources:
-  DBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupName: !Ref 'DBSubnetGroupName'
-      DBSubnetGroupDescription: PostgreSQL RDS Subnet Group
-      SubnetIds: !Ref 'DBSubnets'
   {% if sceptre_user_data.IngressWhitelist is defined %}
-  DBEC2SecurityGroup:
+  DBInstanceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Open database for access
+      GroupDescription: "Open database on defined port for access by whitelisted IP"
       VpcId: !ImportValue
         'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
       SecurityGroupIngress:
@@ -162,21 +148,78 @@ Resources:
         FromPort: -1
         ToPort: -1
         IpProtocol: "-1"
-      Tags: 
+      Tags:
         - Key: "Department"
-          Value: !Ref Department 
-        - Key: "Project"   
-          Value: !Ref Project   
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
         - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail  
+          Value: !Ref OwnerEmail
   {% endif %}
-  MasterDB:
-    Type: AWS::RDS::DBInstance
+  DBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Metadata: 
+      'AWS::CloudFormation::Init':
+        configSets:
+          SetupCfn:
+            - cfn_hup_service
+          SetupVolume:
+            - tag_volume
+        # Cfn-hup setting, it is to monitor the change of metadata.
+        # When there is change in the contents of json file in the metadata section, cfn-hup will call cfn-init.
+        cfn_hup_service:
+          files:
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                verbose=true
+                interval=5
+              mode: "000400"
+              owner: root
+              group: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.DBInstance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource DBInstance --configsets SetupCfn,SetupVolume --region ${AWS::Region}
+              mode: "000400"
+              owner: root
+              group: root
+	    /lib/systemd/system/cfn-hup.service:
+	      content: !Sub |
+	        [Unit]
+		Description=cfn-hup daemon
+
+		[Service]
+		Type=simple
+		ExecStart=/opt/aws/bin/cfn-hup
+		Restart=always
+
+		[Install]
+		WantedBy=multi-user.target
+		mode: "000400"
+		owner: root
+		group: root
+	commands:
+	  01_enable_cfn-hup:
+	    command: "/bin/systemctl enable cfn-hup.service"
+	  02_start_cfn-hup:
+	    command: "/bin/systemctl start cfn-hup.service"
+        tag_volume:                      
+	  commands:   
+	    01_tag_root_disk:
+	    command: !Join                                                                                                                                                  - ''                                                                                                                                                          - - "EC2_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "                                                                  - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "                                                                                    - "--filters Name=attachment.instance-id,Values=$EC2_INSTANCE_ID "                                                                                            - "--query Volumes[].VolumeId --out text); "                                                                                                                  - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "                                                                              - "--tags Key=Name,Value=$EC2_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "                                                              - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"                                                         env:                                                                                                                                                            AWS_REGION: !Ref AWS::Region                                                                                                                                  STACK_NAME: !Ref AWS::StackName                                                                                                                               DEPARTMENT: !Ref Department                                                                                                                                   PROJECT: !Ref Project                                                                                                                                         OWNER_EMAIL: !Ref OwnerEmail
+
+
+
     Properties:
-      DBName: !Ref 'DBName'
-      DBSubnetGroupName: !Ref 'DBSubnetGroupName'
-      AllocatedStorage: !Ref 'DBAllocatedStorage'
-      DBInstanceClass: !Ref 'DBInstanceClass'
+      AllocatedStorage: !Ref 'VolumeSize'
+      DBInstanceClass: !Ref 'InstanceType'
+      KmsKeyId: !If [HasKmsKeyId, !Ref KmsKeyId, !Ref 'AWS::NoValue']
+      StorageEncryption: !Ref 'EncryptVolume'
       Engine: postgres
       EngineVersion: !Ref 'DBEngineVersion'
       MasterUsername: !Ref 'DBMasterUsername'
@@ -188,7 +231,6 @@ Resources:
           Value: PostgreSQL Master Database
       VPCSecurityGroups:
         - !GetAtt 'DBEC2SecurityGroup.GroupId'
-    DependsOn: DBSubnetGroup
     DeletionPolicy: Snapshot
     Tags:
       - Key: "Name"
@@ -200,13 +242,32 @@ Resources:
       - Key: "OwnerEmail"
         Value: !Ref OwnerEmail
 Outputs:
-  MasterJDBCConnectionString:
+  DBInstance:
+    Value: !Ref DBInstance
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstance'
+  DBInstancePublicIp:
+    Condition: PublicDBResource
+    Value: !GetAtt 'DBInstance.Endpoint.Address'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstancePublicIp'
+  DBInstancePrivateIp:
+    Condition: PrivateDBResource
+    Value: !GetAtt 'DBInstance.Endpoint.Address'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstancePrivateIp'
+  OwnerEmail:
+    Value: !Ref OwnerEmail
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-OwnerEmail'
+  DBInstanceJDBCConnectionString:
     Description: JDBC connection string for the master database
     Value: !Join
       - ''
       - - jdbc:postgresql://
-        - !GetAtt 'MasterDB.Endpoint.Address'
+        - !GetAtt 'DBInstance.Endpoint.Address'
         - ':'
-        - !GetAtt 'MasterDB.Endpoint.Port'
-        - /
-        - !Ref 'DBName'
+        - !GetAtt 'DBInstance.Endpoint.Port'
+        - '/postgres'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstanceJDBCConnectionString'
