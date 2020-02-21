@@ -117,7 +117,7 @@ Parameters:
       - db.r4.16xlarge
     ConstraintDescription: must select a valid database instance type.
   MultiAZ:
-    Description: Multi-AZ master database
+    Description: Multi-AZ database
     Type: String
     Default: 'true'
     AllowedValues:
@@ -211,10 +211,21 @@ Resources:
         tag_volume:                      
 	  commands:   
 	    01_tag_root_disk:
-	    command: !Join                                                                                                                                                  - ''                                                                                                                                                          - - "EC2_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "                                                                  - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "                                                                                    - "--filters Name=attachment.instance-id,Values=$EC2_INSTANCE_ID "                                                                                            - "--query Volumes[].VolumeId --out text); "                                                                                                                  - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "                                                                              - "--tags Key=Name,Value=$EC2_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "                                                              - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"                                                         env:                                                                                                                                                            AWS_REGION: !Ref AWS::Region                                                                                                                                  STACK_NAME: !Ref AWS::StackName                                                                                                                               DEPARTMENT: !Ref Department                                                                                                                                   PROJECT: !Ref Project                                                                                                                                         OWNER_EMAIL: !Ref OwnerEmail
-
-
-
+	      command: !Join
+	        - ''
+	        - - "DB_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "
+	          - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "
+		  - "--filters Name=attachment.instance-id,Values=$DB_INSTANCE_ID "
+		  - "--query Volumes[].VolumeId --out text); "
+		  - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
+		  - "--tags Key=Name,Value=$DB_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "
+		  - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"
+	      env:
+	        AWS_REGION: !Ref AWS::Region
+	        STACK_NAME: !Ref AWS::StackName
+	        DEPARTMENT: !Ref Department
+	        PROJECT: !Ref Project
+	        OWNER_EMAIL: !Ref OwnerEmail
     Properties:
       AllocatedStorage: !Ref 'VolumeSize'
       DBInstanceClass: !Ref 'InstanceType'
