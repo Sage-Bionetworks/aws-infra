@@ -158,7 +158,7 @@ Resources:
   {% endif %}
   DBInstance:
     Type: 'AWS::RDS::DBInstance'
-    Metadata: 
+    Metadata:
       'AWS::CloudFormation::Init':
         configSets:
           SetupCfn:
@@ -188,44 +188,44 @@ Resources:
               mode: "000400"
               owner: root
               group: root
-	    /lib/systemd/system/cfn-hup.service:
-	      content: !Sub |
-	        [Unit]
-		Description=cfn-hup daemon
+        /lib/systemd/system/cfn-hup.service:
+          content: !Sub |
+            [Unit]
+        Description=cfn-hup daemon
 
-		[Service]
-		Type=simple
-		ExecStart=/opt/aws/bin/cfn-hup
-		Restart=always
+        [Service]
+        Type=simple
+        ExecStart=/opt/aws/bin/cfn-hup
+        Restart=always
 
-		[Install]
-		WantedBy=multi-user.target
-		mode: "000400"
-		owner: root
-		group: root
-	commands:
-	  01_enable_cfn-hup:
-	    command: "/bin/systemctl enable cfn-hup.service"
-	  02_start_cfn-hup:
-	    command: "/bin/systemctl start cfn-hup.service"
-        tag_volume:                      
-	  commands:   
-	    01_tag_root_disk:
-	      command: !Join
-	        - ''
-	        - - "DB_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "
-	          - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "
-		  - "--filters Name=attachment.instance-id,Values=$DB_INSTANCE_ID "
-		  - "--query Volumes[].VolumeId --out text); "
-		  - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
-		  - "--tags Key=Name,Value=$DB_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "
-		  - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"
-	      env:
-	        AWS_REGION: !Ref AWS::Region
-	        STACK_NAME: !Ref AWS::StackName
-	        DEPARTMENT: !Ref Department
-	        PROJECT: !Ref Project
-	        OWNER_EMAIL: !Ref OwnerEmail
+        [Install]
+        WantedBy=multi-user.target
+        mode: "000400"
+        owner: root
+        group: root
+    commands:
+      01_enable_cfn-hup:
+        command: "/bin/systemctl enable cfn-hup.service"
+      02_start_cfn-hup:
+        command: "/bin/systemctl start cfn-hup.service"
+        tag_volume:
+      commands:
+        01_tag_root_disk:
+          command: !Join
+            - ''
+            - - "DB_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "
+              - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "
+          - "--filters Name=attachment.instance-id,Values=$DB_INSTANCE_ID "
+          - "--query Volumes[].VolumeId --out text); "
+          - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
+          - "--tags Key=Name,Value=$DB_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "
+          - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"
+          env:
+            AWS_REGION: !Ref AWS::Region
+            STACK_NAME: !Ref AWS::StackName
+            DEPARTMENT: !Ref Department
+            PROJECT: !Ref Project
+            OWNER_EMAIL: !Ref OwnerEmail
     Properties:
       AllocatedStorage: !Ref 'VolumeSize'
       DBInstanceClass: !Ref 'InstanceType'
