@@ -59,6 +59,14 @@ Parameters:
     MinValue: '20'
     MaxValue: '16384'
     ConstraintDescription: Must be an integer from 20 to 16384.
+  StorageType:
+    Default: 'standard'
+    Description: Type of storage on the instance, whether standard ssd or optimized
+    Type: String
+    AllowedValues:
+      - standard
+      - gp2
+      - io1
   EncryptVolume:
     Default: 'true'
     Description: Local encryption on the instance
@@ -73,10 +81,6 @@ Parameters:
       - '11.1'
       - '10.7'
       - '10.6'
-      - '10.5'
-      - '10.4'
-      - '10.3'
-      - '10.1'
   InstanceType:
     Description: The database instance type
     Type: String
@@ -88,33 +92,8 @@ Parameters:
       - db.t2.large
       - db.t2.xlarge
       - db.t2.xlarge
-      - db.m5.24xlarge
-      - db.m5.12xlarge
-      - db.m5.4xlarge
-      - db.m5.2xlarge
       - db.m5.xlarge
       - db.m5.large
-      - db.m4.large
-      - db.m4.xlarge
-      - db.m4.2xlarge
-      - db.m4.4xlarge
-      - db.m4.10xlarge
-      - db.m4.16xlarge
-      - db.m3.medium
-      - db.m3.large
-      - db.m3.xlarge
-      - db.m3.2xlarge
-      - db.r3.large
-      - db.r3.xlarge
-      - db.r3.2xlarge
-      - db.r3.4xlarge
-      - db.r3.8xlarge
-      - db.r4.large
-      - db.r4.xlarge
-      - db.r4.2xlarge
-      - db.r4.4xlarge
-      - db.r4.8xlarge
-      - db.r4.16xlarge
     ConstraintDescription: must select a valid database instance type.
   MultiAZ:
     Description: Multi-AZ database
@@ -125,8 +104,6 @@ Parameters:
       - 'false'
     ConstraintDescription: must be true or false.
 Conditions:
-  PublicDBResource: !Or [!Equals [ !Ref VpcSubnet, PublicSubnet ], !Equals [ !Ref VpcSubnet, PublicSubnet1 ], !Equals [ !Ref VpcSubnet, PublicSubnet2 ] ]
-  PrivateDBResource: !Or [!Equals [ !Ref VpcSubnet, PrivateSubnet ], !Equals [ !Ref VpcSubnet, PrivateSubnet1 ], !Equals [ !Ref VpcSubnet, PrivateSubnet2 ] ]
   HasMksKeyId: !Not [!Equals ["", !Ref KmsKeyId]]
 Resources:
   {% if sceptre_user_data.IngressWhitelist is defined %}
@@ -134,14 +111,13 @@ Resources:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupDescription: "Open database on defined port for access by whitelisted IP"
-      VpcId: !ImportValue
-        'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
+      VpcId: !ImportValue 'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
       SecurityGroupIngress:
-      {% for block in sceptre_user_data.IngressWhitelist %}
+      {% for CIDRBlock in sceptre_user_data.IngressWhitelist %}
         - IpProtocol: tcp
           FromPort: !Ref 'DBPortNumber'
           ToPort: !Ref 'DBPortNumber'
-          CidrIp: {{ block }}
+          CidrIp: {{ CIDRBlock }}
       {% endfor %}
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
@@ -227,46 +203,38 @@ Resources:
             PROJECT: !Ref Project
             OWNER_EMAIL: !Ref OwnerEmail
     Properties:
-      AllocatedStorage: !Ref 'VolumeSize'
       DBInstanceClass: !Ref 'InstanceType'
+      AllocatedStorage: !Ref 'VolumeSize'
+      StorageType: !Ref 'StorageType'
+      StorageEncrypted: !Ref 'EncryptVolume'
+      CACertificateIdentifier: !ImportValue: 'Fn::Sub': '${AWS::Region}-${AWS::StackName}-CertificateArn'
       KmsKeyId: !If [HasKmsKeyId, !Ref KmsKeyId, !Ref 'AWS::NoValue']
-      StorageEncryption: !Ref 'EncryptVolume'
       Engine: postgres
       EngineVersion: !Ref 'DBEngineVersion'
       MasterUsername: !Ref 'DBMasterUsername'
       MasterUserPassword: !Ref 'DBMasterUserPassword'
       MultiAZ: !Ref 'MultiAZ'
       BackupRetentionPeriod: !Ref 'DBBackupRetentionPeriod'
-      Tags:
-        - Key: Name
-          Value: PostgreSQL Master Database
       VPCSecurityGroups:
-        - !GetAtt 'DBEC2SecurityGroup.GroupId'
-    DeletionPolicy: Snapshot
-    Tags:
-      - Key: "Name"
-        Value: !Ref 'AWS::StackName'
-      - Key: "Department"
-        Value: !Ref Department
-      - Key: "Project"
-        Value: Project
-      - Key: "OwnerEmail"
-        Value: !Ref OwnerEmail
+        - !GetAtt 'DBInstanceSecurityGroup.GroupId'
+      DeletionPolicy: Snapshot
+      CreationPolicy:
+        ResourceSignal:
+          Timeout: PT10M
+      Tags:
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
 Outputs:
   DBInstance:
     Value: !Ref DBInstance
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstance'
-  DBInstancePublicIp:
-    Condition: PublicDBResource
-    Value: !GetAtt 'DBInstance.Endpoint.Address'
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstancePublicIp'
-  DBInstancePrivateIp:
-    Condition: PrivateDBResource
-    Value: !GetAtt 'DBInstance.Endpoint.Address'
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstancePrivateIp'
   OwnerEmail:
     Value: !Ref OwnerEmail
     Export:
