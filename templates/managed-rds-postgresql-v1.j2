@@ -79,19 +79,18 @@ Parameters:
       - '11.5R1'
       - '11.2'
       - '11.1'
-      - '10.7'
-      - '10.6'
   InstanceType:
     Description: The database instance type
     Type: String
-    Default: db.t2.small
+    Default: db.t3.small
     AllowedValues:
-      - db.t2.micro
-      - db.t2.small
-      - db.t2.medium
-      - db.t2.large
-      - db.t2.xlarge
-      - db.t2.xlarge
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t3.large
+      - db.t3.xlarge
+      - db.r4.large
+      - db.r4.xlarge
       - db.m5.xlarge
       - db.m5.large
     ConstraintDescription: must select a valid database instance type.
@@ -132,6 +131,14 @@ Resources:
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
   {% endif %}
+  DBCertificate:
+    Type: 'AWS::CertificateManager::Certificate'
+    Properties:
+      DomainName: !Ref DomainName
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+      ValidationDomain: !Ref ValidationDomain
+
   DBInstance:
     Type: 'AWS::RDS::DBInstance'
     Metadata:
@@ -207,7 +214,7 @@ Resources:
       AllocatedStorage: !Ref 'VolumeSize'
       StorageType: !Ref 'StorageType'
       StorageEncrypted: !Ref 'EncryptVolume'
-      CACertificateIdentifier: !ImportValue: 'Fn::Sub': '${AWS::Region}-${AWS::StackName}-CertificateArn'
+      CACertificateIdentifier: !Ref 'DBCertificate'
       KmsKeyId: !If [HasKmsKeyId, !Ref KmsKeyId, !Ref 'AWS::NoValue']
       Engine: postgres
       EngineVersion: !Ref 'DBEngineVersion'
@@ -239,7 +246,7 @@ Outputs:
     Value: !Ref OwnerEmail
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-OwnerEmail'
-  DBInstanceJDBCConnectionString:
+  DBInstanceJDBCConnectionString: #TODO this should potential be the FQDN of the endpoint
     Description: JDBC connection string for the master database
     Value: !Join
       - ''
@@ -250,3 +257,7 @@ Outputs:
         - '/postgres'
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstanceJDBCConnectionString'
+  DBCertificate:
+    Description: SSL/TLS certificate for the validated subdomain of the service
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CertificateArn'
