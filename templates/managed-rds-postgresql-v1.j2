@@ -105,6 +105,12 @@ Parameters:
 Conditions:
   HasMksKeyId: !Not [!Equals ["", !Ref KmsKeyId]]
 Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: !Ref ##TODO VPC-Subnet override
+      DBSubnetGroupDescription: Subnet group name within accounts
+      SubnetIds: !Ref 'VPCSubnet'
   {% if sceptre_user_data.IngressWhitelist is defined %}
   DBInstanceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -138,7 +144,6 @@ Resources:
       DomainValidationOptions:
         - DomainName: !Ref DomainName
       ValidationDomain: !Ref ValidationDomain
-
   DBInstance:
     Type: 'AWS::RDS::DBInstance'
     Metadata:
