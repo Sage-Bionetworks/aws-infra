@@ -108,9 +108,9 @@ Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupName: !Ref ##TODO VPC-Subnet override
+      DBSubnetGroupName: !Ref 'VpcName'
       DBSubnetGroupDescription: Subnet group name within accounts
-      SubnetIds: !Ref 'VPCSubnet'
+      SubnetIds: !Ref 'VpcSubnet'
   {% if sceptre_user_data.IngressWhitelist is defined %}
   DBInstanceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -180,10 +180,6 @@ Outputs:
     Value: !Ref DBInstance
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstance'
-  OwnerEmail:
-    Value: !Ref OwnerEmail
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-OwnerEmail'
   DBInstanceJDBCConnectionString: #TODO this should potential be the FQDN of the endpoint
     Description: JDBC connection string for the master database
     Value: !Join
