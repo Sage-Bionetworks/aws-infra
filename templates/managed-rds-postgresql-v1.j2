@@ -137,14 +137,6 @@ Resources:
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
   {% endif %}
-  DBCertificate:
-    Type: 'AWS::CertificateManager::Certificate'
-    Properties:
-      DomainName: !Ref DomainName
-      DomainValidationOptions:
-        - DomainName: !Ref DomainName
-      ValidationDomain: !Ref ValidationDomain
-      ValidationMethod: DNS
   DBInstance:
     Type: 'AWS::RDS::DBInstance'
     Properties:
@@ -152,7 +144,7 @@ Resources:
       AllocatedStorage: !Ref 'VolumeSize'
       StorageType: !Ref 'StorageType'
       StorageEncrypted: !Ref 'EncryptVolume'
-      CACertificateIdentifier: !Ref 'DBCertificate'
+      CACertificateIdentifier: !Ref 'AcmCertificateArn'
       KmsKeyId: !If [HasKmsKeyId, !Ref KmsKeyId, !Ref 'AWS::NoValue']
       Engine: postgres
       EngineVersion: !Ref 'DBEngineVersion'
