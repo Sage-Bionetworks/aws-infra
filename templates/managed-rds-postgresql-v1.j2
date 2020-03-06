@@ -144,76 +144,9 @@ Resources:
       DomainValidationOptions:
         - DomainName: !Ref DomainName
       ValidationDomain: !Ref ValidationDomain
+      ValidationMethod: DNS
   DBInstance:
     Type: 'AWS::RDS::DBInstance'
-    Metadata:
-      'AWS::CloudFormation::Init':
-        configSets:
-          SetupCfn:
-            - cfn_hup_service
-          SetupVolume:
-            - tag_volume
-        # Cfn-hup setting, it is to monitor the change of metadata.
-        # When there is change in the contents of json file in the metadata section, cfn-hup will call cfn-init.
-        cfn_hup_service:
-          files:
-            /etc/cfn/cfn-hup.conf:
-              content: !Sub |
-                [main]
-                stack=${AWS::StackId}
-                region=${AWS::Region}
-                verbose=true
-                interval=5
-              mode: "000400"
-              owner: root
-              group: root
-            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              content: !Sub |
-                [cfn-auto-reloader-hook]
-                triggers=post.update
-                path=Resources.DBInstance.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource DBInstance --configsets SetupCfn,SetupVolume --region ${AWS::Region}
-              mode: "000400"
-              owner: root
-              group: root
-        /lib/systemd/system/cfn-hup.service:
-          content: !Sub |
-            [Unit]
-        Description=cfn-hup daemon
-
-        [Service]
-        Type=simple
-        ExecStart=/opt/aws/bin/cfn-hup
-        Restart=always
-
-        [Install]
-        WantedBy=multi-user.target
-        mode: "000400"
-        owner: root
-        group: root
-    commands:
-      01_enable_cfn-hup:
-        command: "/bin/systemctl enable cfn-hup.service"
-      02_start_cfn-hup:
-        command: "/bin/systemctl start cfn-hup.service"
-        tag_volume:
-      commands:
-        01_tag_root_disk:
-          command: !Join
-            - ''
-            - - "DB_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "
-              - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "
-          - "--filters Name=attachment.instance-id,Values=$DB_INSTANCE_ID "
-          - "--query Volumes[].VolumeId --out text); "
-          - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
-          - "--tags Key=Name,Value=$DB_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "
-          - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"
-          env:
-            AWS_REGION: !Ref AWS::Region
-            STACK_NAME: !Ref AWS::StackName
-            DEPARTMENT: !Ref Department
-            PROJECT: !Ref Project
-            OWNER_EMAIL: !Ref OwnerEmail
     Properties:
       DBInstanceClass: !Ref 'InstanceType'
       AllocatedStorage: !Ref 'VolumeSize'
@@ -262,7 +195,3 @@ Outputs:
         - '/postgres'
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstanceJDBCConnectionString'
-  DBCertificate:
-    Description: SSL/TLS certificate for the validated subdomain of the service
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CertificateArn'
