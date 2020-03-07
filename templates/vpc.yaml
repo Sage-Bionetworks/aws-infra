@@ -609,7 +609,12 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'BastianSecurityGroup']]
-
+  QuarantineSecurityGroup:
+    Description: "Quarantine Security Group Id"
+    Value: !Ref BastianSecurityGroup
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'QuarantineSecurityGroup']]
   VpnCidr:
     Description: "CIDR of the VPN used for the VpnSecurityGroup SecurityIngress"
     Value: !Ref VpnCidr
