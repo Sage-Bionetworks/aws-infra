@@ -505,15 +505,15 @@ Resources:
   QuarantineSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Security Group for bastians
+      GroupDescription: Security Group for quarantining hosts
       VpcId:
         Ref: "VPC"
       SecurityGroupIngress:
-        - CidrIp: "10.0.0.0/8"
+        - CidrIp: "10.1.0.0/16"
           FromPort: 22
           ToPort: 22
           IpProtocol: tcp
-          Description: "Allow SSH connection from priv"
+          Description: "Allow SSH connection from VPN route"
       SecurityGroupEgress:
         - CidrIp: "127.0.0.1/32"
           IpProtocol: "-1"
