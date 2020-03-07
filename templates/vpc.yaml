@@ -611,7 +611,7 @@ Outputs:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'BastianSecurityGroup']]
   QuarantineSecurityGroup:
     Description: "Quarantine Security Group Id"
-    Value: !Ref BastianSecurityGroup
+    Value: !Ref QuarantineSecurityGroup
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'QuarantineSecurityGroup']]
