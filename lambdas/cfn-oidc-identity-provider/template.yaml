@@ -27,7 +27,7 @@ Resources:
   IdentityProviderCreatorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Runtime: python3.7
+      Runtime: python3.6
       CodeUri: oidc_identity_provider/
       Handler: app.lambda_handler
       Role: !GetAtt IdentityProviderCreatorRole.Arn
