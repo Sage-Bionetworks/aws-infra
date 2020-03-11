@@ -4,47 +4,36 @@ This template and associated Lambda function and custom resource add support to 
 AWS CloudFormation for the [AWS IAM OpenId Connect Identity Provider][1]
 resource type.
 
+This is copied from [Mozilla security teams's repo](https://github.com/mozilla/security/tree/master/operations/cloudformation-templates/oidc_identity_provider)
+with a few modifications:
+* Placed in SAM directory structure
+* Modified the custom resource template with SAM properties
+* Built and packaged with the SAM CLI
+* Updated README.md file
+* Removed Makefile and deploy.sh
+
 ## Usage
 
-Launch the CloudFormation stack using the [`Makefile`](Makefile) by running a
-command like
+Launch the CloudFormation stack using the [sceptre](https://github.com/Sceptre/sceptre).
+The sceptre template should be something like this..
 
-```shell script
-make S3_BUCKET=my-s3-bucket-name deploy-cloudformation-stack
+```yaml
+template_path: remote/cfn-oidc-identity-provider.yaml
+stack_name: my-oidc-idp
+stack_tags:
+  Department: "Platform"
+  Project: "Infrastructure"
+  OwnerEmail: "joe.smith@sagebase.org"
+parameters:
+  Url: "https://prod.acme.org/auth/v1"
+  ClientIDList: "Client1"
+  ThumbprintList: "09aa48a9a6fb14926bb7f3fa2e02da2b0ab02fa"
+hooks:
+  before_launch:
+    - !cmd "curl https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/cfn-oidc-identity-provider.yaml --create-dirs -o templates/remote/cfn-oidc-identity-provider.yaml"
 ```
 
 This will launch the stack with example URL, Client IDs and Thumbprints.
-
-To pass your actual settings, either
-* Launch a stack from a hosted template of a specific git commit
-  ```
-  https://s3-us-west-2.amazonaws.com/public.us-west-2.infosec.mozilla.org/oidc-identity-provider/5f48b78c87d98c18b55c98a6e5c285a80d53424c/oidc_identity_provider.5f48b78c87d98c18b55c98a6e5c285a80d53424c.yml
-  ```
-  * By pasting the S3 URL above into the AWS Web Console when creating a new
-    CloudFormation stack
-  * By using the AWS CLI with the S3 URL above to create a new CloudFormation
-    stack.
-    ```shell script
-    aws cloudformation create-stack \
-        --stack-name OIDCIdentityProvider \
-        --template-url https://s3-us-west-2.amazonaws.com/public.us-west-2.infosec.mozilla.org/oidc-identity-provider/5f48b78c87d98c18b55c98a6e5c285a80d53424c/oidc_identity_provider.5f48b78c87d98c18b55c98a6e5c285a80d53424c.yml \
-        --capabilities CAPABILITY_IAM \
-        --parameters \
-            ParameterKey=Url,ParameterValue=https://example.com/ \
-            ParameterKey=ClientIDList,ParameterValue='id1\,id2' \
-            ParameterKey=ThumbprintList,ParameterValue='1234567890abcdef1234567890abcdef12345678\,234567890abcdef1234567890abcdef123456789'
-    ```
-* Host the Lambda code in your own S3 bucket by running `make` and passing in the values, for example
-  ```shell script
-  export S3_BUCKET=my-s3-bucket-name
-  export URL=https://example.com/
-  export CLIENT_ID_LIST=clientid1,clientid2
-  export THUMBPRINT_LIST=34567890abcdef1234567890abcdef1234567890,4567890abcdef1234567890abcdef1234567890a
-  make deploy-cloudformation-stack
-  ```
-* Edit the `Makefile` and set new defaults
-* Launch the stack with the defaults, then do a stack update and pass in the
-  real values either on the command line or in the web console
 
 ## Why a separate Lambda file
 
@@ -53,8 +42,6 @@ couldn't fit into the [4096 characters][2] allowed for embedded code without
 heavily obfuscating the code.
 
 ## Inspiration
-
-This is copied from [Mozilla security teams's repo](https://github.com/mozilla/security/tree/master/operations/cloudformation-templates/oidc_identity_provider)
 
 This project was inspired by the [cfn-identity-provider][3] by [Colin Panisset][4]
 of [Cevo][5] which provides a similar function but for the SAML identity provider
