@@ -182,7 +182,7 @@ Outputs:
     Value: !Ref DBInstance
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstance'
-  DBInstanceJDBCConnectionString: #TODO this should potential be the FQDN of the endpoint
+  DBInstanceJDBCConnectionString: 
     Description: JDBC connection string for the master database
     Value: !Join
       - ''
