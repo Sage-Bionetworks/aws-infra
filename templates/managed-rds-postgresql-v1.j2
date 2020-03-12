@@ -109,10 +109,10 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnet group name within accounts
-      SubnetIds: 
+      SubnetIds:
         - PublicSubnet
-	- PublicSubnet1
-	- PublicSubnet2
+    - PublicSubnet1
+    - PublicSubnet2
       Tags:
         - Key: "Department"
           Value: !Ref Department
@@ -182,7 +182,7 @@ Outputs:
     Value: !Ref DBInstance
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-DBInstance'
-  DBInstanceJDBCConnectionString: 
+  DBInstanceJDBCConnectionString:
     Description: JDBC connection string for the master database
     Value: !Join
       - ''
