@@ -108,9 +108,18 @@ Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupName: !Ref 'VpcName'
       DBSubnetGroupDescription: Subnet group name within accounts
-      SubnetIds: !Ref 'VpcSubnet'
+      SubnetIds: 
+        - PublicSubnet
+	- PublicSubnet1
+	- PublicSubnet2
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
   {% if sceptre_user_data.IngressWhitelist is defined %}
   DBInstanceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -154,6 +163,7 @@ Resources:
       BackupRetentionPeriod: !Ref 'DBBackupRetentionPeriod'
       VPCSecurityGroups:
         - !GetAtt 'DBInstanceSecurityGroup.GroupId'
+      CopyTagsToSnapshot: true
       DeletionPolicy: Snapshot
       CreationPolicy:
         ResourceSignal:
