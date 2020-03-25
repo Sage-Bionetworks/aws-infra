@@ -2,6 +2,25 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
   Provision RDS PostgreSQL instance
 Parameters:
+  DomainName:
+    Description: Domain name for your website (example.org)
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  SubDomainName:
+    Description: The sub domain name e.g. ('my' in my.example.org)
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  AcmCertificateArn:
+    Type: String
+    Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
+    AllowedPattern: "arn:aws:acm:.*"
+    ConstraintDescription: must be a valid certificate ARN.
+  Department:
+    Description: 'The department for this resource'
+    Type: String
+    Default: ""
   VpcSubnet:
     Type: List<AWS::EC2::Subnet::Id>
     ConstraintDescription: must be an existing subnet
@@ -16,7 +35,7 @@ Parameters:
   KmsKeyId:
     Description: The Amazon Resource Name (ARN) of the AWS Key Management Service master key that is used to create the encrypted volume
     Type: String
-    Default: ""
+    Default: !Ref AWSKmsInfraKey
   DBPortNumber:
     Description: The port number on which the database accepts connections.
     Type: Number
@@ -103,16 +122,17 @@ Parameters:
       - 'false'
     ConstraintDescription: must be true or false.
 Conditions:
-  HasMksKeyId: !Not [!Equals ["", !Ref KmsKeyId]]
+  HasKmsKeyId: !Not [!Equals ["", !Ref KmsKeyId]]
 Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnet group name within accounts
+      # Currently not able to reference private subnets
       SubnetIds:
         - PublicSubnet
-    - PublicSubnet1
-    - PublicSubnet2
+        - PublicSubnet1
+        - PublicSubnet2
       Tags:
         - Key: "Department"
           Value: !Ref Department
