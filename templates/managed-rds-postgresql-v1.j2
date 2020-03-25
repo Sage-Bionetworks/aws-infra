@@ -21,17 +21,6 @@ Parameters:
     Description: 'The department for this resource'
     Type: String
     Default: ""
-  VpcSubnet:
-    Type: List<AWS::EC2::Subnet::Id>
-    ConstraintDescription: must be an existing subnet
-    Default: PrivateSubnet
-    AllowedValues:
-      - PrivateSubnet
-      - PrivateSubnet1
-      - PrivateSubnet2
-      - PublicSubnet
-      - PublicSubnet1
-      - PublicSubnet2
   KmsKeyId:
     Description: The Amazon Resource Name (ARN) of the AWS Key Management Service master key that is used to create the encrypted volume
     Type: String
@@ -170,6 +159,7 @@ Resources:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       DBInstanceClass: !Ref 'InstanceType'
+      DBSubnetGroupName: !Ref 'DBSubnetGroup'
       AllocatedStorage: !Ref 'VolumeSize'
       StorageType: !Ref 'StorageType'
       StorageEncrypted: !Ref 'EncryptVolume'
