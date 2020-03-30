@@ -509,11 +509,16 @@ Resources:
       VpcId:
         Ref: "VPC"
       SecurityGroupIngress:
-        - CidrIp: "10.1.0.0/16"
+        - CidrIp: !Ref VpnCidr
           FromPort: 22
           ToPort: 22
           IpProtocol: tcp
           Description: "Allow SSH connection from VPN route"
+        - CidrIp: !Ref VpnCidr
+          FromPort: 3389
+          ToPort: 3389
+          IpProtocol: tcp
+          Description: "Allow RDP connection from VPN route"
       SecurityGroupEgress:
         - CidrIp: "127.0.0.1/32"
           IpProtocol: "-1"
