@@ -364,23 +364,6 @@ Resources:
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
 
-  # Allow SSM service to connect to agents on instance
-  SystemManagementRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Principal:
-              Service:
-                - "ssm.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Path: "/"
-      ManagedPolicyArns: ['arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore']
-  
   # Allow instances to apply tags to its root volume
   TagRootVolumePolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -405,11 +388,15 @@ Resources:
             Principal:
               Service:
                 - "ec2.amazonaws.com"
+                #Needed for SSM management
+                - "ssm.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Path: "/"
       ManagedPolicyArns:
         - !Ref TagRootVolumePolicy
+          #Add policy to role allow SSM to attach to instances
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
 # This profile would more accurately be named "EC2ManagementProfile"
   TagRootVolumeProfile:
     Type: 'AWS::IAM::InstanceProfile'
@@ -417,7 +404,6 @@ Resources:
       Path: "/"
       Roles:
         - !Ref TagRootVolumeRole
-        - !Ref SystemManagementRole
   # Role for Data Lifecycle Manager (DLM)
   # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html
   AWSDataLifecycleManagerDefaultRole:
