@@ -5,11 +5,6 @@ Parameters:
   VpcSubnetPrefix:
     Description: The VPC subnet prefix (i.e. 10.40)
     Type: String
-  AZRegions:
-    Description: Availability zone regions
-    Type: List<AWS::EC2::AvailabilityZone::Name>
-    ConstraintDescription: List of Availability Zone regions, such as us-east-1a, us-east-1b, etc..
-    Default: "us-east-1a, us-east-1b, us-east-1c, us-east-1d, us-east-1e, us-east-1f"
 Mappings:
   SubnetConfig:
     VPC:
@@ -26,6 +21,9 @@ Mappings:
       CIDR: "64.0/20"
     Public5:
       CIDR: "80.0/20"
+  AZRegions:
+    us-east-1:
+      AZs: ["a", "b", "c", "d", "e", "f"]
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -48,9 +46,10 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public0, CIDR]
-      AvailabilityZone: !Select
-        - 0
-        - !Ref AZRegions
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 0, !FindInMap [ "AZRegions", !Ref "AWS::Region", "AZs" ] ]
       Tags:
         - Key: "Name"
           Value: !Sub '${AWS::StackName}-PublicSubnet0'
@@ -63,9 +62,10 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public1, CIDR]
-      AvailabilityZone: !Select
-        - 1
-        - !Ref AZRegions
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 1, !FindInMap [ "AZRegions", !Ref "AWS::Region", "AZs" ] ]
       Tags:
         - Key: "Name"
           Value: !Sub '${AWS::StackName}-PublicSubnet1'
@@ -78,9 +78,10 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public2, CIDR]
-      AvailabilityZone: !Select
-        - 2
-        - !Ref AZRegions
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 2, !FindInMap [ "AZRegions", !Ref "AWS::Region", "AZs" ] ]
       Tags:
         - Key: "Name"
           Value: !Sub '${AWS::StackName}-PublicSubnet2'
@@ -93,9 +94,10 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public3, CIDR]
-      AvailabilityZone: !Select
-        - 3
-        - !Ref AZRegions
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 3, !FindInMap [ "AZRegions", !Ref "AWS::Region", "AZs" ] ]
       Tags:
         - Key: "Name"
           Value: !Sub '${AWS::StackName}-PublicSubnet3'
@@ -108,9 +110,10 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public4, CIDR]
-      AvailabilityZone: !Select
-        - 4
-        - !Ref AZRegions
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 4, !FindInMap [ "AZRegions", !Ref "AWS::Region", "AZs" ] ]
       Tags:
         - Key: "Name"
           Value: !Sub '${AWS::StackName}-PublicSubnet4'
@@ -123,9 +126,10 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public5, CIDR]
-      AvailabilityZone: !Select
-        - 5
-        - !Ref AZRegions
+      AvailabilityZone:
+        Fn::Sub:
+          - "${AWS::Region}${AZ}"
+          - AZ: !Select [ 5, !FindInMap [ "AZRegions", !Ref "AWS::Region", "AZs" ] ]
       Tags:
         - Key: "Name"
           Value: !Sub '${AWS::StackName}-PublicSubnet5'
