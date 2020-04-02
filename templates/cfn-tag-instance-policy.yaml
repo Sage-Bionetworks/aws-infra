@@ -1,0 +1,21 @@
+Description: Policy with extra actions for tagging instances in Service Catalog
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  TagInstancePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: SearchProvisionedProducts
+            Effect: 'Allow'
+            Action: 'servicecatalog:SearchProvisionedProducts'
+            Resource: '*'
+
+Outputs:
+  TagInstancePolicy:
+    Description: Policy with extra actions for tagging instances in Service Catalog
+    Value: !Ref TagInstancePolicy
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TagInstancePolicy'
