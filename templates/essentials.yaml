@@ -364,6 +364,31 @@ Resources:
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
 
+  # Allow instances to apply tags to its root volume and attach SSM
+  ManagedEC2Role:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+                - "ssm.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - !Ref TagRootVolumePolicy
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+  ManagedEC2Profile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref ManagedEC2Role
   # Allow instances to apply tags to its root volume
   TagRootVolumePolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -395,9 +420,6 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - !Ref TagRootVolumePolicy
-          #Add policy to role allow SSM to attach to instances
-        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
-# This profile would more accurately be named "EC2ManagementProfile"
   TagRootVolumeProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
@@ -472,8 +494,18 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
-  TagRootVolumeProfile:
+  ManagedEC2Profile:
     Description: Profile to allow instances to tag its root volume and allow SSM actions
+    Value: !Ref ManagedEC2Profile
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedEC2Profile'
+  ManagedEC2Role:
+    Description: Role to allow instances to tag its root volume
+    Value: !Ref ManagedEC2Role
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedEC2Role'
+  TagRootVolumeProfile:
+    Description: Profile to allow instances to tag its root volume
     Value: !Ref TagRootVolumeProfile
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TagRootVolumeProfile'
