@@ -413,8 +413,6 @@ Resources:
             Principal:
               Service:
                 - "ec2.amazonaws.com"
-                #Needed for SSM management
-                - "ssm.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Path: "/"
