@@ -1,0 +1,192 @@
+{
+  "fragment": {
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Service Catalog: S3 Reference Architecture: Private encrypted bucket using AES256 with retention on object deletion. (fdp-1oc5gsre6)",
+    "Metadata": {
+      "AWS::CloudFormation::Interface": {
+        "ParameterGroups": [
+          {
+            "Label": {
+              "default": "S3 Bucket Policy Configuration"
+            },
+            "Parameters": [
+              "S3UserARNs"
+            ]
+          }
+        ]
+      }
+    },
+    "Parameters": {
+      "S3UserARNs": {
+        "Type": "CommaDelimitedList",
+        "Default": "",
+        "Description": "User ARNs allowed to access S3 Bucket",
+        "ConstraintDescription": "List of ARNs separated by commas (i.e. arn:aws:iam::011223344556:user/jsmith,arn:aws:iam::544332211006:user/rjones)"
+      }
+    },
+    "Conditions": {
+      "AllowUserAccess": {
+        "Fn::Not": [
+          {
+            "Fn::Equals": [
+              {
+                "Fn::Join": [
+                  "",
+                  {
+                    "Ref": "S3UserARNs"
+                  }
+                ]
+              },
+              "[]"
+            ]
+          }
+        ]
+      }
+    },
+    "Resources": {
+      "Fn::Transform": {
+        "Name": "SetBucketTags",
+        "Parameters": {
+          "BucketName": {
+            "Ref": "S3Bucket"
+          }
+        }
+      },
+      "S3Bucket": {
+        "Type": "AWS::S3::Bucket",
+        "DeletionPolicy": "Retain",
+        "Properties": {
+          "AccessControl": "Private",
+          "BucketEncryption": {
+            "ServerSideEncryptionConfiguration": [
+              {
+                "ServerSideEncryptionByDefault": {
+                  "SSEAlgorithm": "AES256"
+                }
+              }
+            ]
+          },
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": "SC-S3-RA-S3-Bucket"
+            }
+          ]
+        }
+      },
+      "BucketPolicy": {
+        "Type": "AWS::S3::BucketPolicy",
+        "Condition": "AllowUserAccess",
+        "Properties": {
+          "Bucket": {
+            "Ref": "S3Bucket"
+          },
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "ReadAccess",
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": {
+                    "Ref": "S3UserARNs"
+                  }
+                },
+                "Action": [
+                  "s3:ListBucket*",
+                  "s3:GetBucketLocation"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "S3Bucket",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Sid": "WriteAccess",
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": {
+                    "Ref": "S3UserARNs"
+                  }
+                },
+                "Action": [
+                  "s3:*Object*",
+                  "s3:*MultipartUpload*"
+                ],
+                "Resource": {
+                  "Fn::Sub": "${S3Bucket.Arn}/*"
+                }
+              },
+              {
+                "Sid": "DenyIncorrectEncryptionHeader",
+                "Effect": "Deny",
+                "Principal": {
+                  "AWS": {
+                    "Ref": "S3UserARNs"
+                  }
+                },
+                "Action": "s3:PutObject",
+                "Resource": {
+                  "Fn::Sub": "arn:aws:s3:::${S3Bucket}/*"
+                },
+                "Condition": {
+                  "StringNotEquals": {
+                    "s3:x-amz-server-side-encryption": "AES256"
+                  }
+                }
+              },
+              {
+                "Sid": "DenyUnEncryptedObjectUploads",
+                "Effect": "Deny",
+                "Principal": {
+                  "AWS": {
+                    "Ref": "S3UserARNs"
+                  }
+                },
+                "Action": "s3:PutObject",
+                "Resource": {
+                  "Fn::Sub": "arn:aws:s3:::${S3Bucket}/*"
+                },
+                "Condition": {
+                  "Null": {
+                    "s3:x-amz-server-side-encryption": "true"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Outputs": {
+      "BucketName": {
+        "Value": {
+          "Ref": "S3Bucket"
+        }
+      },
+      "BucketARN": {
+        "Value": {
+          "Fn::GetAtt": [
+            "S3Bucket",
+            "Arn"
+          ]
+        }
+      },
+      "BucketUrl": {
+        "Value": {
+          "Fn::Sub": "https://console.aws.amazon.com/s3/home?region=${AWS::Region}&bucket=${S3Bucket}"
+        }
+      }
+    }
+  },
+  "region": "us-east-1",
+  "accountId" : "1234567890",
+  "transformId": "SetBucketTags",
+  "params": {
+    "BucketName": "sc-237179673806-pp-xvgbviyhxerwg-s3bucket-1gxmhiymr3p25"
+  },
+  "requestId": "testRequest",
+  "templateParameterValues": {}
+}
