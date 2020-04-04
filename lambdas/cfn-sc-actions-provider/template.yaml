@@ -23,9 +23,9 @@ Resources:
             Action:
               - sts:AssumeRole
       ManagedPolicyArns:
+        - !Ref LogsPolicy
         - "arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess"
 #        - !Ref ProviderPolicy
-#        - !Ref LogsPolicy
   LogsPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
