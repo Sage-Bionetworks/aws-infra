@@ -5,6 +5,7 @@ AWS CloudFormation for the [AWS Service Catalog Service Actions][1]
 resource type.
 
 ## Build Lambda
+Build the lambda using the [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 
 ```shell script
 sam build --build-dir lambdas/build/cfn-sc-actions-provider --base-dir lambdas/cfn-sc-actions-provider --template lambdas/cfn-sc-actions-provider/template.yaml
@@ -17,7 +18,7 @@ sam package --template-file lambdas/build/cfn-sc-actions-provider/template.yaml 
 ```
 
 ## Install Lambda into AWS
-Create the following sceptre file
+Create the following [sceptre](https://github.com/Sceptre/sceptre) file
 
 config/prod/cfn-sc-actions-provider.yaml
 ```yaml
@@ -28,14 +29,14 @@ hooks:
     - !cmd "curl https://s3.amazonaws.com/{{stack_group_config.admincentral_cf_bucket}}/aws-infra/master/cfn-sc-actions-provider.yaml --create-dirs -o templates/remote/cfn-sc-actions-provider.yaml"
 ```
 
-Install the lambda using [sceptre](https://github.com/Sceptre/sceptre):
+Install the lambda using sceptre:
 ```bash script
 sceptre --var "profile=my-profile" --var "region=us-east-1" launch prod/cfn-sc-actions-provider.yaml
 ```
 
 ## Creating SC Actions
 
-Create the following sceptre files
+Create the sceptre file
 
 config/prod/sc-restart-instance-action.yaml:
 ```yaml
@@ -49,6 +50,8 @@ parameters:
   Name: "AWS-RestartEC2Instance"
   AssumeRole: "arn:aws:iam::563295687221:role/SCEC2LaunchRole"
 ```
+
+Create the AWS cloudformation template
 
 sc-action.yaml:
 ```yaml
