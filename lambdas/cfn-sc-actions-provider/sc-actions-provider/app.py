@@ -17,18 +17,19 @@ except Exception as e:
 def get_parameters(event):
     aws_account_id = event['StackId'].split(':')[4]
     name = event['ResourceProperties']['Name']
-    version = event['ResourceProperties']['Version']
+    ssm_doc_name = event['ResourceProperties']['SsmDocName']
+    ssm_doc_version = event['ResourceProperties']['SsmDocVersion']
     assume_role = event['ResourceProperties']['AssumeRole']
-    return aws_account_id, name, version, assume_role
+    return aws_account_id, name, ssm_doc_name, ssm_doc_version, assume_role
 
-def create_provider(aws_account_id, name, version, assume_role):
+def create_provider(aws_account_id, name, ssm_doc_name, ssm_doc_version, assume_role):
     try:
         response = sc.create_service_action(
             Name=name,
             DefinitionType='SSM_AUTOMATION',
             Definition= {
-                    "Name": name,
-                    "Version": version,
+                    "Name": ssm_doc_name,
+                    "Version": ssm_doc_version,
                     "AssumeRole": assume_role,
                     "Parameters": "[{\"Name\":\"AutomationAssumeRole\",\"Type\":\"TARGET\"}]"
                   }

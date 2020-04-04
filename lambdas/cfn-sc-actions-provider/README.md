@@ -47,7 +47,9 @@ stack_tags:
   Project: "Infrastructure"
   OwnerEmail: "joe.smith@sagebase.org"
 parameters:
-  Name: "AWS-RestartEC2Instance"
+  Name: "RestartEC2Instance"
+  SsmDocName: "AWS-RestartEC2Instance"
+  SsmDocVersion: "1"
   AssumeRole: "arn:aws:iam::563295687221:role/SCEC2LaunchRole"
 ```
 
@@ -58,13 +60,24 @@ sc-action.yaml:
 Description: Service Catalog Service Action
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  Name:
+  SsmDocName:
     Type: String
-    Description: The SC action name
-  Version:
+    Description: The name of the SSM document providing the action
+    AllowedValues:
+      - AWS-RebootRdsInstance
+      - AWS-StartRdsInstance
+      - AWS-StopRdsInstance
+      - AWS-StopEC2Instance
+      - AWS-StartEC2Instance
+      - AWS-RestartEC2Instance
+    Default: "AWS-RestartEC2Instance"
+  SsmDocVersion:
     Type: String
     Description: The SSM document version
     Default: "1"
+  Name:
+    Type: String
+    Description: The SC action name
   AssumeRole:
     Type: String
     Description: The IAM role that SC actions will use
@@ -74,8 +87,9 @@ Resources:
     Properties:
      ServiceToken: !ImportValue
       'Fn::Sub': '${AWS::Region}-cfn-sc-actions-provider-CreateFunctionArn'
+     SsmDocName: !Ref SsmDocName
+     SsmDocVersion: !Ref SsmDocVersion
      Name: !Ref Name
-     Version: !Ref Version
      AssumeRole: !Ref AssumeRole
 Outputs:
   EC2InstanceActionId:
