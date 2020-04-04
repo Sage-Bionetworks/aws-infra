@@ -1,7 +1,6 @@
 # cfn-set-bucket-tags
 
-The `SetBucketTags` macro allows retrieval of parameters from the SSM Parameter
-Store.
+The `SetBucketTags` sets the OwnerEmail of a bucket
 
 Inventory of source code and supporting files:
 
