@@ -34,9 +34,9 @@ def create_provider(aws_account_id, name, ssm_doc_name, ssm_doc_version, assume_
                     "Parameters": "[{\"Name\":\"AutomationAssumeRole\",\"Type\":\"TARGET\"}]"
                   }
         )
-        resource_id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
+        id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
         logger.info("created sc action " + id)
-        return resource_id
+        return id
     except ClientError as e:
         raise e
 
@@ -66,7 +66,6 @@ def update(event, context):
         old_properties = event['OldResourceProperties']
         id = event['PhysicalResourceId']
         if new_properties != old_properties:
-            logger.info("updating sc action " + id)
             response = sc.update_service_action(
                 Id=id,
                 Name=new_properties['Name'],
@@ -77,9 +76,8 @@ def update(event, context):
                         "Parameters": "[{\"Name\":\"AutomationAssumeRole\",\"Type\":\"TARGET\"}]"
                       }
             )
-            resource_id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
-            logger.info("resource_id = " + resource_id)
-            id=resource_id
+            id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
+            logger.info("updated sc action = " + id)
         return id
     except ClientError as e:
         raise e
