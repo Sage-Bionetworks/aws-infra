@@ -35,7 +35,7 @@ Build your application with the `sam build --use-container` command.
 cfn-set-bucket-tags$ sam build --use-container
 ```
 
-The SAM CLI installs dependencies defined in `ssm_param/requirements.txt`,
+The SAM CLI installs dependencies defined in `set_bucket_tags/requirements.txt`,
 creates a deployment package, and saves it in the `.aws-sam/build` folder.
 
 Test a single function by invoking it directly with a test event. An event is a
