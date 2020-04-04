@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Service Catalog actions provider
+#Metadata:
+#  Source: https://github.com/mozilla/security/tree/master/operations/cloudformation-templates/oidc_identity_provider/
+#Parameters:
+#  Name:
+#    Type: String
+#    Description: The name of the action
+#  Version:
+#    Type: Number
+#    Description: The version number (i.e 1)
+#  AssumeRole:
+#    Type: String
+#    Description: The role ARN to assume when executing the action
+Resources:
+#  ScActionsProvider:
+#    Type: Custom::ScActionsProvider
+#    Properties:
+#      ServiceToken: !GetAtt ScActionsProviderCreatorFunction.Arn
+#      Name: !Ref Name
+#      Version: !Ref Version
+#      AssumeRole: !Ref AssumeRole
+
+#  ScActionsProviderCreatorFunction:
+  CreateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: python3.6
+      CodeUri: sc-actions-provider/
+      Handler: app.lambda_handler
+      Role: !GetAtt CreateFunctionRole.Arn
+      Timeout: 30
+  CreateFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess"
+#        - !Ref ProviderPolicy
+#        - !Ref LogsPolicy
+
+  LogsPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+
+  ProviderPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - "servicecatalog:*ServiceAction"
+              - "servicecatalog:*ServiceAction*"
+              - "ssm:DescribeDocument"
+              - "ssm:GetAutomationExecution"
+              - "ssm:StartAutomationExecution"
+              - "ssm:StopAutomationExecution"
+              - "cloudformation:ListStackResources"
+              - "ec2:DescribeInstanceStatus"
+              - "ec2:StartInstances"
+              - "ec2:StopInstances"
+            Resource: "*"
+
+#      Policies:
+#        - PolicyName: ManageScActionsProvider
+#          PolicyDocument:
+#            Version: 2012-10-17
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "servicecatalog:ListServiceActionsForProvisioningArtifact"
+#                  - "servicecatalog:ExecuteprovisionedProductServiceAction"
+#                  - "ssm:DescribeDocument"
+#                  - "ssm:GetAutomationExecution"
+#                  - "ssm:StartAutomationExecution"
+#                  - "ssm:StopAutomationExecution"
+#                  - "cloudformation:ListStackResources"
+#                  - "ec2:DescribeInstanceStatus"
+#                  - "ec2:StartInstances"
+#                  - "ec2:StopInstances"
+#                Resource: "*"
+#              - Effect: Allow
+#                Action:
+#                  - logs:CreateLogGroup
+#                  - logs:CreateLogStream
+#                  - logs:PutLogEvents
+#                Resource: "*"
+Outputs:
+  CreateFunctionArn:
+    Value: !GetAtt CreateFunction.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CreateFunctionArn'
+#  ScActionsProvider:
+#    Value: !Ref ScActionsProvider
+#    Export:
+#      Name: !Sub '${AWS::Region}-${AWS::StackName}-ScActionsProvider'
