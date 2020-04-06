@@ -1,8 +1,10 @@
 # Service Catalog Actions Provider CloudFormation Template Custom Resource
 
-This template and associated Lambda function and custom resource add support to \
-AWS CloudFormation for the [AWS Service Catalog Service Actions][1]
+This template and associated Lambda function and custom resource add support to AWS CloudFormation for the [AWS Service Catalog Service Actions][1]
 resource type.
+
+# Lambda
+We create the lambda in AWS to provide SC action functionality
 
 ## Build Lambda
 Build the lambda using the [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
@@ -34,8 +36,11 @@ Install the lambda using sceptre:
 sceptre --var "profile=my-profile" --var "region=us-east-1" launch prod/cfn-sc-actions-provider.yaml
 ```
 
-## Creating SC Actions
+# Service Catalog Action
+We create the SC actions by using the cfn-sc-actions-provider lambda.  The provider contains two custom
+resources, one to create the SC action and one to associate the action to a product.
 
+## Creating SC Actions and Asssociation
 Create the sceptre file
 
 config/prod/sc-restart-instance-action.yaml:
@@ -82,6 +87,7 @@ Parameters:
     Type: String
     Description: The IAM role that SC actions will use
 Resources:
+  # Create the SC action
   EC2InstanceAction:
     Type: Custom::ScActionsProvider
     Properties:
@@ -91,6 +97,16 @@ Resources:
      SsmDocVersion: !Ref SsmDocVersion
      Name: !Ref Name
      AssumeRole: !Ref AssumeRole
+  # Associate the SC action to a SC product
+  AssociateProductAction:
+    Type: Custom::ScActionsProvider
+    Properties:
+      ServiceToken: !ImportValue
+        'Fn::Sub': '${AWS::Region}-cfn-sc-actions-provider-AssociateFunctionArn'
+      ServiceActionId: !ImportValue
+        'Fn::Sub': '${AWS::Region}-cdemo-EC2InstanceActionId'
+      ProductId: "prod-oxldqdwxwxtlg"              # the SC product ID
+      ProvisioningArtifactId: "pa-ejemsqmj4uewa"   # the SC product's version ID
 Outputs:
   EC2InstanceActionId:
     Value: !Ref EC2InstanceAction
@@ -98,11 +114,10 @@ Outputs:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-EC2InstanceActionId'
 ```
 
-Execute with sceptre:
+Deploy the SC action:
 ```bash script
 sceptre --var "profile=my-profile" --var "region=us-east-1" launch prod/sc-restart-instance-action.yaml
 ```
-
 
 ## Why a separate Lambda file
 
