@@ -365,7 +365,7 @@ Resources:
       TargetKeyId: !Ref AWSKmsInfraKey
 
   # Allow instances to apply tags to its root volume and attach SSM
-  ManagedEC2Role:
+  ManagedInstanceRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -383,12 +383,12 @@ Resources:
       ManagedPolicyArns:
         - !Ref TagRootVolumePolicy
         - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
-  ManagedEC2Profile:
+  ManagedInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Path: "/"
       Roles:
-        - !Ref ManagedEC2Role
+        - !Ref ManagedInstanceRole
   # Allow instances to apply tags to its root volume
   TagRootVolumePolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -492,16 +492,16 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
-  ManagedEC2Profile:
+  ManagedInstanceProfile:
     Description: Profile to allow instances to tag its root volume and allow SSM actions
-    Value: !Ref ManagedEC2Profile
+    Value: !Ref ManagedInstanceProfile
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedEC2Profile'
-  ManagedEC2Role:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceProfile'
+  ManagedInstanceRole:
     Description: Role to allow instances to tag its root volume
-    Value: !Ref ManagedEC2Role
+    Value: !Ref ManagedInstanceRole
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedEC2Role'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceRole'
   TagRootVolumeProfile:
     Description: Profile to allow instances to tag its root volume
     Value: !Ref TagRootVolumeProfile
