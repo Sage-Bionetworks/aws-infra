@@ -19,17 +19,9 @@ of the S3 bucket (called in this example `S3Bucket`) :
       BucketName: !Ref S3Bucket
 ```
 
-## Deploy the sample application
-
-The Serverless Application Model Command Line Interface (SAM CLI) is an
-extension of the AWS CLI that adds functionality for building and testing Lambda
-applications. It uses Docker to run your functions in an Amazon Linux
-environment that matches Lambda. It can also emulate your application's build
-environment and API.
-
 ## Use the SAM CLI to build and test locally
 
-Build your application with the `sam build --use-container` command.
+Build the application with the `sam build --use-container` command.
 
 ```bash
 cfn-set-bucket-tags$ sam build --use-container
@@ -71,7 +63,7 @@ Tests are defined in the `tests` folder in this project. Use PIP to install the
 [pytest](https://docs.pytest.org/en/latest/) and run unit tests.
 
 ```bash
-cfn-set-bucket-tags$ pip install pytest pytest-mock --user
+cfn-set-bucket-tags$ pip install pytest --user
 cfn-set-bucket-tags$ python -m pytest tests/ -v
 ```
 
