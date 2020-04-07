@@ -23,22 +23,19 @@ def get_parameters(event):
     return aws_account_id, name, ssm_doc_name, ssm_doc_version, assume_role
 
 def create_provider(aws_account_id, name, ssm_doc_name, ssm_doc_version, assume_role):
-    try:
-        response = sc.create_service_action(
-            Name=name,
-            DefinitionType='SSM_AUTOMATION',
-            Definition= {
-                    "Name": ssm_doc_name,
-                    "Version": ssm_doc_version,
-                    "AssumeRole": assume_role,
-                    "Parameters": "[{\"Name\":\"AutomationAssumeRole\",\"Type\":\"TARGET\"}]"
-                  }
-        )
-        id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
-        logger.info("created sc action " + id)
-        return id
-    except ClientError as e:
-        raise e
+    response = sc.create_service_action(
+        Name=name,
+        DefinitionType='SSM_AUTOMATION',
+        Definition= {
+                "Name": ssm_doc_name,
+                "Version": ssm_doc_version,
+                "AssumeRole": assume_role,
+                "Parameters": "[{\"Name\":\"AutomationAssumeRole\",\"Type\":\"TARGET\"}]"
+              }
+    )
+    id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
+    logger.info("created sc action " + id)
+    return id
 
 @helper.create
 def create(event, context):
@@ -48,39 +45,32 @@ def create(event, context):
 @helper.delete
 def delete(event, context):
     logger.debug("Received event: " + json.dumps(event, sort_keys=False))
-    try:
-        id = event['PhysicalResourceId']
-        logger.info("deleting sc action " + id)
-        sc.delete_service_action(
-            Id=id
-        )
-    except ClientError as e:
-        raise e
+    id = event['PhysicalResourceId']
+    logger.info("deleting sc action " + id)
+    sc.delete_service_action(
+        Id=id
+    )
 
 @helper.update
 def update(event, context):
     logger.debug("Received event: " + json.dumps(event, sort_keys=False))
-
-    try:
-        new_properties = event['ResourceProperties']
-        old_properties = event['OldResourceProperties']
-        id = event['PhysicalResourceId']
-        if new_properties != old_properties:
-            response = sc.update_service_action(
-                Id=id,
-                Name=new_properties['Name'],
-                Definition= {
-                        "Name": new_properties['SsmDocName'],
-                        "Version": new_properties['SsmDocVersion'],
-                        "AssumeRole": new_properties['AssumeRole'],
-                        "Parameters": "[{\"Name\":\"AutomationAssumeRole\",\"Type\":\"TARGET\"}]"
-                      }
-            )
-            id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
-            logger.info("updated sc action = " + id)
-        return id
-    except ClientError as e:
-        raise e
+    new_properties = event['ResourceProperties']
+    old_properties = event['OldResourceProperties']
+    id = event['PhysicalResourceId']
+    if new_properties != old_properties:
+        response = sc.update_service_action(
+            Id=id,
+            Name=new_properties['Name'],
+            Definition= {
+                    "Name": new_properties['SsmDocName'],
+                    "Version": new_properties['SsmDocVersion'],
+                    "AssumeRole": new_properties['AssumeRole'],
+                    "Parameters": "[{\"Name\":\"AutomationAssumeRole\",\"Type\":\"TARGET\"}]"
+                  }
+        )
+        id = response['ServiceActionDetail']['ServiceActionSummary']['Id']
+        logger.info("updated sc action = " + id)
+    return id
 
 def lambda_handler(event, context):
     helper(event, context)
