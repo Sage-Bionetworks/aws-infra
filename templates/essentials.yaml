@@ -541,11 +541,21 @@ Outputs:
     Value: !Ref ManagedInstanceProfile
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceProfile'
+  ManagedInstanceProfileArn:
+    Description: Profile to allow instances to tag its root volume and allow SSM actions
+    Value: !GetAtt ManagedInstanceProfile.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceProfileArn'
   ManagedInstanceRole:
     Description: Role to allow instances to tag its root volume
     Value: !Ref ManagedInstanceRole
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceRole'
+  ManagedInstanceRoleArn:
+    Description: Role to allow instances to tag its root volume
+    Value: !GetAtt ManagedInstanceRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceRoleArn'
   TagRootVolumeProfile:
     Description: Profile to allow instances to tag its root volume
     Value: !Ref TagRootVolumeProfile
