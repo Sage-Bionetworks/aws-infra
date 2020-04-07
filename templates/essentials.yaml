@@ -179,38 +179,6 @@ Resources:
           Value: !Ref Project
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
-  AWSS3SSMTasklogBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      Tags:
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
-  AWSSSMTaskNotificationSNSTopic:
-    Type: "AWS::SNS::Topic"
-    Properties:
-      Subscription:
-        -
-          Endpoint: !Ref OperatorEmail
-          Protocol: email
-  AWSSSMTaskNotificationSNSTopicPolicy:
-    Type: "AWS::SNS::TopicPolicy"
-    Properties:
-      Topics:
-        - !Ref AWSSSMTaskNotificationSNSTopic
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Sid: "SSMTaskNotificaitonSNSTopicPolicy"
-            Effect: "Allow"
-            Principal:
-              Service: "ssm.amazonaws.com"
-            Resource: "*"
-            Action: "SNS:Publish"
   # Bucket for lambda artifacts
   AWSS3LambdaArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -503,18 +471,6 @@ Outputs:
     Value: !GetAtt AWSS3ConfigBucket.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AwsConfigBucketArn'
-  AWSS3SSMTasklogBucket:
-    Value: !Ref AWSS3SSMTasklogBucket
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-SSMTasklogS3Bucket'
-  AWSS3SSMTasklogBucketArn:
-    Value: !GetAtt AWSS3SSMTasklogBucket.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-SSMTasklogS3BucketArn'
-  AWSSSMTaskNotificationSNSTopic:
-    Value: !Ref AWSSSMTaskNotificationSNSTopic
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-SSMTaskNotificationTopic'
   AWSS3LambdaArtifactsBucket:
     Value: !Ref AWSS3LambdaArtifactsBucket
     Export:
