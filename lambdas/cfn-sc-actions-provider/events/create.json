@@ -1,0 +1,16 @@
+{
+    "RequestType": "Create",
+    "ServiceToken": "arn:aws:lambda:us-east-1:563295687221:function:cfn-sc-actions-provider-CreateFunction-1N0K4H4U2J5O2",
+    "ResponseURL": "https://cloudformation-custom-resource-response-useast1.s3.amazonaws.com/arn%3Aaws%3Acloudformation%3Aus-east-1%3A563295687221%3Astack/kddemo/48742f80-7695-11ea-9e17-12c1d85cca19%7CEC2InstanceAction%7Cc0a342e1-e173-4e2a-9f38-da4714989c7d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20200404T165657Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIA6L7Q4OWTROUDBTSZ%2F20200404%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=d94085b644690c9d9e5fa5289ab9d8d843d7ce7084c3a6778278700a77792e8f",
+    "StackId": "arn:aws:cloudformation:us-east-1:563295687221:stack/kddemo/48742f80-7695-11ea-9e17-12c1d85cca19",
+    "RequestId": "c0a342e1-e173-4e2a-9f38-da4714989c7d",
+    "LogicalResourceId": "EC2InstanceAction",
+    "ResourceType": "Custom::ScActionsProvider",
+    "ResourceProperties": {
+        "ServiceToken": "arn:aws:lambda:us-east-1:563295687221:function:cfn-sc-actions-provider-CreateFunction-1N0K4H4U2J5O2",
+        "SsmDocName": "AWS-RestartEC2Instance",
+        "SsmDocVersion": "1",
+        "AssumeRole": "arn:aws:iam::563295687221:role/SCEC2LaunchRole",
+        "Name": "KdRestartEC2Instance"
+    }
+}

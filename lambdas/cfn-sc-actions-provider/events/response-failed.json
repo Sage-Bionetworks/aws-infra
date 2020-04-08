@@ -1,0 +1,9 @@
+{
+    "Status": "FAILED",
+    "PhysicalResourceId": "act-xyodx3ox56ilq",
+    "StackId": "arn:aws:cloudformation:us-east-1:563295687221:stack/myassociation/13c7c530-78e3-11ea-abc8-0e80bfdca6c9",
+    "RequestId": "5ad5fcca-bee6-4cd5-b892-0815c7d5a3a0",
+    "LogicalResourceId": "AssociateProductAction",
+    "Reason": "An error occurred (ResourceNotFoundException) when calling the DescribeProduct operation: prod-y6k4h34mva5ys does not exist or access was denied",
+    "Data": {}
+}

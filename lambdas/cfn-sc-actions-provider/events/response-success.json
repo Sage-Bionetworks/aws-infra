@@ -1,0 +1,9 @@
+{
+    "Status": "SUCCESS",
+    "PhysicalResourceId": "act-xyodx3ox56ilq",
+    "StackId": "arn:aws:cloudformation:us-east-1:563295687221:stack/myaction/48742f80-7695-11ea-9e17-12c1d85cca19",
+    "RequestId": "c0a342e1-e173-4e2a-9f38-da4714989c7d",
+    "LogicalResourceId": "EC2InstanceAction",
+    "Reason": "",
+    "Data": {}
+}
