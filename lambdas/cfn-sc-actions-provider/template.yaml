@@ -33,7 +33,8 @@ Resources:
       ManagedPolicyArns:
         - !Ref LogsPolicy
         - "arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess"
-#        - !Ref ProviderPolicy
+        - "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+        - "arn:aws:iam::aws:policy/IAMFullAccess"
   LogsPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
@@ -46,50 +47,6 @@ Resources:
               - logs:CreateLogStream
               - logs:PutLogEvents
             Resource: "*"
-
-  ProviderPolicy:
-    Type: 'AWS::IAM::ManagedPolicy'
-    Properties:
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action:
-              - "servicecatalog:*ServiceAction"
-              - "servicecatalog:*ServiceAction*"
-              - "ssm:DescribeDocument"
-              - "ssm:GetAutomationExecution"
-              - "ssm:StartAutomationExecution"
-              - "ssm:StopAutomationExecution"
-              - "cloudformation:ListStackResources"
-              - "ec2:DescribeInstanceStatus"
-              - "ec2:StartInstances"
-              - "ec2:StopInstances"
-            Resource: "*"
-#      Policies:
-#        - PolicyName: ManageScActionsProvider
-#          PolicyDocument:
-#            Version: 2012-10-17
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "servicecatalog:ListServiceActionsForProvisioningArtifact"
-#                  - "servicecatalog:ExecuteprovisionedProductServiceAction"
-#                  - "ssm:DescribeDocument"
-#                  - "ssm:GetAutomationExecution"
-#                  - "ssm:StartAutomationExecution"
-#                  - "ssm:StopAutomationExecution"
-#                  - "cloudformation:ListStackResources"
-#                  - "ec2:DescribeInstanceStatus"
-#                  - "ec2:StartInstances"
-#                  - "ec2:StopInstances"
-#                Resource: "*"
-#              - Effect: Allow
-#                Action:
-#                  - logs:CreateLogGroup
-#                  - logs:CreateLogStream
-#                  - logs:PutLogEvents
-#                Resource: "*"
 Outputs:
   CreateFunctionArn:
     Value: !GetAtt CreateFunction.Arn
