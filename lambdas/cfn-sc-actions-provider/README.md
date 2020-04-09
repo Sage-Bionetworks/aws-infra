@@ -89,9 +89,6 @@ Parameters:
     Type: String
     Description: The name of the SSM document providing the action
     AllowedValues:
-      - AWS-RebootRdsInstance
-      - AWS-StartRdsInstance
-      - AWS-StopRdsInstance
       - AWS-StopEC2Instance
       - AWS-StartEC2Instance
       - AWS-RestartEC2Instance

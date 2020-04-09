@@ -1,15 +1,6 @@
 AWS built-in SSM docs for service actions
 https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-documents-reference-details.html
 
-AWS-RebootRdsInstance
-    Automation    Windows, Linux
-
-AWS-StartRdsInstance
-    Automation    Windows, Linux
-
-AWS-StopRdsInstance
-    Automation    Windows, Linux
-
 AWS-StopEC2Instance
     Automation    Windows, Linux
 
