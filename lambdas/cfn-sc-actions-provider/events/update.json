@@ -1,0 +1,24 @@
+{
+    "RequestType": "Update",
+    "ServiceToken": "arn:aws:lambda:us-east-1:563295687221:function:cfn-sc-actions-provider-CreateFunction-1N0K4H4U2J5O2",
+    "ResponseURL": "https://cloudformation-custom-resource-response-useast1.s3.amazonaws.com/arn%3Aaws%3Acloudformation%3Aus-east-1%3A563295687221%3Astack/kddemo/48742f80-7695-11ea-9e17-12c1d85cca19%7CEC2InstanceAction%7Cb1cc3101-2ca1-4039-97d7-f3707ca76bd5?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20200404T165927Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIA6L7Q4OWTROUDBTSZ%2F20200404%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=896ddabe26bb92acf689c43720e9f08108a4067c735daec4ac56bcc6575f6a15",
+    "StackId": "arn:aws:cloudformation:us-east-1:563295687221:stack/kddemo/48742f80-7695-11ea-9e17-12c1d85cca19",
+    "RequestId": "b1cc3101-2ca1-4039-97d7-f3707ca76bd5",
+    "LogicalResourceId": "EC2InstanceAction",
+    "PhysicalResourceId": "act-xyodx3ox56ilq",
+    "ResourceType": "Custom::ScActionsProvider",
+    "ResourceProperties": {
+        "ServiceToken": "arn:aws:lambda:us-east-1:563295687221:function:cfn-sc-actions-provider-CreateFunction-1N0K4H4U2J5O2",
+        "SsmDocName": "AWS-RestartEC2Instance",
+        "SsmDocVersion": "1",
+        "AssumeRole": "arn:aws:iam::563295687221:role/SCEC2LaunchRole",
+        "Name": "MyRestartEC2Instance"
+    },
+    "OldResourceProperties": {
+        "ServiceToken": "arn:aws:lambda:us-east-1:563295687221:function:cfn-sc-actions-provider-CreateFunction-1N0K4H4U2J5O2",
+        "SsmDocName": "AWS-RestartEC2Instance",
+        "SsmDocVersion": "1",
+        "AssumeRole": "arn:aws:iam::563295687221:role/SCEC2LaunchRole",
+        "Name": "KdRestartEC2Instance"
+    }
+}
