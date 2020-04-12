@@ -178,14 +178,6 @@ Resources:
             02_start_cfn-hup:
               command: "/bin/systemctl start cfn-hup.service"
         install_jc:
-          packages:
-          {% if sceptre_user_data.Distro.lower() == 'aws' %}
-            yum:
-          {% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
-            apt:
-              awscli: []
-          {% endif %}
-              jq: []
           commands:
             01_jumpcloud_agent:
               command: !Join
