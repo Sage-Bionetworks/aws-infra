@@ -210,10 +210,10 @@ Resources:
               command: !Join
                 - ''
                 - - "EC2_INSTANCE_ID=$(/usr/bin/curl -s http://169.254.169.254/latest/meta-data/instance-id) "
-                  - "ROOT_DISK_ID=$(/snap/bin/aws ec2 describe-volumes --region $AWS_REGION "
+                  - "ROOT_DISK_ID=$(/usr/bin/aws ec2 describe-volumes --region $AWS_REGION "
                   - "--filters Name=attachment.instance-id,Values=$EC2_INSTANCE_ID "
                   - "--query Volumes[].VolumeId --out text); "
-                  - "/snap/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
+                  - "/usr/bin/aws ec2 create-tags --region $AWS_REGION --resources $ROOT_DISK_ID "
                   - "--tags Key=Name,Value=$EC2_INSTANCE_ID-root Key=cloudformation:stack-name,Value=$STACK_NAME "
                   - "Key=Department,Value=$DEPARTMENT Key=Project,Value=$PROJECT Key=OwnerEmail,Value=$OWNER_EMAIL"
               env:
