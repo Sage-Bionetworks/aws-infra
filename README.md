@@ -29,7 +29,7 @@ AWS Admincentral account.  The purpose is to allow us to share those templates.
 
 ## Deployments
 Templates can be deployed using the AWSCLI.  We use [sceptre](https://github.com/cloudreach/sceptre)
-for more functionality.  Examples of deployments of templats in this repo
+for more functionality.  Examples of deployments of templates in this repo
 can be found in our other Sage-Bionetworks/*-infa repos
 (i.e. [sandbox-infra](https://github.com/Sage-Bionetworks/sandbox-infra))
 
