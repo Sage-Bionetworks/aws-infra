@@ -27,12 +27,6 @@ Parameters:
     AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
-  # This lambda, by default, restricts access to buckets when Gateway VPC Endpoints are enabled on an AWS account
-  # This parameter overrides that by explicitly granting bucket access to resources in this list of VPCs.
-  SameRegionResourceAccessToBucketGrantVpcAccess:
-    Type: CommaDelimitedList
-    Description: Allow resources in a VPC (i.e. ["vpc-111bbb22", "vpc-123add45"]) to access the bucket
-    ConstraintDescription: Comma separated list of VPC IDs (i.e. ["vpc-111bbb22", "vpc-123add45"])
 Resources:
   ExternalBucketGroupPolicyUpdateRole:
     Type: "AWS::IAM::Role"
@@ -76,7 +70,6 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref "BucketName"
-          VPC_IDS: !Join [ ",", !Ref "SameRegionResourceAccessToBucketGrantVpcAccess"]
           REGION: !Ref "AWS::Region"
       Code:
         ZipFile: |
@@ -95,14 +88,11 @@ Resources:
           region = os.environ['REGION']
           policy_statement_id="DenyGetObjectForNonMatchingIp"
 
-
           # have to put in a not None value for repsonseData or error will be thrown
           custom_resource_response_data = {'Data':''}
 
           def handler(event, context):
             try:
-
-              vpc_ids = [x.strip() for x in str.split(os.environ.get('VPC_IDS', '[]'), sep=',') if x.strip()]
 
               #for the case when this lambda is triggered by aws custom resource
               custom_resource_request_type = event.get('RequestType')
@@ -130,12 +120,11 @@ Resources:
                                            'Action': 's3:GetObject',
                                            'Resource': 'arn:aws:s3:::'+bucket_name+'/*',
                                            'Condition': {'NotIpAddress': {'aws:SourceIp': region_ip_addresses}}}
-                if vpc_ids:
-                  # allows listed VPCs to bypass the ip restriction
-                  new_ip_policy_statement['Condition']['StringNotEquals']={ 'aws:sourceVpc': vpc_ids }
-                else:
-                  # remove existing vpc condition if it exists
-                  new_ip_policy_statement['Condition'].pop('StringNotEquals', {})
+
+                # allows any S3 VPC Endpoint to bypass the ip restriction.
+                # cross region gateway endpoints are not supported in AWS so any S3 VPC endpoint
+                # traffic is implicitly same region.
+                new_ip_policy_statement['Condition']['Null']={ 'aws:sourceVpc': 'true' }
 
                 #add new IP address policy statement
                 bucket_policy['Statement'].append(new_ip_policy_statement)
