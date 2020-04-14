@@ -4,6 +4,7 @@ Resources:
   DefaultMaintenanceWindow:
     Type: 'AWS::SSM::MaintenanceWindow'
     Properties:
+      Name: ProdDefaultMaintenanceWindow
       Description: Automated deliver patches every other Sunday
       Duration: 3
       Cutoff: 1
