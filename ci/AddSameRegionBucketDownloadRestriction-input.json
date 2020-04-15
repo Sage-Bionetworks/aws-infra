@@ -2,9 +2,5 @@
     {
         "ParameterKey": "BucketName",
         "ParameterValue": "taskcat-tastcatsynapsebucket-oeg42xg2hitp"
-    },
-    {
-        "ParameterKey": "SameRegionResourceAccessToBucketGrantVpcAccess",
-        "ParameterValue": "vpc-26976a5d"
     }
 ]

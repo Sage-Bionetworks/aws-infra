@@ -26,12 +26,6 @@ Parameters:
       - true
       - false
     Default: false
-  # only used with SameRegionResourceAccessToBucket, more info in AddSameRegionBucketDownloadRestriction.yaml
-  SameRegionResourceAccessToBucketGrantVpcAccess:
-    Type: String
-    Default: "[]"
-    Description: Grant bucket access to VPC endpoints (only used with SameRegionResourceAccessToBucket)
-    ConstraintDescription: Comma separated list of VPC IDs (i.e. ["vpc-111bbb22", "vpc-1a2b3c4d5e"])
   BucketVersioning:
     Type: String
     Description: Enabled to enable bucket versionsing, default is Suspended
@@ -203,7 +197,6 @@ Resources:
       TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/v0.1.0/AddSameRegionBucketDownloadRestriction.yaml'
       Parameters:
         BucketName: !If [EnableEncryption, !Ref SynapseEncryptedExternalBucket, !Ref SynapseExternalBucket]
-        SameRegionResourceAccessToBucketGrantVpcAccess: !Ref SameRegionResourceAccessToBucketGrantVpcAccess
       Tags:
         - Key: "Name"
           Value: !Ref 'AWS::StackName'
