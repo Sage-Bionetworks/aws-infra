@@ -363,6 +363,32 @@ Resources:
           - !Ref AWS::StackName
           - '/InfraKey'
       TargetKeyId: !Ref AWSKmsInfraKey
+
+  # Allow instances to apply tags to its root volume and attach SSM
+  ManagedInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+                - "ssm.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - !Ref TagRootVolumePolicy
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+  ManagedInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref ManagedInstanceRole
   # Allow instances to apply tags to its root volume
   TagRootVolumePolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -466,6 +492,26 @@ Outputs:
     Value: !Ref AWSKmsInfraKeyAlias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-InfraKeyAlias'
+  ManagedInstanceProfile:
+    Description: Profile to allow instances to tag its root volume and allow SSM actions
+    Value: !Ref ManagedInstanceProfile
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceProfile'
+  ManagedInstanceProfileArn:
+    Description: Profile to allow instances to tag its root volume and allow SSM actions
+    Value: !GetAtt ManagedInstanceProfile.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceProfileArn'
+  ManagedInstanceRole:
+    Description: Role to allow instances to tag its root volume and allow SSM actions
+    Value: !Ref ManagedInstanceRole
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceRole'
+  ManagedInstanceRoleArn:
+    Description: Role to allow instances to tag its root volume and allow SSM actions
+    Value: !GetAtt ManagedInstanceRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedInstanceRoleArn'
   TagRootVolumeProfile:
     Description: Profile to allow instances to tag its root volume
     Value: !Ref TagRootVolumeProfile
