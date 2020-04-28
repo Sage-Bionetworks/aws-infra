@@ -400,7 +400,7 @@ Resources:
             Effect: Allow
             Action:
               - "iam:GetRole"
-            Resource: !Sub 'arn:aws:sts:${AWS::Region}:${AWS::AccountId}:assumed-role/*'
+            Resource: "*"
   # Allow instances to apply tags to its root volume
   TagRootVolumePolicy:
     Type: "AWS::IAM::ManagedPolicy"
