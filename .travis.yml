@@ -20,7 +20,6 @@ jobs:
       script:
         - pre-commit autoupdate
         - pre-commit run --all-files
-        - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam build --build-dir lambdas/build/cfn-explode-macro --base-dir lambdas/cfn-explode-macro --template lambdas/cfn-explode-macro/template.yaml
         - sam build --build-dir lambdas/build/cfn-ssm-param-macro --base-dir lambdas/cfn-ssm-param-macro --template lambdas/cfn-ssm-param-macro/template.yaml
@@ -31,8 +30,6 @@ jobs:
         - pushd lambdas/cfn-ssm-param-macro && python -m pytest tests/ -v && popd
     - stage: test
       script:
-        - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
-        - sam package --template-file lambdas/build/jumpcloud/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/jumpcloud.yaml
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
         - sam build --build-dir lambdas/build/cfn-explode-macro --base-dir lambdas/cfn-explode-macro --template lambdas/cfn-explode-macro/template.yaml
@@ -48,8 +45,6 @@ jobs:
         - taskcat -c ci/taskcat.yml --tag owner=taskcat || travis_terminate 1
     - stage: deploy
       script:
-        - sam build --build-dir lambdas/build/jumpcloud --base-dir lambdas/jumpcloud --template lambdas/jumpcloud/template.yaml
-        - sam package --template-file lambdas/build/jumpcloud/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/jumpcloud.yaml
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
         - sam build --build-dir lambdas/build/cfn-explode-macro --base-dir lambdas/cfn-explode-macro --template lambdas/cfn-explode-macro/template.yaml

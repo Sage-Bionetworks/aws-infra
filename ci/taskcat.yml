@@ -30,11 +30,6 @@ tests:
     regions:
       - us-east-1
     template_file: AccountAlertTopics.yaml
-  jumpcloud:
-    parameter_input: jumpcloud-input.json
-    regions:
-      - us-east-1
-    template_file: jumpcloud.yaml
   # test depends on resources in Sage-Bionetworks/admincentral-infra/config/prod/taskcat.yaml
   AddSameRegionBucketDownloadRestriction:
     parameter_input: AddSameRegionBucketDownloadRestriction-input.json
