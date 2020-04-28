@@ -382,6 +382,7 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - !Ref TagRootVolumePolicy
+        - !Ref ReadAssumedRoleInformationPolicy
         - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
   ManagedInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
@@ -389,6 +390,17 @@ Resources:
       Path: "/"
       Roles:
         - !Ref ManagedInstanceRole
+  ReadAssumedRoleInformationPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ReadAssumedRoleInformation
+            Effect: Allow
+            Action:
+              - "iam:GetRole"
+            Resource: !Sub 'arn:aws:sts:${AWS::Region}:${AWS::AccountId}:assumed-role/*'
   # Allow instances to apply tags to its root volume
   TagRootVolumePolicy:
     Type: "AWS::IAM::ManagedPolicy"
@@ -401,7 +413,7 @@ Resources:
             Action:
               - "ec2:Describe*"
               - "ec2:CreateTags"
-            Resource: "*"
+            Resource: "*" 
   TagRootVolumeRole:
     Type: "AWS::IAM::Role"
     Properties:
