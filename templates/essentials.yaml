@@ -413,7 +413,7 @@ Resources:
             Action:
               - "ec2:Describe*"
               - "ec2:CreateTags"
-            Resource: "*" 
+            Resource: "*"
   TagRootVolumeRole:
     Type: "AWS::IAM::Role"
     Properties:
