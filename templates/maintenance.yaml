@@ -4,11 +4,11 @@ Resources:
   DefaultMaintenanceWindow:
     Type: 'AWS::SSM::MaintenanceWindow'
     Properties:
-      Name: test-ahayden-ProdDefaultMaintenanceWindow
-      Description: Automated deliver patches every other Sunday
+      Name: prod-default-maintenance-window
+      Description: Automated deliver patches every Sunday
       Duration: 3
       Cutoff: 1
-      Schedule: 'cron(00 10 ? * SUN/2 *)' #1000UTC Every other Sunday
+      Schedule: 'cron(00 10 ? * SUN *)' #1000UTC every Sunday
       ScheduleTimezone: 'UTC'
       AllowUnassociatedTargets: false
   DefaultPatchGroupTarget:
