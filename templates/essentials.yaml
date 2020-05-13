@@ -389,7 +389,7 @@ Resources:
       Path: "/"
       Roles:
         - !Ref ManagedInstanceRole
-  # Allow instances to apply tags to its root volume
+  # Allow instances to apply tags to anything and deny write to TagKeys like "Protected/*" except by self
   TagRootVolumePolicy:
     Type: "AWS::IAM::ManagedPolicy"
     Properties:
@@ -402,6 +402,17 @@ Resources:
               - "ec2:Describe*"
               - "ec2:CreateTags"
             Resource: "*"
+          - Sid: DenyWriteProtectedPath
+            Effect: Deny
+            Action:
+              - "ec2:CreateTags"
+            Resource: "*"
+            Condition:
+              StringNotEquals:
+                "aws:ARN": "${ec2:SourceInstanceARN}"
+              ForAnyValue:StringLike:
+                "aws:TagKeys":
+                  - "Protected/*" #this can be a list of paths to protect
   TagRootVolumeRole:
     Type: "AWS::IAM::Role"
     Properties:
