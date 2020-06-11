@@ -198,7 +198,7 @@ Resources:
         - RedirectConfig:
             Host: "#{host}"
             Path: "/#{path}"
-            Port: 443
+            Port: "443"
             Protocol: HTTPS
             Query: "#{query}"
             StatusCode: HTTP_301
