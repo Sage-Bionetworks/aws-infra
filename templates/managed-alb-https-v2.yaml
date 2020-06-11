@@ -191,6 +191,21 @@ Resources:
       DefaultActions:
         - TargetGroupArn: !Ref ElbTargetGroup
           Type: forward
+  ElbHttpRedirectListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - RedirectConfig:
+            Host: "#{host}"
+            Path: "/#{path}"
+            Port: 443
+            Protocol: HTTPS
+            Query: "#{query}"
+            StatusCode: HTTP_301
+          Type: redirect
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
 Outputs:
   LoadBalancerName:
     Value: !GetAtt LoadBalancer.LoadBalancerName
