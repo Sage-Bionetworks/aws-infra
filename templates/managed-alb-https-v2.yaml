@@ -145,7 +145,7 @@ Resources:
           Port: !Ref AppPort
       VpcId: !Ref VpcId
       Port: !Ref AppPort
-      Protocol: HTTP
+      Protocol: HTTPS
       Tags:
         - Key: "Name"
           Value: !Join
