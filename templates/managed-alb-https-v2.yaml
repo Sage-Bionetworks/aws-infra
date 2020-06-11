@@ -1,0 +1,233 @@
+# The purpose of this template is to provision an application load balancer.
+# An ALB provides addtional security:
+# 1. Running apps on HTTPS
+# 2. Front the app with a WAF
+# Note: This does not fully automate the load balancer setup.  An additional step
+#       of applying the provisioned Ec2SecurityGroup to the instance is required.
+#       Applying security group to a running instance will not provision a new instance.
+#       The security group looks like this: https://pasteboard.co/IeIAzkJ.png
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Provision an application load balancer listening on https
+Parameters:
+  Department:
+    Description: 'The department for this resource'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Platform'
+  Project:
+    Description: 'The name of the project that this resource is used for'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+    Default: 'Infrastructure'
+  OwnerEmail:
+    Description: 'Email address of the owner of this resource'
+    Type: String
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
+    Default: 'it@sagebase.org'
+  VpcId:
+    Type: "AWS::EC2::VPC::Id"
+    Description: The VPC Id for the ELB
+  Subnets:
+    Description: List of subnets for the ELB
+    Type: List<AWS::EC2::Subnet::Id>
+  Scheme:
+    Description: Load balancer interface scheme
+    Type: String
+    AllowedValues:
+      - "internet-facing"
+      - "internal"
+    Default: internet-facing
+  Ec2InstanceId:
+    Description: The ID of the instance for the load balancer
+    Type: AWS::EC2::Instance::Id
+  SSLCertificateIdArn:
+    Description: The ARN of the server certificate
+    Type: String
+  SslPolicy:
+    Type: String
+    Default: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+    AllowedValues:
+      - "ELBSecurityPolicy-TLS-1-2-2017-01"
+      - "ELBSecurityPolicy-TLS-1-2-Ext-2018-06"
+      - "ELBSecurityPolicy-FS-2018-06"
+  AppPort:
+    Description: The port that the application runs on
+    Type: Number
+    MinValue: 1
+    MaxValue: 65535
+    Default: 443
+    ConstraintDescription: A port number in the range 1 to 65535
+Resources:
+  Ec2SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Join
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - Ec2SecurityGroup
+      GroupDescription: EC2 Security Group
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref AppPort
+          ToPort: !Ref AppPort
+          SourceSecurityGroupId: !GetAtt ElbSecurityGroup.GroupId
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+
+# We need to attach Ec2SecurityGroup to the Ec2InstanceId.  CFN does
+# not allow attaching to SG to the default ENI.  A workaround is to
+# add a second ENI to attach the security group however this does not
+# work since extra steps are needed to make the OS recognize a second
+# network interface.
+#
+#  Ec2NetworkInterface:
+#    Type: 'AWS::EC2::NetworkInterface'
+#    Properties:
+#      SubnetId: !Select [0, !Ref Subnets]
+#      GroupSet:
+#        - !Ref Ec2SecurityGroup
+#      Tags:
+#        - Key: "Name"
+#          Value: !Join
+#            - '-'
+#            - - !Ref Ec2InstanceId
+#              - "ELB"
+#        - Key: "Department"
+#          Value: !Ref Department
+#        - Key: "Project"
+#          Value: !Ref Project
+#        - Key: "OwnerEmail"
+#          Value: !Ref OwnerEmail
+#  Ec2NetworkInterfaceAttach:
+#    Type: 'AWS::EC2::NetworkInterfaceAttachment'
+#    Properties:
+#      DeviceIndex : 1
+#      InstanceId: !Ref Ec2InstanceId
+#      NetworkInterfaceId: !Ref Ec2NetworkInterface
+
+  ElbSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Join
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - ElbSecurityGroup
+      GroupDescription: ELB Security Group
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  ElbTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      TargetType: instance
+      Targets:
+        - Id: !Ref Ec2InstanceId
+          Port: !Ref AppPort
+      VpcId: !Ref VpcId
+      Port: !Ref AppPort
+      Protocol: HTTPS
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - '-'
+            - - !Ref Ec2InstanceId
+              - "ELB"
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Type: "application"
+      IpAddressType: "ipv4"
+      Scheme: !Ref Scheme
+      SecurityGroups:
+        - !GetAtt ElbSecurityGroup.GroupId
+      Subnets: !Ref Subnets
+      Tags:
+        - Key: "Name"
+          Value: !Join
+            - '-'
+            - - !Ref Ec2InstanceId
+              - "ELB"
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  ElbHttpsListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Certificates:
+        - CertificateArn: !Ref SSLCertificateIdArn
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: !Ref SslPolicy
+      DefaultActions:
+        - TargetGroupArn: !Ref ElbTargetGroup
+          Type: forward
+  ElbHttpRedirectListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - RedirectConfig:
+            Host: "#{host}"
+            Path: "/#{path}"
+            Port: "443"
+            Protocol: HTTPS
+            Query: "#{query}"
+            StatusCode: HTTP_301
+          Type: redirect
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+Outputs:
+  LoadBalancerName:
+    Value: !GetAtt LoadBalancer.LoadBalancerName
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LoadBalancerName'
+  LoadBalancerArn:
+    Value: !Ref LoadBalancer
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LoadBalancerArn'
+  LoadBalancerDnsName:
+    Value: !GetAtt LoadBalancer.DNSName
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-LoadBalancerDnsName'
+  ElbTargetGroupFullName:
+    Value: !GetAtt ElbTargetGroup.TargetGroupFullName
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ElbTargetGroupFullName'
+  ElbTargetGroupName:
+    Value: !GetAtt ElbTargetGroup.TargetGroupName
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ElbTargetGroupName'
+  ElbTargetGroupArn:
+    Value: !Ref ElbTargetGroup
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ElbTargetGroupArn'
