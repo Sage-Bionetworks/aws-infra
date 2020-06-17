@@ -205,7 +205,7 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
       # template uploaded from Sage-Bionetworks/aws-infra repo
-      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/periodic-batch-scheduler.yaml'
+      TemplateURL: 'https://bootstrap-awss3cloudformationbucket-19qromfd235z9.s3.amazonaws.com/aws-infra/master/periodic-batch-scheduler.yaml'
       Parameters:
         Department: !Ref Department
         Project: !Ref Project

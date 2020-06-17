@@ -519,7 +519,7 @@ Resources:
           /usr/bin/apt-get install -y python-pip
           /usr/bin/apt-get install -y python-setuptools
           /bin/mkdir -p /opt/aws/bin
-          /usr/bin/python /usr/lib/python2.7/dist-packages/easy_install.py --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+          /usr/bin/python /usr/lib/python2.7/dist-packages/easy_install.py --script-dir /opt/aws/bin https://cloudformation-examples.s3.amazonaws.com/aws-cfn-bootstrap-latest.tar.gz
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupJumpcloud,SetupVolume --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource Ec2Instance --region ${AWS::Region}
       Tags:
@@ -541,7 +541,7 @@ Resources:
     Condition: EnableEc2Backup
     Properties:
       # template uploaded from Sage-Bionetworks/aws-infra repo
-      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/ec2-backup.yaml'
+      TemplateURL: 'https://bootstrap-awss3cloudformationbucket-19qromfd235z9.s3.amazonaws.com/aws-infra/master/ec2-backup.yaml'
       Parameters:
         StackName: !Ref AWS::StackName
         SnapshotCount: !Ref SnapshotCount
