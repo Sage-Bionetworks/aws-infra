@@ -30,7 +30,7 @@ parameters:
   ThumbprintList: "09aa48a9a6fb14926bb7f3fa2e02da2b0ab02fa"
 hooks:
   before_launch:
-    - !cmd "curl https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/master/cfn-oidc-identity-provider.yaml --create-dirs -o templates/remote/cfn-oidc-identity-provider.yaml"
+    - !cmd "curl https://bootstrap-awss3cloudformationbucket-19qromfd235z9.s3.amazonaws.com/aws-infra/master/cfn-oidc-identity-provider.yaml --create-dirs -o templates/remote/cfn-oidc-identity-provider.yaml"
 ```
 
 This will launch the stack with example URL, Client IDs and Thumbprints.
