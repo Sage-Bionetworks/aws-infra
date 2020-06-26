@@ -40,7 +40,7 @@ Mappings:
     Public2:
       CIDR: "160/28" #10.255.X.160-175
     Private2:
-      CIDR: "176/26" #10.255.X.176-240
+      CIDR: "176/26" #10.255.X.176-239
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
