@@ -8,7 +8,7 @@ Parameters:
   VpcSubnetPrefix:
     Description: The VPC subnet prefix (i.e. 10.255.40)
     Type: String
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([0-9]|[1-9][0-9]|1[0-9]    {2}|2[0-4][0-9]|25[0-5])$
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
   PublicSubnetZones:
     Description: Availability zones for public subnets
     Type: List<AWS::EC2::AvailabilityZone::Name>
