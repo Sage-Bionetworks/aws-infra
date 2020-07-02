@@ -89,7 +89,6 @@ Conditions:
   EnableEncryption: !Equals [!Ref EncryptBucket, true]
   DisableEncryption: !Not [!Condition EnableEncryption]
   CreateIPAddressRestrictionLambda: !Equals [!Ref SameRegionResourceAccessToBucket, true]
-  HasSynapseIDs: !Not [!Equals [!Join ['', !Ref SynapseIDs], "[]"]]
   HasBucketName: !Not [!Equals [!Ref BucketName, ""]]
 Resources:
   SynapseExternalBucket:
@@ -225,6 +224,7 @@ Resources:
           Value: !Ref Project
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
+
 Outputs:
   SynapseExternalBucket:
     Condition: DisableEncryption
