@@ -34,11 +34,6 @@ Parameters:
       - Enabled
       - Suspended
     Default: Suspended
-  SynapseIDs:
-    Type: CommaDelimitedList
-    Description: A list of Synapse user or team IDs
-    Default: "[]"
-    ConstraintDescription: List of Synapse IDs (i.e. ["1300139", "3390915"]
   Department:
     Description: 'The department for this resource'
     Type: String
@@ -193,9 +188,9 @@ Resources:
 
   # Add owner file to the synapse bucket, requires the cloudformation S3 objects macro
   # https://github.com/Sage-Bionetworks/aws-infra/tree/master/lambdas/cfn-s3objects-macro
+  {% if sceptre_user_data.SynapseIDs is defined %}
   SynapseOwnerFile:
     Type: AWS::S3::Object
-    Condition: HasSynapseIDs
     Metadata:
       cfn-lint:
         config:
@@ -207,7 +202,11 @@ Resources:
         Key: owner.txt
         ContentType: text
         ACL: authenticated-read
-      Body: !If [HasSynapseIDs, !Join ['\n', !Ref SynapseIDs], ""]
+      Body: >-
+        {% for SynapseID in sceptre_user_data.SynapseIDs %}
+          {{ SynapseID }}
+        {% endfor %}
+  {% endif %}
 
   IPAddressRestictionLambda:
     Type: 'AWS::CloudFormation::Stack'
