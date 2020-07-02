@@ -1,0 +1,253 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: S3Objects
+Description: Synapse External S3 Bucket
+Parameters:
+  AllowWriteBucket:
+    Type: String
+    Description: true for read-write, false (default) for read-only bucket
+    AllowedValues:
+      - true
+      - false
+    Default: false
+  EncryptBucket:
+    Type: String
+    Description: true (default) to encrypt bucket, false for no encryption
+    AllowedValues:
+      - true
+      - false
+    Default: true
+  SameRegionResourceAccessToBucket:
+    Type: String
+    Description: >
+      THIS CURRENTLY ONLY WORKS IN THE us-east-1 REGION!!!!!
+      Data transfers within the same region between AWS resources are free.
+      true to restrict downloading files from this bucket to only AWS resources (e.g. EC2 , Lambda) within the same region as this bucket.
+      This will not allow even the owner of the bucket to download objects in this bucket when not using an AWS resource in the same region!
+    AllowedValues:
+      - true
+      - false
+    Default: false
+  BucketVersioning:
+    Type: String
+    Description: Enabled to enable bucket versionsing, default is Suspended
+    AllowedValues:
+      - Enabled
+      - Suspended
+    Default: Suspended
+  SynapseIDs:
+    Type: CommaDelimitedList
+    Description: A list of Synapse user or team IDs
+    Default: "[]"
+    ConstraintDescription: List of Synapse IDs (i.e. ["1300139", "3390915"]
+  Department:
+    Description: 'The department for this resource'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+  Project:
+    Description: 'The name of the project that this resource is used for'
+    Type: String
+    AllowedPattern: '^\S*$'
+    ConstraintDescription: 'Must be string with no spaces'
+  OwnerEmail:
+    Description: 'Email address of the owner of this resource'
+    Type: String
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
+  GrantAccess:
+    Type: CommaDelimitedList
+    Default: "[]"
+    Description: Grant bucket access to accounts, groups, and users.
+    ConstraintDescription: List of ARNs (i.e. ["arn:aws:iam::011223344556:user/jsmith", "arn:aws:iam::544332211006:user/rjones"]
+  EnableDataLifeCycle:
+    Type: String
+    Description: Enabled to enable bucket lifecycle rule, default is Disabled
+    AllowedValues:
+      - Enabled
+      - Disabled
+    Default: Disabled
+  LifecycleDataTransition:
+    Type: Number
+    Description: Number of days until S3 objects are moved to LifecycleDataStorageClass
+    Default: 30
+  LifecycleDataStorageClass:
+    Type: String
+    Description: S3 bucket objects will transition into this storage class
+    AllowedValues:
+      - DEEP_ARCHIVE
+      - INTELLIGENT_TIERING
+      - STANDARD_IA
+      - ONEZONE_IA
+      - GLACIER
+    Default: GLACIER
+  LifecycleDataExpiration:
+    Type: Number
+    Description: Number of days (from creation) when objects are deleted from S3 and the LifecycleDataStorageClass
+    Default: 365000
+  BucketName:
+    Type: String
+    Description: (Optional) Name of the created bucket.
+    Default: ""
+Conditions:
+  AllowWrite: !Equals [!Ref AllowWriteBucket, true]
+  AllowUserAccess: !Not [!Equals [!Join ['', !Ref GrantAccess], "[]"]]
+  EnableEncryption: !Equals [!Ref EncryptBucket, true]
+  DisableEncryption: !Not [!Condition EnableEncryption]
+  CreateIPAddressRestrictionLambda: !Equals [!Ref SameRegionResourceAccessToBucket, true]
+  HasSynapseIDs: !Not [!Equals [!Join ['', !Ref SynapseIDs], "[]"]]
+  HasBucketName: !Not [!Equals [!Ref BucketName, ""]]
+Resources:
+  SynapseExternalBucket:
+    Type: "AWS::S3::Bucket"
+    Condition: DisableEncryption
+    Properties:
+      BucketName: !If [HasBucketName, !Ref BucketName, !Ref 'AWS::NoValue']
+      VersioningConfiguration:
+        Status: !Ref BucketVersioning
+      CorsConfiguration:
+        CorsRules:
+          - Id: SynapseCORSRule
+            AllowedHeaders: ['*']
+            AllowedOrigins: ['*']
+            AllowedMethods: [GET, POST, PUT, HEAD]
+            MaxAge: 3000
+      LifecycleConfiguration:
+        Rules:
+        - Id: DataLifecycleRule
+          Status: !Ref EnableDataLifeCycle
+          ExpirationInDays: !Ref LifecycleDataExpiration
+          Transitions:
+            - TransitionInDays: !Ref LifecycleDataTransition
+              StorageClass: !Ref LifecycleDataStorageClass
+      Tags:
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+  SynapseEncryptedExternalBucket:
+    Type: "AWS::S3::Bucket"
+    Condition: EnableEncryption
+    Properties:
+      BucketName: !If [HasBucketName, !Ref BucketName, !Ref 'AWS::NoValue']
+      VersioningConfiguration:
+        Status: !Ref BucketVersioning
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - Id: SynapseCORSRule
+            AllowedHeaders: ['*']
+            AllowedOrigins: ['*']
+            AllowedMethods: [GET, POST, PUT, HEAD]
+            MaxAge: 3000
+      LifecycleConfiguration:
+        Rules:
+        - Id: DataLifecycleRule
+          Status: !Ref EnableDataLifeCycle
+          ExpirationInDays: !Ref LifecycleDataExpiration
+          Transitions:
+            - TransitionInDays: !Ref LifecycleDataTransition
+              StorageClass: !Ref LifecycleDataStorageClass
+      Tags:
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+
+  ExternalBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Condition: AllowUserAccess
+    Properties:
+      Bucket: !If [EnableEncryption, !Ref SynapseEncryptedExternalBucket, !Ref SynapseExternalBucket]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "ReadAccess"
+            Effect: "Allow"
+            Principal:
+              AWS: !Ref GrantAccess
+            Action:
+              - "s3:ListBucket*"
+              - "s3:GetBucketLocation"
+            Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
+          -
+            Sid: "WriteAccess"
+            Effect: "Allow"
+            Principal:
+              AWS: !Ref GrantAccess
+            Action:
+              - !If [AllowWrite, "s3:*Object*", "s3:GetObject*"]
+              - "s3:*MultipartUpload*"
+            Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
+
+  # Add owner file to the synapse bucket, requires the cloudformation S3 objects macro
+  # https://github.com/Sage-Bionetworks/aws-infra/tree/master/lambdas/cfn-s3objects-macro
+  SynapseOwnerFile:
+    Type: AWS::S3::Object
+    Condition: HasSynapseIDs
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3001
+    Properties:
+      Target:
+        Bucket: !If [EnableEncryption, !Ref SynapseEncryptedExternalBucket, !Ref SynapseExternalBucket]
+        Key: owner.txt
+        ContentType: text
+        ACL: authenticated-read
+      Body: !If [HasSynapseIDs, !Join ['\n', !Ref SynapseIDs], ""]
+
+  IPAddressRestictionLambda:
+    Type: 'AWS::CloudFormation::Stack'
+    Condition: CreateIPAddressRestrictionLambda
+    Properties:
+      # template uploaded from Sage-Bionetworks/aws-infra repo
+      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/v0.1.1/AddSameRegionBucketDownloadRestriction.yaml'
+      Parameters:
+        BucketName: !If [EnableEncryption, !Ref SynapseEncryptedExternalBucket, !Ref SynapseExternalBucket]
+      Tags:
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
+        - Key: "Department"
+          Value: !Ref Department
+        - Key: "Project"
+          Value: !Ref Project
+        - Key: "OwnerEmail"
+          Value: !Ref OwnerEmail
+Outputs:
+  SynapseExternalBucket:
+    Condition: DisableEncryption
+    Value: !Ref SynapseExternalBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucket'
+  SynapseExternalBucketArn:
+    Condition: DisableEncryption
+    Value: !GetAtt SynapseExternalBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucketArn'
+  SynapseEncryptedExternalBucket:
+    Condition: EnableEncryption
+    Value: !Ref SynapseEncryptedExternalBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucket'
+  SynapseEncryptedExternalBucketArn:
+    Condition: EnableEncryption
+    Value: !GetAtt SynapseEncryptedExternalBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SynapseExternalBucketArn'
+  OwnerEmail:
+    Value: !Ref OwnerEmail
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-OwnerEmail'
