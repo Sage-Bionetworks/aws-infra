@@ -18,7 +18,6 @@ jobs:
   include:
     - stage: validate
       script:
-        - pre-commit autoupdate
         - pre-commit run --all-files
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam build --build-dir lambdas/build/cfn-explode-macro --base-dir lambdas/cfn-explode-macro --template lambdas/cfn-explode-macro/template.yaml

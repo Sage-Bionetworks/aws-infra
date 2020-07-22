@@ -39,11 +39,8 @@ Resources:
             Action:
               Ref: Actions
             Resource:
-              - Ref: Resource
-              - !Join
-                - '/'
-                - - !Ref Resource
-                  - '*'
+              - !Sub '${Resource}'
+              - !Sub '${Resource}/*'
 Outputs:
   SumoRoleId:
     Value: !GetAtt SumoRole.RoleId
