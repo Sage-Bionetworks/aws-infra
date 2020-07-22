@@ -1,0 +1,8 @@
+{
+  "fragment": {},
+  "requestId": "foo",
+  "params": {
+    "Type": "WeirdType",
+    "Name": "test-param"
+  }
+}
