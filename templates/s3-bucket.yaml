@@ -194,7 +194,7 @@ Resources:
     Condition: CreateIPAddressRestrictionLambda
     Properties:
       # template uploaded from Sage-Bionetworks/aws-infra repo
-      TemplateURL: 'https://s3.amazonaws.com/bootstrap-awss3cloudformationbucket-19qromfd235z9/aws-infra/v0.1.1/AddSameRegionBucketDownloadRestriction.yaml'
+      TemplateURL: 'https://bootstrap-awss3cloudformationbucket-19qromfd235z9.s3.amazonaws.com/aws-infra/v0.1.1/AddSameRegionBucketDownloadRestriction.yaml'
       Parameters:
         BucketName: !If [EnableEncryption, !Ref SynapseEncryptedExternalBucket, !Ref SynapseExternalBucket]
       Tags:
