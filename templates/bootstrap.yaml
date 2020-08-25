@@ -158,6 +158,10 @@ Outputs:
     Value: !GetAtt AWSIAMCfServiceRole.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleArn'
+  AWSIAMCfServiceRoleId:
+    Value: !GetAtt AWSIAMCfServiceRole.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleId'
   AWSIAMSsmParamLambdaExecutionRoleArn:
     Value: !GetAtt AWSIAMSsmParamLambdaExecutionRole.Arn
     Export:
