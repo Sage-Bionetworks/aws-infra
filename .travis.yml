@@ -20,17 +20,13 @@ jobs:
       script:
         - pre-commit run --all-files
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
-        - sam build --build-dir lambdas/build/cfn-explode-macro --base-dir lambdas/cfn-explode-macro --template lambdas/cfn-explode-macro/template.yaml
         - sam build --build-dir lambdas/build/cfn-ssm-param-macro --base-dir lambdas/cfn-ssm-param-macro --template lambdas/cfn-ssm-param-macro/template.yaml
         - sam build --build-dir lambdas/build/cfn-s3objects-macro --base-dir lambdas/cfn-s3objects-macro --template lambdas/cfn-s3objects-macro/template.yaml
-        - pushd lambdas/cfn-explode-macro && python -m pytest tests/ -v && popd
         - pushd lambdas/cfn-ssm-param-macro && python -m pytest tests/ -v && popd
     - stage: test
       script:
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
-        - sam build --build-dir lambdas/build/cfn-explode-macro --base-dir lambdas/cfn-explode-macro --template lambdas/cfn-explode-macro/template.yaml
-        - sam package --template-file lambdas/build/cfn-explode-macro/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/cfn-explode-macro.yaml
         - sam build --build-dir lambdas/build/cfn-ssm-param-macro --base-dir lambdas/cfn-ssm-param-macro --template lambdas/cfn-ssm-param-macro/template.yaml
         - sam package --template-file lambdas/build/cfn-ssm-param-macro/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/cfn-ssm-param-macro.yaml
         - sam build --build-dir lambdas/build/cfn-s3objects-macro --base-dir lambdas/cfn-s3objects-macro --template lambdas/cfn-s3objects-macro/template.yaml
@@ -40,8 +36,6 @@ jobs:
       script:
         - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
         - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
-        - sam build --build-dir lambdas/build/cfn-explode-macro --base-dir lambdas/cfn-explode-macro --template lambdas/cfn-explode-macro/template.yaml
-        - sam package --template-file lambdas/build/cfn-explode-macro/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/cfn-explode-macro.yaml
         - sam build --build-dir lambdas/build/cfn-ssm-param-macro --base-dir lambdas/cfn-ssm-param-macro --template lambdas/cfn-ssm-param-macro/template.yaml
         - sam package --template-file lambdas/build/cfn-ssm-param-macro/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/cfn-ssm-param-macro.yaml
         - sam build --build-dir lambdas/build/cfn-s3objects-macro --base-dir lambdas/cfn-s3objects-macro --template lambdas/cfn-s3objects-macro/template.yaml
