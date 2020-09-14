@@ -19,14 +19,9 @@ jobs:
     - stage: validate
       script:
         - pre-commit run --all-files
-        - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
     - stage: test
       script:
-        - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
-        - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
         - taskcat -c ci/taskcat.yml --tag owner=taskcat || travis_terminate 1
     - stage: deploy
       script:
-        - sam build --build-dir lambdas/build/rotate-credentials --base-dir lambdas/rotate-credentials --template lambdas/rotate-credentials/template.yaml
-        - sam package --template-file lambdas/build/rotate-credentials/template.yaml --s3-bucket essentials-awss3lambdaartifactsbucket-x29ftznj6pqw --output-template-file templates/rotate-credentials.yaml
         - ./deploy-templates.sh || travis_terminate 1
