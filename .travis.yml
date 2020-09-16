@@ -1,8 +1,11 @@
 language: python
 python: 3.6
 cache: pip
+env:
+  global:
+    - REPO_NAME="${PWD##*/}"
 install:
-  - pip install pre-commit jsondiff taskcat==0.8.50
+  - pip install pre-commit jsondiff taskcat==0.8.50 awscli
 before_script:
   - mkdir -p ~/.aws
   - echo -e "[default]\nregion=us-east-1\nsource_profile=default\nrole_arn=$AwsCfServiceRoleArn" > ~/.aws/config
@@ -24,4 +27,4 @@ jobs:
         - taskcat -c ci/taskcat.yml --tag owner=taskcat || travis_terminate 1
     - stage: deploy
       script:
-        - ./deploy-templates.sh || travis_terminate 1
+        - aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/$REPO_NAME/$TRAVIS_BRANCH/ --recursive
