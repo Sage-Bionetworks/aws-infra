@@ -1,22 +1,24 @@
-# This is a cloudformation jinjaized template to install parameters into the
-# SSM parameter store.  This is only for non-securestring parameters.
-# Cloudformation does not support adding securestring parameters into the SSM.
-#
-# Usage:
-#  Create a sceptre template `my-ssm-params.yaml`
-#
-#  template_path: remote/ssm-parameters.j2
-#  hooks:
-#    before_launch:
-#      - !cmd "curl https://{{stack_group_config.admincentral_cf_bucket}}.s3.amazonaws.com/aws-infra/master/ssm-parameters.j2 --create-dirs -o templates/remote/ssm-parameters.j2"
-#  stack_name: my-ssm-vars
-#  sceptre_user_data:
-#    Prefix: /my-ssm-vars/
-#    Parameters:
-#      - Name: param1
-#        Value: foo
-#      - Name: param2
-#        Value: foo
+{#
+ This is a cloudformation jinjaized template to install parameters into the
+ SSM parameter store.  This is only for non-securestring parameters.
+ Cloudformation does not support adding securestring parameters into the SSM.
+
+ Usage:
+  Create a sceptre template `my-ssm-params.yaml`
+
+  template_path: remote/ssm-parameters.j2
+  hooks:
+    before_launch:
+      - !cmd "curl https://{{stack_group_config.admincentral_cf_bucket}}.s3.amazonaws.com/aws-infra/master/ssm-parameters.j2 --create-dirs -o templates/remote/ssm-parameters.j2"
+  stack_name: my-ssm-vars
+  sceptre_user_data:
+    Prefix: /my-ssm-vars/
+    Parameters:
+      - Name: param1
+        Value: foo
+      - Name: param2
+        Value: foo
+#}
 
 Description: "Setup parameters in the SSM parameter store"
 AWSTemplateFormatVersion: "2010-09-09"
