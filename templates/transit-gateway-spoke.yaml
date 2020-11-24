@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Setup the AWS transit gateway spoke
+Parameters:
+  TransitGatewayId:
+    Description: 'The sage transit gateway id'
+    Type: String
+  TransitGatewayEndpointCidr:
+    Description: 'The transit gateway endpoint CIDR'
+    Type: String
+  VpcId:
+    Description: 'The VPC ID to attach'
+    Type: String
+  VpcRouteTableId:
+    Description: 'The VPC route table ID'
+    Type: String
+  SubnetIds:
+    Description: 'The list of VPC subnet IDs to atttach'
+    Type: List<String>
+Resources:
+  TransitGatewayAttachment:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties:
+      SubnetIds: !Ref SubnetIds
+      TransitGatewayId: !Ref TransitGatewayId
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: !Ref 'AWS::StackName'
+  RouteTable:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: !Ref TransitGatewayEndpointCidr
+      RouteTableId: !Ref VpcRouteTableId
+      TransitGatewayId: !Ref TransitGatewayId
+Outputs:
+  TransitGatewayAttachment:
+    Description: The transit gateway attachment ID
+    Value: !Ref TransitGatewayAttachment
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TransitGatewayAttachmentId'
