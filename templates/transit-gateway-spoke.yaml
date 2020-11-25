@@ -28,8 +28,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref 'AWS::StackName'
-  RouteTable:
+  VpcRouteTable:
     Type: AWS::EC2::Route
+    DependsOn: TransitGatewayAttachment
     Properties:
       DestinationCidrBlock: !Ref TransitGatewayEndpointCidr
       RouteTableId: !Ref VpcRouteTableId
