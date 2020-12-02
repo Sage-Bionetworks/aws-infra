@@ -35,9 +35,33 @@ Resources:
       DestinationCidrBlock: !Ref TransitGatewayEndpointCidr
       RouteTableId: !Ref VpcRouteTableId
       TransitGatewayId: !Ref TransitGatewayId
+  TgwSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Sub 'Security Group for ${TransitGatewayEndpointCidr}'
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - CidrIp: !Ref TransitGatewayEndpointCidr
+          Description: !Sub 'Allow access from ${TransitGatewayEndpointCidr}'
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+      Tags:
+        - Key: "Name"
+          Value: !Ref 'AWS::StackName'
 Outputs:
-  TransitGatewayAttachment:
-    Description: The transit gateway attachment ID
+  TransitGatewayAttachmentId:
+    Description: "The transit gateway attachment ID"
     Value: !Ref TransitGatewayAttachment
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-TransitGatewayAttachmentId'
+  TgwSecurityGroupId:
+    Description: "Transit Gateway Security Group Id"
+    Value: !Ref TgwSecurityGroup
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-TgwSecurityGroupId'
