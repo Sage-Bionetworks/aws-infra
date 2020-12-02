@@ -2,8 +2,7 @@
 # to another website, optionally replacing the key. Also sets up a Cloudfront
 # distribution to handle https.
 AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  Provision a S3 static website redirector with Cloudfront
+Description: Provision a S3 static website redirector with Cloudfront
 Parameters:
   SourceHostName:
     Description: The source endpoint (to redirect from)
@@ -17,7 +16,7 @@ Parameters:
     ConstraintDescription: must be a valid certificate ARN.
   TargetHostName:
     Type: String
-    Description: The target endpoint 
+    Description: The target endpoint
     AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
     ConstraintDescription: must be a valid DNS zone name.
   TargetKey:
@@ -25,7 +24,7 @@ Parameters:
     Description: Optional target key
     Default: ""
 Conditions:
-  HasTargetKey: !Not [ !Equals ["", !Ref TargetKey ] ]
+  HasTargetKey: !Not [ !Equals [ "", !Ref TargetKey ] ]
 Resources:
   WebsiteBucket:
     Type: AWS::S3::Bucket
@@ -35,14 +34,15 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-      RoutingRules:
-        RedirectRule:
-          HostName: !Ref TargetHostName
-          HttpRedirectCode: '307'
-          Protocol: https
-          ReplaceKeyWith: !If [ !Ref HasTargetKey, !Ref TargetKey, !Ref 'AWS::NoValue' ]
-     DeletionPolicy: Retain
-     UpdateReplacePolicy: Retain
+        RoutingRules:
+          -
+            RedirectRule:
+              HostName: !Ref TargetHostName
+              HttpRedirectCode: '307'
+              Protocol: https
+              ReplaceKeyWith: !If [ HasTargetKey, !Ref TargetKey, !Ref "AWS::NoValue" ]
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
 
   Cloudfront:
     Type: AWS::CloudFront::Distribution
