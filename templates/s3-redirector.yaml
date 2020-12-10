@@ -1,0 +1,124 @@
+# This template sets up an S3 static website with a routing rule to redirect (307)
+# to another website, optionally replacing the key. Also sets up a Cloudfront
+# distribution to handle https.
+AWSTemplateFormatVersion: 2010-09-09
+Description: Provision a website at https://SourceHostName that redirects (307) to https://TargetHostName[/targetKey].
+Parameters:
+  SourceHostName:
+    Description: The source endpoint (to redirect from)
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  SourceAcmCertificateArn:
+    Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
+    Type: String
+    AllowedPattern: "arn:aws:acm:.*"
+    ConstraintDescription: must be a valid certificate ARN.
+  SourceHostedZoneId:
+    Description: The ID of the hosted zone where the source endpoint will be created. Needs to be in same account.
+    Type: String
+    MaxLength: 32
+    AllowedPattern: "[A-Z0-9]*"
+    ConstraintDescription: Must be a valid hosted zone ID
+    Default: ""
+  TargetHostName:
+    Description: The target endpoint
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  TargetKey:
+    Description: Optional target key, this is used to replace the path in the original url (sourcehost/path becomes targethost/key if specified)
+    Type: String
+    Default: ""
+Conditions:
+  HasTargetKey: !Not [ !Equals [ "", !Ref TargetKey ] ]
+  HasHostedZoneId: !Not [ !Equals [ "", !Ref SourceHostedZoneId ] ]
+Resources:
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Ref SourceHostName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+        RoutingRules:
+          -
+            RedirectRule:
+              HostName: !Ref TargetHostName
+              HttpRedirectCode: '307'
+              Protocol: https
+              ReplaceKeyWith: !If [ HasTargetKey, !Ref TargetKey, !Ref "AWS::NoValue" ]
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+
+  Cloudfront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Cloudfront Distribution pointing to S3 bucket
+        Aliases:
+          - !Ref SourceHostName
+        Enabled: true
+        Origins:
+          - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
+            Id: S3Origin
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+        HttpVersion: 'http2'
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          DefaultTTL: 3600
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref SourceAcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2019
+          SslSupportMethod: sni-only
+
+  DnsRecord:
+    Condition: HasHostedZoneId
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref SourceHostedZoneId
+      Name: !Ref SourceHostName
+      Type: CNAME
+      TTL: 3600
+      ResourceRecords:
+      - !GetAtt Cloudfront.DomainName
+
+Outputs:
+  CloudfrontId:
+    Value: !Ref Cloudfront
+    Description: ID of the Cloudfront distribution
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontId'
+  CloudfrontEndpoint:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt Cloudfront.DomainName
+    Description: URL for cloudfront
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontEndpoint'
+  BucketWebsiteUrl:
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Description: URL for redirector
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BucketWebsiteUrl'
+  WebsiteBucket:
+    Value: !Ref WebsiteBucket
+    Description: The bucket containing the website redirect
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-WebsiteBucket'
