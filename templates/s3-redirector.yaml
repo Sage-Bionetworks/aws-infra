@@ -84,6 +84,7 @@ Resources:
         PriceClass: PriceClass_100
         ViewerCertificate:
           AcmCertificateArn: !Ref SourceAcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2019
           SslSupportMethod: sni-only
 
   DnsRecord:
@@ -93,10 +94,10 @@ Resources:
       HostedZoneId: !Ref SourceHostedZoneId
       Name: !Ref SourceHostName
       Type: CNAME
-      TTL: '3600'
+      TTL: 3600
       ResourceRecords:
       - !GetAtt Cloudfront.DomainName
-    
+
 Outputs:
   CloudfrontId:
     Value: !Ref Cloudfront
