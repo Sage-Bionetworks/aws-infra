@@ -1,6 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Provision EC2 instance, connect to Jumpcloud, and associate with a jumpcloud systems group.
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W4002
 Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
