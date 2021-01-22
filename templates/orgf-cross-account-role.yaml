@@ -1,0 +1,30 @@
+# AWS will automatically create this role on member accounts only if the member account is
+# created from a master account.
+# More info: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_access.html
+#
+# Therefore we need to bootstrap this role in two situations:
+# 1. bootstrap on master account
+# 2. bootstrap on member accounts that were NOT created from the master account
+#  (i.e. existing accounts brought into org-formation management)
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Creates a role for cross account access'
+Parameters:
+  MasterAccountId:   # or account number
+    Type: String
+  RoleName:
+    Type: String
+    Default: OrganizationAccountAccessRole
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Action: sts:AssumeRole
+           Principal:
+            AWS: !Ref MasterAccountId
