@@ -28,3 +28,16 @@ Resources:
            Action: sts:AssumeRole
            Principal:
             AWS: !Ref MasterAccountId
+Outputs:
+  RoleName:
+    Value: !Ref Role
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-RoleName'
+  RoleId:
+    Value: !GetAtt Role.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-RoleId'
+  RoleArn:
+    Value: !GetAtt Role.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-RoleArn'
