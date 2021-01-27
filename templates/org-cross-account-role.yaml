@@ -8,6 +8,8 @@
 #  (i.e. existing accounts brought into org-formation management)
 #
 # NOTE: The MasterServiceRoleArn is only required when deployed to the Master account
+#
+# Stack name should be 'bootstrap-cross-account-role'
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Creates a role for cross account access'
 Parameters:
