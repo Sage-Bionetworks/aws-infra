@@ -6,14 +6,24 @@
 # 1. bootstrap on master account
 # 2. bootstrap on member accounts that were NOT created from the master account
 #  (i.e. existing accounts brought into org-formation management)
+#
+# NOTE: The MasterServiceRoleArn is only required when deployed to the Master account
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Creates a role for cross account access'
 Parameters:
-  MasterAccountId:   # or account number
+  MasterAccountId:
     Type: String
+    Description: The Master account number
+  MasterServiceRoleArn:
+    Type: String
+    Default: ""
+    Description: Role that is used to execute org-formation
   RoleName:
     Type: String
     Default: OrganizationAccountAccessRole
+    Description: Role name in member account that is assumed by Org Master
+Conditions:
+  SetTrustPrincipal: !Not [!Equals [!Ref MasterServiceRoleArn, ""]]
 Resources:
   Role:
     Type: AWS::IAM::Role
@@ -27,7 +37,9 @@ Resources:
          - Effect: Allow
            Action: sts:AssumeRole
            Principal:
-            AWS: !Ref MasterAccountId
+            AWS:
+             - !Ref MasterAccountId
+             - !If [SetTrustPrincipal, !Ref MasterServiceRoleArn, !Ref AWS::NoValue]
 Outputs:
   RoleName:
     Value: !Ref Role
