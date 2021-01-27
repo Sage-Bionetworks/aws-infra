@@ -1,0 +1,73 @@
+# This is to bootstrap an AWS account with a CI service user and role.
+# Login as root user to deploy this template.
+# Stack name should be 'bootstrap-ci-service-access'
+Description: Create resources to allow continuous integration service access
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  CiServiceUserAccessKey:
+    Type: 'AWS::IAM::AccessKey'
+    Properties:
+      UserName: !Ref CiServiceUser
+  CiServiceUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Groups:
+        - !Ref CiUsersGroup
+  CiUsersGroup:
+    Type: 'AWS::IAM::Group'
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  CiServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - !GetAtt CiServiceUser.Arn
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+  CiServicePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: "CfService"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Action: "*"
+            Resource: "*"
+      Roles:
+        -
+          !Ref CiServiceRole
+Outputs:
+  CiServiceUser:
+    Value: !Ref CiServiceUser
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUser'
+  CiServiceUserArn:
+    Value: !GetAtt CiServiceUser.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUserArn'
+  CiServiceUserAccessKey:
+    Value: !Ref CiServiceUserAccessKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUserAccessKey'
+  CiUserSecretAccessKey:
+    Value: !GetAtt CiServiceUserAccessKey.SecretAccessKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUserSecretAccessKey'
+  CiServiceRoleArn:
+    Value: !GetAtt CiServiceRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiServiceRoleArn'
+  CiServiceRoleId:
+    Value: !GetAtt CiServiceRole.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiServiceRoleId'
