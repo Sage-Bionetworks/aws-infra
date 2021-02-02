@@ -4,12 +4,20 @@
 Description: Create resources to allow continuous integration service access
 AWSTemplateFormatVersion: 2010-09-09
 Resources:
-  CiServiceUser:
-    Type: 'AWS::IAM::User'
   CiServiceUserAccessKey:
     Type: 'AWS::IAM::AccessKey'
     Properties:
       UserName: !Ref CiServiceUser
+  CiServiceUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      Groups:
+        - !Ref CiUsersGroup
+  CiUsersGroup:
+    Type: 'AWS::IAM::Group'
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
   CiServiceRole:
     Type: "AWS::IAM::Role"
     Properties:
