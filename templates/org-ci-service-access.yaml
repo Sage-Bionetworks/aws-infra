@@ -40,19 +40,19 @@ Outputs:
   CiServiceUser:
     Value: !Ref CiServiceUser
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUser'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiServiceUser'
   CiServiceUserArn:
     Value: !GetAtt CiServiceUser.Arn
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUserArn'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiServiceUserArn'
   CiServiceUserAccessKey:
     Value: !Ref CiServiceUserAccessKey
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUserAccessKey'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiServiceUserAccessKey'
   CiUserSecretAccessKey:
     Value: !GetAtt CiServiceUserAccessKey.SecretAccessKey
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiUserSecretAccessKey'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CiServiceUserSecretAccessKey'
   CiServiceRoleArn:
     Value: !GetAtt CiServiceRole.Arn
     Export:
