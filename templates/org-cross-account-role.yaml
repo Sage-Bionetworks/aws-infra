@@ -1,0 +1,59 @@
+# AWS will automatically create this role on member accounts only if the member account is
+# created from a master account.
+# More info: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_access.html
+#
+# Therefore we need to bootstrap this role in two situations:
+# 1. bootstrap on master account
+# 2. bootstrap on member accounts that were NOT created from the master account
+#  (i.e. existing accounts brought into org-formation management)
+#
+# NOTE: The MasterServiceRoleArn is only required when deployed to the Master account
+#
+# Stack name should be 'bootstrap-cross-account-role'
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Creates a role for cross account access'
+Parameters:
+  MasterAccountId:
+    Type: String
+    Description: The Master account number
+  MasterServiceRoleArn:
+    Type: String
+    Default: ""
+    Description: Role that is used to execute org-formation
+  RoleName:
+    Type: String
+    Default: OrganizationFormationBuildAccessRole
+    Description: Role name in member account that is assumed by Org Master
+Conditions:
+  SetTrustPrincipal: !Not [!Equals [!Ref MasterServiceRoleArn, ""]]
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Action:
+             - sts:AssumeRole
+             - sts:TagSession
+           Principal:
+            AWS:
+             - !Ref MasterAccountId
+             - !If [SetTrustPrincipal, !Ref MasterServiceRoleArn, !Ref AWS::NoValue]
+Outputs:
+  RoleName:
+    Value: !Ref Role
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-RoleName'
+  RoleId:
+    Value: !GetAtt Role.RoleId
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-RoleId'
+  RoleArn:
+    Value: !GetAtt Role.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-RoleArn'
