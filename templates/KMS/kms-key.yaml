@@ -9,7 +9,7 @@ Parameters:
   EnableKeyRotation:
     Type: String
     AllowedValues: ['true', 'false']
-    Default: true
+    Default: 'true'
     Description: Allow KMS to automatically rotate the key
   PendingWindowInDays:
     MinValue: 7
