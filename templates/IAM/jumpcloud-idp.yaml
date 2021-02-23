@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  SamlProviderName:
+    Type: String
+    Description: "Name for the SAML provider"
+  SamlProviderPolicyArns:
+    Type: List<String>
+    Description: "List of managed policy ARNs for the SAML provider role"
+  MetadataDocument:
+    Type: String
+    Description: "Public certificate for Jumpcloud AWS app"
+Resources:
+  SamlProvider:
+    Type: 'Community::IAM::SamlProvider'
+    Properties:
+      Name: !Ref SamlProviderName
+      MetadataDocument: !Ref MetadataDocument
+  SamlProviderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      MaxSessionDuration: 28800
+      RoleName: !Ref SamlProviderName
+      ManagedPolicyArns: !Ref SamlProviderPolicyArns
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref SamlProvider
+            Action: sts:AssumeRoleWithSAML
+            Condition:
+              StringEquals:
+                "SAML:aud": "https://signin.aws.amazon.com/saml"
+Outputs:
+  SamlProviderArn:
+    Value: !Ref SamlProvider
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SamlProviderArn'
+  SamlProviderRoleArn:
+    Value: !GetAtt SamlProviderRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SamlProviderRoleArn'

@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  AliasName:
+    MinLength: 1
+    MaxLength: 256
+    Type: String
+    AllowedPattern: ^[a-zA-Z0-9/_-]+$
+    Description: Friendly name for the KMS Key
+  EnableKeyRotation:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: true
+    Description: Allow KMS to automatically rotate the key
+  PendingWindowInDays:
+    MinValue: 7
+    MaxValue: 30
+    Type: Number
+    Default: 7
+    Description: Number of days before KMS delets the key
+  AdminPrincipalArns:
+    Type: CommaDelimitedList
+    Description: List of user/role/account arns that can administer the key
+  UserPrincipalArns:
+    Type: CommaDelimitedList
+    Description: List of user/role/account arn that can use the key
+Resources:
+  Key:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: !Sub '${AWS::StackName} created key'
+      EnableKeyRotation: !Ref EnableKeyRotation
+      PendingWindowInDays: !Ref PendingWindowInDays
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: "Allow administration of the key"
+            Effect: "Allow"
+            Principal:
+              AWS: !Ref AdminPrincipalArns
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: "Allow use of the key"
+            Effect: "Allow"
+            Principal:
+              AWS: !Ref UserPrincipalArns
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"
+            Resource: "*"
+  Alias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Ref AliasName
+      TargetKeyId: !Ref Key
+Outputs:
+  Key:
+    Value: !Ref Key
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-Key'
+  Alias:
+    Value: !Ref Alias
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-Alias'
