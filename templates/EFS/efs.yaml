@@ -20,7 +20,7 @@ Parameters:
       - maxIO
   Encrypted:
     Type: String
-    Default: "true"
+    Default: true
     Description: True to enable EFS encryption, false to disable.
     AllowedValues:
       - true
