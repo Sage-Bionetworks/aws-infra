@@ -1,0 +1,125 @@
+# Based off of https://github.com/aws-samples/aws-lambda-efs-samples
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create VPC, subnets and EFS.
+Parameters:
+  EfsPath:
+    Type: String
+    Default: "/mnt/efs"
+    Description: The EFS mount point
+  CidrPrefix:
+    Type: String
+    Default: "172.41"
+    Description: EFS will be deployed to a VPC with this CIDR
+  PerformanceMode:
+    Type: String
+    Default: "generalPurpose"
+    Description: The EFS disk performance mode
+    AllowedValues:
+      - generalPurpose
+      - maxIO
+  Encrypted:
+    Type: String
+    Default: true
+    Description: True to enable EFS encryption, false to disable.
+    AllowedValues:
+      - true
+      - false
+Resources:
+  MountTargetVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Sub '${CidrPrefix}.0.0/16'
+      EnableDnsHostnames: True
+      EnableDnsSupport: True
+
+  MountTargetSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Sub '${CidrPrefix}.1.0/24'
+      VpcId: !Ref MountTargetVPC
+      AvailabilityZone: !Sub "${AWS::Region}a"
+
+  MountTargetSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Sub '${CidrPrefix}.2.0/24'
+      VpcId: !Ref MountTargetVPC
+      AvailabilityZone: !Sub "${AWS::Region}b"
+
+  MountTargetSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Sub '${CidrPrefix}.3.0/24'
+      VpcId: !Ref MountTargetVPC
+      AvailabilityZone: !Sub "${AWS::Region}c"
+
+  FileSystemResource:
+    Type: 'AWS::EFS::FileSystem'
+    Properties:
+      PerformanceMode: !Ref PerformanceMode
+      Encrypted: !Ref Encrypted
+      FileSystemPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "elasticfilesystem:ClientMount"
+            Principal:
+              AWS: "*"
+
+  MountTargetResourceA:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref MountTargetSubnetA
+      SecurityGroups:
+      - !GetAtt MountTargetVPC.DefaultSecurityGroup
+
+  MountTargetResourceB:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref MountTargetSubnetB
+      SecurityGroups:
+      - !GetAtt MountTargetVPC.DefaultSecurityGroup
+
+  MountTargetResourceC:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref MountTargetSubnetC
+      SecurityGroups:
+      - !GetAtt MountTargetVPC.DefaultSecurityGroup
+
+  AccessPointResource:
+    Type: 'AWS::EFS::AccessPoint'
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      PosixUser:
+        Uid: "1000"
+        Gid: "1000"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1000"
+          OwnerUid: "1000"
+          Permissions: "0777"
+        Path: !Ref EfsPath
+
+Outputs:
+  EfsPath:
+    Value: !Ref 'EfsPath'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-EfsPath'
+  SubnetIds:
+    Value: !Sub '${MountTargetSubnetA},${MountTargetSubnetB},${MountTargetSubnetC}'
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-SubnetIds'
+  AccessPointResourceArn:
+    Value: !GetAtt AccessPointResource.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-AccessPointResourceArn'
+  VpcDefaultSecurityGroup:
+    Value: !GetAtt MountTargetVPC.DefaultSecurityGroup
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-VpcDefaultSecurityGroup'
