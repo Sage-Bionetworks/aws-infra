@@ -26,7 +26,7 @@ Parameters:
       - true
       - false
 Resources:
-  MountTargetVPC:
+  MountTargetVpc:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: !Sub '${CidrPrefix}.0.0/16'
@@ -37,21 +37,21 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Sub '${CidrPrefix}.1.0/24'
-      VpcId: !Ref MountTargetVPC
+      VpcId: !Ref MountTargetVpc
       AvailabilityZone: !Sub "${AWS::Region}a"
 
   MountTargetSubnetB:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Sub '${CidrPrefix}.2.0/24'
-      VpcId: !Ref MountTargetVPC
+      VpcId: !Ref MountTargetVpc
       AvailabilityZone: !Sub "${AWS::Region}b"
 
   MountTargetSubnetC:
     Type: AWS::EC2::Subnet
     Properties:
       CidrBlock: !Sub '${CidrPrefix}.3.0/24'
-      VpcId: !Ref MountTargetVPC
+      VpcId: !Ref MountTargetVpc
       AvailabilityZone: !Sub "${AWS::Region}c"
 
   FileSystemResource:
@@ -74,7 +74,7 @@ Resources:
       FileSystemId: !Ref FileSystemResource
       SubnetId: !Ref MountTargetSubnetA
       SecurityGroups:
-      - !GetAtt MountTargetVPC.DefaultSecurityGroup
+      - !GetAtt MountTargetVpc.DefaultSecurityGroup
 
   MountTargetResourceB:
     Type: AWS::EFS::MountTarget
@@ -82,7 +82,7 @@ Resources:
       FileSystemId: !Ref FileSystemResource
       SubnetId: !Ref MountTargetSubnetB
       SecurityGroups:
-      - !GetAtt MountTargetVPC.DefaultSecurityGroup
+      - !GetAtt MountTargetVpc.DefaultSecurityGroup
 
   MountTargetResourceC:
     Type: AWS::EFS::MountTarget
@@ -90,7 +90,7 @@ Resources:
       FileSystemId: !Ref FileSystemResource
       SubnetId: !Ref MountTargetSubnetC
       SecurityGroups:
-      - !GetAtt MountTargetVPC.DefaultSecurityGroup
+      - !GetAtt MountTargetVpc.DefaultSecurityGroup
 
   AccessPointResource:
     Type: 'AWS::EFS::AccessPoint'
@@ -120,6 +120,10 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-AccessPointResourceArn'
   VpcDefaultSecurityGroup:
-    Value: !GetAtt MountTargetVPC.DefaultSecurityGroup
+    Value: !GetAtt MountTargetVpc.DefaultSecurityGroup
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-VpcDefaultSecurityGroup'
+  MountTargetVpcId:
+    Value: !Ref MountTargetVpc
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-MountTargetVpcId'
