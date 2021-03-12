@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Parameters:
+
+  targetIds:
+    Type: CommaDelimitedList
+
+Resources:
+
+  Scp:
+    Type: Community::Organizations::Policy
+    Properties:
+      Description: Prevent users from disabling AWS Config or changing its rules
+      Name: PreventDisableConfigRules
+      PolicyType: SERVICE_CONTROL_POLICY
+      TargetIds: !Ref targetIds
+      # https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples.html#examples_config
+      Content: >-
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Deny",
+              "Action": [
+                "config:DeleteConfigRule",
+                "config:DeleteConfigurationRecorder",
+                "config:DeleteDeliveryChannel",
+                "config:StopConfigurationRecorder"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
