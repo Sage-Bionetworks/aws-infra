@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Parameters:
+
+  targetIds:
+    Type: CommaDelimitedList
+
+Resources:
+
+  Scp:
+    Type: Community::Organizations::Policy
+    Properties:
+      Description: Restricts the use of all regions except for the us-east-1 region
+      Name: DenyAllRegionsExceptUsEast1
+      PolicyType: SERVICE_CONTROL_POLICY
+      TargetIds: !Ref targetIds
+      # https://asecure.cloud/a/scp_whitelist_region/
+      Content: >-
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "NotAction": [
+                        "a4b:*",
+                        "acm:*",
+                        "aws-marketplace-management:*",
+                        "aws-marketplace:*",
+                        "aws-portal:*",
+                        "awsbillingconsole:*",
+                        "budgets:*",
+                        "ce:*",
+                        "chime:*",
+                        "cloudfront:*",
+                        "config:*",
+                        "cur:*",
+                        "directconnect:*",
+                        "ec2:DescribeRegions",
+                        "ec2:DescribeTransitGateways",
+                        "ec2:DescribeVpnGateways",
+                        "fms:*",
+                        "globalaccelerator:*",
+                        "health:*",
+                        "iam:*",
+                        "importexport:*",
+                        "kms:*",
+                        "mobileanalytics:*",
+                        "networkmanager:*",
+                        "organizations:*",
+                        "pricing:*",
+                        "route53:*",
+                        "route53domains:*",
+                        "s3:GetAccountPublic*",
+                        "s3:ListAllMyBuckets",
+                        "s3:PutAccountPublic*",
+                        "shield:*",
+                        "sts:*",
+                        "support:*",
+                        "trustedadvisor:*",
+                        "waf-regional:*",
+                        "waf:*",
+                        "wafv2:*",
+                        "wellarchitected:*"
+                    ],
+                    "Resource": "*",
+                    "Effect": "Deny",
+                    "Condition": {
+                        "StringNotEquals": {
+                            "aws:RequestedRegion": [
+                                "us-east-1"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }

@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Parameters:
+
+  targetIds:
+    Type: CommaDelimitedList
+
+Resources:
+
+  Scp:
+    Type: Community::Organizations::Policy
+    Properties:
+      Description: Restricts the use of the Root account
+      Name: DenyRootAccess
+      PolicyType: SERVICE_CONTROL_POLICY
+      TargetIds: !Ref targetIds
+      Content: >-
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "RestrictAllForRoot",
+              "Effect": "Deny",
+              "Action": "*",
+              "Resource": "*",
+              "Condition": {
+                "StringLike": {
+                  "aws:PrincipalArn": [
+                    "arn:aws:iam::*:root"
+                  ]
+                }
+              }
+            }
+          ]
+        }
