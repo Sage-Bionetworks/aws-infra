@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09-OC'
+
+Parameters:
+
+  targetIds:
+    Type: CommaDelimitedList
+
+Resources:
+
+  Scp:
+    Type: Community::Organizations::Policy
+    Properties:
+      Description: Prevent users from disabling a CloudTrail logs
+      Name: PreventDisableCloudtrail
+      PolicyType: SERVICE_CONTROL_POLICY
+      TargetIds: !Ref targetIds
+      # https://asecure.cloud/a/scp_cloudtrail/
+      Content: >-
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": [
+                        "cloudtrail:StopLogging",
+                        "cloudtrail:DeleteTrail"
+                    ],
+                    "Resource": "*",
+                    "Effect": "Deny"
+                }
+            ]
+        }
