@@ -11,7 +11,7 @@ Resources:
     Type: Community::Organizations::Policy
     Properties:
       Description: Restricts the use of all regions except for the US regions
-      Name: DenyAllRegionsExceptUs
+      Name: DenyAllRegionsOutsideUs
       PolicyType: SERVICE_CONTROL_POLICY
       TargetIds: !Ref targetIds
       # https://asecure.cloud/a/scp_whitelist_region/
