@@ -1,6 +1,0 @@
-[
-    {
-        "ParameterKey": "JcServiceApiKey",
-        "ParameterValue": "$[taskcat_random-numbers]"
-    }
-]
