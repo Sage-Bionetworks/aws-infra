@@ -105,6 +105,9 @@ Resources:
             AllowedOrigins: ['*']
             AllowedMethods: [GET, POST, PUT, HEAD]
             MaxAge: 3000
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
       LifecycleConfiguration:
         Rules:
         - Id: DataLifecycleRule
@@ -175,6 +178,16 @@ Resources:
               - "s3:ListBucket*"
               - "s3:GetBucketLocation"
             Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
+          -
+            Sid: "RequireCanonicalIdOnObjectUpdates"
+            Effect: Deny
+            Principal:
+              AWS: !Ref GrantAccess
+            Action: s3:PutObject
+            Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
+            Condition:
+              StringNotEquals:
+                s3:x-amz-acl: bucket-owner-full-control
           -
             Sid: "WriteAccess"
             Effect: "Allow"
