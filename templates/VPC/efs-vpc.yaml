@@ -1,0 +1,40 @@
+# Based off of https://github.com/aws-samples/aws-lambda-efs-samples
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create VPC, subnets for EFS.
+Parameters:
+  CidrPrefix:
+    Type: String
+    Default: "172.41"
+    Description: EFS will be deployed to a VPC with this CIDR
+Resources:
+  MountTargetVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Sub '${CidrPrefix}.0.0/16'
+      EnableDnsHostnames: True
+      EnableDnsSupport: True
+      Tags:
+        - Key: "Name"
+          Value: !Sub ${AWS::StackName}
+  MountTargetSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Sub '${CidrPrefix}.1.0/22'
+      VpcId: !Ref MountTargetVpc
+      AvailabilityZone: !Sub "${AWS::Region}a"
+      Tags:
+        - Key: "Name"
+          Value: !Sub ${AWS::StackName}
+Outputs:
+  DefaultSecurityGroup:
+    Value: !GetAtt MountTargetVpc.DefaultSecurityGroup
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-DefaultSecurityGroup'
+  MountTargetVpcId:
+    Value: !Ref MountTargetVpc
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-MountTargetVpcId'
+  MountTargetSubnet:
+    Value: !Ref MountTargetSubnet
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-MountTargetSubnet'
