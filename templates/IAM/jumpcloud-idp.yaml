@@ -11,10 +11,10 @@ Parameters:
     Description: "Public certificate for Jumpcloud AWS app"
 Resources:
   SamlProvider:
-    Type: 'Community::IAM::SamlProvider'
+    Type: 'AWS::IAM::SAMLProvider'
     Properties:
       Name: !Ref SamlProviderName
-      MetadataDocument: !Ref MetadataDocument
+      SamlMetadataDocument: !Ref MetadataDocument
   SamlProviderRole:
     Type: AWS::IAM::Role
     Properties:
