@@ -18,11 +18,6 @@ Please install pre-commit, once installed the file validations will
 automatically run on every commit.  Alternatively you can manually
 execute the validations by running `pre-commit run --all-files`.
 
-We have setup [taskcat](https://github.com/aws-quickstart/taskcat) to test that
-the shared cloudformation templates can actually deploy resources to our AWS accounts.
-The test runs in our Admincentral account.  We only validate on `us-east-1`
-region.
-
 ## Continuous Integration
 We have configured the CI to deploy CF template to a public S3 bucket on the
 AWS Admincentral account.  The purpose is to allow us to share those templates.
