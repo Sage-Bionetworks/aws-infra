@@ -13,6 +13,11 @@ Resources:
 
   GuardDutyBucket:
     Type: AWS::S3::Bucket
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E1012
     OrganizationBinding: !Ref LogArchiveBinding
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -31,6 +36,11 @@ Resources:
 
   GuardDutyBucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E1012
     OrganizationBinding: !Ref LogArchiveBinding
     Properties:
       Bucket: !Ref GuardDutyBucket
@@ -51,6 +61,11 @@ Resources:
   Detector:
     OrganizationBinding: !Ref AllBinding
     Type: AWS::GuardDuty::Detector
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E1012
     Properties:
       Enable: true
       FindingPublishingFrequency: FIFTEEN_MINUTES
@@ -58,12 +73,21 @@ Resources:
   Master:
     OrganizationBinding: !Ref MemberBinding
     Type: AWS::GuardDuty::Master
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E1012
     Properties:
       DetectorId: !Ref Detector
       MasterId: !Ref accountId
 
   Member:
     Type: AWS::GuardDuty::Member
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [E1012, E1010]
     ForeachAccount:
       !Ref MemberBinding
     Properties:
