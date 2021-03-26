@@ -9,6 +9,11 @@ Resources:
   CloudTrailBucket:
     OrganizationBinding: !Ref LogArchiveBinding
     Type: AWS::S3::Bucket
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E1012
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
@@ -29,6 +34,11 @@ Resources:
   CloudTrailBucketPolicy:
     OrganizationBinding: !Ref LogArchiveBinding
     Type: AWS::S3::BucketPolicy
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E1012
     Properties:
       Bucket: !Ref CloudTrailBucket
       PolicyDocument:
