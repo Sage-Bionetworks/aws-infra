@@ -23,13 +23,11 @@ Resources:
                     "Effect": "Deny",
                     "Action": [
                         "guardduty:AcceptInvitation",
-                        "guardduty:ArchiveFindings",
                         "guardduty:CreateDetector",
                         "guardduty:CreateFilter",
                         "guardduty:CreateIPSet",
                         "guardduty:CreateMembers",
                         "guardduty:CreatePublishingDestination",
-                        "guardduty:CreateSampleFindings",
                         "guardduty:CreateThreatIntelSet",
                         "guardduty:DeclineInvitations",
                         "guardduty:DeleteDetector",
