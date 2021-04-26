@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: >-
-  Creates a VPC with public and private subnets and a managed NAT gateway.
+Description: >
+  Creates a VPC of 4096 addresses, mostly in private subnets, and a public
+  subnet to accommodate a NAT gateway.
 Parameters:
   VpcName:
     Description: The VPC name (i.e. Synapse-Prod)
