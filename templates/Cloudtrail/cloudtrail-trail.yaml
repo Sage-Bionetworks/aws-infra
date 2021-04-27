@@ -4,6 +4,12 @@ AWSTemplateFormatVersion: '2010-09-09-OC'
 Parameters:
   bucketName:
     Type: String
+  CloudWatchLogsLogGroupArn:
+    Type: String
+    Default: ""
+  CloudWatchLogsRoleArn:
+    Type: String
+    Default: ""
 
 Resources:
   CloudTrailBucket:
@@ -69,5 +75,5 @@ Resources:
       IncludeGlobalServiceEvents: true
       IsMultiRegionTrail: true
       EnableLogFileValidation: true
-      CloudWatchLogsLogGroupArn: ''
-      CloudWatchLogsRoleArn: ''
+      CloudWatchLogsLogGroupArn: !Ref CloudWatchLogsLogGroupArn
+      CloudWatchLogsRoleArn: !Ref CloudWatchLogsRoleArn
