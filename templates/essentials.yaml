@@ -35,7 +35,7 @@ Parameters:
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
 Resources:
-  # ofn managages cloudtrail now. we leave this hear to retain the old data
+  # ofn managages cloudtrail now. we leave this here to retain the old data
   # https://github.com/Sage-Bionetworks-IT/organizations-infra/tree/master/org-formation/060-cloudtrail
   AWSS3CloudtrailBucket:
     Type: "AWS::S3::Bucket"
@@ -47,21 +47,8 @@ Resources:
           Value: !Ref Project
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
-  # AWS Config service, https://github.com/awslabs/aws-cloudformation-templates/blob/master/aws/services/Config/Config.yaml
-  AWSConfigConfigurationRecorder:
-    Type: AWS::Config::ConfigurationRecorder
-    Properties:
-      RecordingGroup:
-        AllSupported: true
-        IncludeGlobalResourceTypes: true
-      RoleARN: !GetAtt [AWSIAMConfigRole, Arn]
-  AWSConfigDeliveryChannel:
-    Type: AWS::Config::DeliveryChannel
-    Properties:
-      ConfigSnapshotDeliveryProperties:
-        DeliveryFrequency: Six_Hours
-      # Send log and data to AWS logcentral account
-      S3BucketName: "essentials-awss3configbucket-9n8wjykhvr5z"
+  # ofn managages aws config now. we leave this here to retain the old data
+  # https://github.com/Sage-Bionetworks-IT/organizations-infra/tree/master/org-formation/80-aws-config-inventory
   AWSS3ConfigBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -101,55 +88,6 @@ Resources:
               AWS: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${AWSS3LambdaArtifactsBucket}/*"
-  AWSSnsConfigTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Subscription:
-        -
-          Endpoint: !Ref OperatorEmail
-          Protocol: email
-  AWSSnsConfigTopicPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties:
-      PolicyDocument:
-        Id: ConfigTopicPolicy
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: config.amazonaws.com
-          Action: SNS:Publish
-          Resource: '*'
-      Topics: [!Ref 'AWSSnsConfigTopic']
-  AWSIAMConfigRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: [config.amazonaws.com]
-          Action: ['sts:AssumeRole']
-      ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AWS_ConfigRole']
-      Policies:
-      - PolicyName: root
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action: s3:GetBucketAcl
-            Resource: !Join ['', ['arn:aws:s3:::', !Ref 'AWSS3ConfigBucket']]
-          - Effect: Allow
-            Action: s3:PutObject
-            Resource: !Join ['', ['arn:aws:s3:::', !Ref 'AWSS3ConfigBucket', /AWSLogs/,
-                !Ref 'AWS::AccountId', /*]]
-            Condition:
-              StringEquals:
-                s3:x-amz-acl: bucket-owner-full-control
-          - Effect: Allow
-            Action: config:Put*
-            Resource: '*'
   # Create a role to authorize the VPC Peering request from a specific account,
   # this is used to create the VPC Peer between different accounts in  CloudFormation
   # https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/solutions/VPCPeering
