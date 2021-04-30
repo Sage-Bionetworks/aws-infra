@@ -1,8 +1,6 @@
 Description: Essential resources common to all AWS accounts
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  OperatorEmail:
-    Type: String
   VpcPeeringRequesterAwsAccountId:
     Type: String
     NoEcho: true
