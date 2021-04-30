@@ -3,10 +3,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   OperatorEmail:
     Type: String
-  CentralCloudtrailBucket:
-    Type: String
-    Description: The central S3 bucket where AWS CloudTrail send logs to.
-    Default: essentials-awss3cloudtrailbucket-1jz6pf8dzid7r
   VpcPeeringRequesterAwsAccountId:
     Type: String
     NoEcho: true
@@ -39,12 +35,8 @@ Parameters:
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
 Resources:
-  # resources for cloudtrail
-  AWSLogsCloudtrailLogGroup:
-    Type: "AWS::Logs::LogGroup"
-    Properties:
-      LogGroupName: !Sub '/aws/cloudtrail/${AWS::StackName}.log'
-      RetentionInDays: 90
+  # ofn managages cloudtrail now. we leave this hear to retain the old data
+  # https://github.com/Sage-Bionetworks-IT/organizations-infra/tree/master/org-formation/060-cloudtrail
   AWSS3CloudtrailBucket:
     Type: "AWS::S3::Bucket"
     Properties:
@@ -55,105 +47,6 @@ Resources:
           Value: !Ref Project
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
-  AWSIAMS3CloudtrailBucketPolicy:
-    Type: "AWS::S3::BucketPolicy"
-    Properties:
-      Bucket: !Ref AWSS3CloudtrailBucket
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Sid: "AWSCloudTrailAclCheck"
-            Effect: "Allow"
-            Principal:
-              Service: "cloudtrail.amazonaws.com"
-            Action: "s3:GetBucketAcl"
-            Resource:
-              !Sub |-
-                arn:aws:s3:::${AWSS3CloudtrailBucket}
-          -
-            Sid: "AWSCloudTrailWrite"
-            Effect: "Allow"
-            Principal:
-              Service: "cloudtrail.amazonaws.com"
-            Action: "s3:PutObject"
-            Resource:
-              !Sub |-
-                arn:aws:s3:::${AWSS3CloudtrailBucket}/AWSLogs/${AWS::AccountId}/*
-            Condition:
-              StringEquals:
-                s3:x-amz-acl: "bucket-owner-full-control"
-  AWSSNSCloudtrailTopic:
-    Type: "AWS::SNS::Topic"
-    Properties:
-      Subscription:
-        -
-          Endpoint: !Ref OperatorEmail
-          Protocol: email
-  AWSSNSCloudtrailTopicPolicy:
-    Type: "AWS::SNS::TopicPolicy"
-    Properties:
-      Topics:
-        - !Ref AWSSNSCloudtrailTopic
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Sid: "CloudtrailTopicPolicy"
-            Effect: "Allow"
-            Principal:
-              Service: "cloudtrail.amazonaws.com"
-            Resource: "*"
-            Action: "SNS:Publish"
-  AWSIAMCloudtrailLogManagedPolicy:
-    Type: "AWS::IAM::ManagedPolicy"
-    Properties:
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: AWSCloudTrailCreateLogStream
-            Effect: Allow
-            Action:
-              - 'logs:CreateLogStream'
-            Resource:
-              - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWSLogsCloudtrailLogGroup}:log-stream:${AWS::AccountId}_CloudTrail_${AWS::Region}*'
-          - Sid: AWSCloudTrailPutLogEvents
-            Effect: Allow
-            Action:
-              - 'logs:PutLogEvents'
-            Resource:
-              - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWSLogsCloudtrailLogGroup}:log-stream:${AWS::AccountId}_CloudTrail_${AWS::Region}*'
-  AWSIAMCloudtrailLogRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Principal:
-              Service:
-                - "cloudtrail.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Path: "/"
-      ManagedPolicyArns:
-        - !Ref AWSIAMCloudtrailLogManagedPolicy
-  AWSCloudtrailTrail:
-    DependsOn:
-      - AWSIAMS3CloudtrailBucketPolicy
-      - AWSSNSCloudtrailTopicPolicy
-    Type: "AWS::CloudTrail::Trail"
-    Properties:
-      CloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
-      CloudWatchLogsRoleArn: !GetAtt AWSIAMCloudtrailLogRole.Arn
-      # send all logs to cloudtrail bucket in AWS logcentral account
-      S3BucketName: !Ref CentralCloudtrailBucket
-      SnsTopicName: !GetAtt AWSSNSCloudtrailTopic.TopicName
-      IsLogging: true
-      EnableLogFileValidation: true
-      IncludeGlobalServiceEvents: true
-      IsMultiRegionTrail: true
   # AWS Config service, https://github.com/awslabs/aws-cloudformation-templates/blob/master/aws/services/Config/Config.yaml
   AWSConfigConfigurationRecorder:
     Type: AWS::Config::ConfigurationRecorder
@@ -257,22 +150,6 @@ Resources:
           - Effect: Allow
             Action: config:Put*
             Resource: '*'
-  # https://docs.aws.amazon.com/config/latest/developerguide/cloudtrail-enabled.html
-  AWSConfigCloudtrailEnabledConfigRule:
-    Type: 'AWS::Config::ConfigRule'
-    DependsOn: AWSConfigConfigurationRecorder
-    Properties:
-      Description: Checks whether AWS CloudTrail is enabled.
-      InputParameters:
-        # logs and data are in AWS logcentral account
-        s3BucketName: !Ref CentralCloudtrailBucket
-        snsTopicArn: !Ref AWSSNSCloudtrailTopic
-        cloudWatchLogsLogGroupArn: !GetAtt AWSLogsCloudtrailLogGroup.Arn
-      Scope: {}
-      Source:
-        Owner: AWS
-        SourceIdentifier: CLOUD_TRAIL_ENABLED
-      MaximumExecutionFrequency: TwentyFour_Hours
   # Create a role to authorize the VPC Peering request from a specific account,
   # this is used to create the VPC Peer between different accounts in  CloudFormation
   # https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/solutions/VPCPeering
