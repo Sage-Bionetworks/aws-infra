@@ -35,6 +35,8 @@ Parameters:
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
 Resources:
+  # ofn managages cloudtrail now. we leave this hear to retain the old data
+  # https://github.com/Sage-Bionetworks-IT/organizations-infra/tree/master/org-formation/060-cloudtrail
   AWSS3CloudtrailBucket:
     Type: "AWS::S3::Bucket"
     Properties:
