@@ -1,6 +1,10 @@
 Description: Setup cloudwatch logs
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
+  LogGroupName:
+    Type: String
+    Description: >-
+      The cloudwatch log group name (i.e. /aws/myapp/tomcat/server.log)
   RetentionInDays:
     Type: Number
     Description: >-
@@ -13,7 +17,7 @@ Resources:
   LogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
-      LogGroupName: !Sub '/aws/cloudtrail/${AWS::StackName}.log'
+      LogGroupName: !Ref LogGroupName
       RetentionInDays: !Ref RetentionInDays
   LogPolicy:
     Type: "AWS::IAM::ManagedPolicy"
