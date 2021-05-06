@@ -1,10 +1,10 @@
 Description: Nunjucks template to setup cross account access for Cloudtrail
 AWSTemplateFormatVersion: 2010-09-09
 Resources:
-  {{ sceptre_user_data.stackname }}CrossAccountBucketPolicy:
+  {{ stackname }}CrossAccountBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
-      Bucket: {{ sceptre_user_data.cloudtrail_bucket }}
+      Bucket: {{ cloudtrail_bucket }}
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -13,21 +13,21 @@ Resources:
             Principal:
               Service: "cloudtrail.amazonaws.com"
             Action: "s3:GetBucketAcl"
-            Resource: arn:aws:s3:::{{ sceptre_user_data.cloudtrail_bucket }}
+            Resource: arn:aws:s3:::{{ cloudtrail_bucket }}
           - Sid: "AWSCloudTrailWrite"
             Effect: "Allow"
             Principal:
               Service: "cloudtrail.amazonaws.com"
             Action: "s3:PutObject"
             Resource:
-{% for account in sceptre_user_data.accounts %}
-              - arn:aws:s3:::{{ sceptre_user_data.cloudtrail_bucket }}/AWSLogs/{{ account }}/*
+{% for account in accounts %}
+              - arn:aws:s3:::{{ cloudtrail_bucket }}/AWSLogs/{{ account }}/*
 {% endfor %}
             Condition:
               StringEquals:
                 s3:x-amz-acl: "bucket-owner-full-control"
-{% for account in sceptre_user_data.accounts %}
-  {{ sceptre_user_data.stackname }}Role{{ account }}:
+{% for account in accounts %}
+  {{ stackname }}Role{{ account }}:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -40,7 +40,7 @@ Resources:
                 - arn:aws:iam::{{ account }}:root
             Action:
               - "sts:AssumeRole"
-  {{ sceptre_user_data.stackname }}AccessPolicy{{ account }}:
+  {{ stackname }}AccessPolicy{{ account }}:
     Type: "AWS::IAM::Policy"
     Properties:
       PolicyName: CloudtrailCrossAccountAccessPolicy-{{ account }}
@@ -52,13 +52,13 @@ Resources:
             Action:
               - "s3:Get*"
               - "s3:List*"
-            Resource: arn:aws:s3:::{{ sceptre_user_data.cloudtrail_bucket }}/AWSLogs/{{ account }}/*
+            Resource: arn:aws:s3:::{{ cloudtrail_bucket }}/AWSLogs/{{ account }}/*
           - Sid: BucketAccessBy{{ account }}
             Effect: "Allow"
             Action:
               - "s3:Get*"
               - "s3:List*"
-            Resource: arn:aws:s3:::{{ sceptre_user_data.cloudtrail_bucket }}
+            Resource: arn:aws:s3:::{{ cloudtrail_bucket }}
       Roles:
-        - Ref: {{ sceptre_user_data.stackname }}Role{{ account }}
+        - Ref: {{ stackname }}Role{{ account }}
 {% endfor %}
