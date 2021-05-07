@@ -1,0 +1,73 @@
+Description: Setup an AWS service user (without a role)
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  # Must provide either a list of ManagePolicyArns or a custom PolicyDocument.
+  # Can also provide both a list of ManagePolicyArns and a custom PolicyDocument.
+  ManagedPolicyArns:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: >-
+      A list of managed policies for the role. Required if PolicyDocument not provided.
+      Example:
+        ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::1111111111:policy/MY-EXISTING-POLICY"]
+  PolicyDocument:
+    Type: String
+    Default: ""
+    Description: >-
+      A JSON policy document to define a custom policy for the role. Required if ManagedPolicyArns not provided.
+      Example:
+        {
+          "Version":"2012-10-17",
+          "Statement":[
+            {
+              "Sid":"PublicRead",
+              "Effect":"Allow",
+              "Principal": "*",
+              "Action":["s3:GetObject","s3:GetObjectVersion"],
+              "Resource":["arn:aws:s3:::EXAMPLE-BUCKET/*"]
+            }
+          ]
+        }
+Conditions:
+  HasManagedPolicyArns: !Not
+    - !Equals
+      - !Join ["", !Ref ManagedPolicyArns]
+      - ''
+  HasPolicyDocument: !Not [!Equals [!Ref PolicyDocument, ""]]
+Resources:
+  ServicePolicy:
+    Condition: HasPolicyDocument
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument: !Ref PolicyDocument
+  ServiceUser:
+    Type: 'AWS::IAM::User'
+    Properties:
+      # Concatenate managed policy and custom policy
+      ManagedPolicyArns: !Split
+        - ","
+        - !Join
+            - ","
+            - - !If [HasPolicyDocument, !Ref ServicePolicy, !Ref 'AWS::NoValue']
+              - !If [HasManagedPolicyArns, !Join [",", !Ref "ManagedPolicyArns"], !Ref 'AWS::NoValue']
+  ServiceUserAccessKey:
+    Type: 'AWS::IAM::AccessKey'
+    Properties:
+      UserName: !Ref ServiceUser
+Outputs:
+  ServiceUser:
+    Value: !Ref ServiceUser
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ServiceUser'
+  ServiceUserArn:
+    Value: !GetAtt ServiceUser.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ServiceUserArn'
+  ServiceUserAccessKey:
+    Value: !Ref ServiceUserAccessKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ServiceUserAccessKey'
+  ServiceUserSecretAccessKey:
+    Value: !GetAtt ServiceUserAccessKey.SecretAccessKey
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ServiceUserSecretAccessKey'
