@@ -1,7 +1,7 @@
 Description: Nunjucks template to setup cross account access for AWS config log and data
 AWSTemplateFormatVersion: 2010-09-09
 Resources:
-  {{ stackname }}CrossAccountBucketPolicy:
+  CrossAccountBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
       Bucket: {{ config_bucket }}
@@ -27,7 +27,7 @@ Resources:
               StringEquals:
                 s3:x-amz-acl: "bucket-owner-full-control"
 {% for account in accounts %}
-  {{ stackname }}Role{{ account }}:
+  Role{{ account }}:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -40,7 +40,7 @@ Resources:
                 - arn:aws:iam::{{ account }}:root
             Action:
               - "sts:AssumeRole"
-  {{ stackname }}AccessPolicy{{ account }}:
+  AccessPolicy{{ account }}:
     Type: "AWS::IAM::Policy"
     Properties:
       PolicyName: ConfigCrossAccountAccessPolicy-{{ account }}
@@ -60,5 +60,5 @@ Resources:
               - "s3:List*"
             Resource: arn:aws:s3:::{{ config_bucket }}
       Roles:
-        - Ref: {{ stackname }}Role{{ account }}
+        - Ref: Role{{ account }}
 {% endfor %}
