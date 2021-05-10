@@ -28,10 +28,10 @@ Parameters:
             }
           ]
         }
-  Principals:
+  PrincipalArns:
     Type: CommaDelimitedList
     Description: >-
-      Give this list of accounts/users/roles access to resources
+      Give this list of accounts/users/roles ARNs access to AWS resources
       Example:
         ["arn:aws:iam::111111111111:root", "arn:aws:iam::111111111111:user/jsmith"]
 Conditions:
@@ -62,7 +62,7 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              AWS: !Ref Principals
+              AWS: !Ref PrincipalArns
             Action:
               - "sts:AssumeRole"
               - "sts:TagSession"
