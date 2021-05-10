@@ -83,6 +83,10 @@ Parameters:
     Type: String
     Description: (Optional) Name of the created bucket.
     Default: ""
+  AccountOwnerId:
+    Type: String
+    Description: >-
+      The AWS account owner ID (i.e. aws s3api list-buckets --query Owner.ID --output text)
 Conditions:
   AllowWrite: !Equals [!Ref AllowWriteBucket, true]
   AllowUserAccess: !Not [!Equals [!Join ['', !Ref GrantAccess], "[]"]]
@@ -105,6 +109,9 @@ Resources:
             AllowedOrigins: ['*']
             AllowedMethods: [GET, POST, PUT, HEAD]
             MaxAge: 3000
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
       LifecycleConfiguration:
         Rules:
         - Id: DataLifecycleRule
@@ -175,6 +182,19 @@ Resources:
               - "s3:ListBucket*"
               - "s3:GetBucketLocation"
             Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
+          -
+            Sid: "RequireCanonicalIdOnObjectUpdates"
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
+            Condition:
+              StringNotLike:
+                aws:userid:
+                  - arn:aws:iam::325565585839:root
+                  - !Ref AccountOwnerID
+              StringNotEquals:
+                s3:x-amz-acl: bucket-owner-full-control
           -
             Sid: "WriteAccess"
             Effect: "Allow"
