@@ -66,3 +66,8 @@ Resources:
             Action:
               - "sts:AssumeRole"
               - "sts:TagSession"
+Outputs:
+  ServiceRoleArn:
+    Value: !GetAtt ServiceRole.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ServiceRoleArn'
