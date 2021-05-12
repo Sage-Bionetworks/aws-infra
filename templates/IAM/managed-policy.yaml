@@ -24,7 +24,7 @@ Resources:
     Properties:
       PolicyDocument: !Ref PolicyDocument
 Outputs:
-  ManagedPolicy:
+  ManagedPolicyArn:
     Value: !Ref ManagedPolicy
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedPolicyArn'
