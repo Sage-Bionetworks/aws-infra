@@ -1,0 +1,30 @@
+Description: Create an custom IAM managed policy
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  PolicyDocument:
+    Type: String
+    Description: >-
+      A JSON policy document to define a custom policy.
+      Example:
+        {
+          "Version":"2012-10-17",
+          "Statement":[
+            {
+              "Sid":"PublicRead",
+              "Effect":"Allow",
+              "Principal": "*",
+              "Action":["s3:GetObject","s3:GetObjectVersion"],
+              "Resource":["arn:aws:s3:::EXAMPLE-BUCKET/*"]
+            }
+          ]
+        }
+Resources:
+  ManagedPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument: !Ref PolicyDocument
+Outputs:
+  ManagedPolicyArn:
+    Value: !Ref ManagedPolicy
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ManagedPolicyArn'
