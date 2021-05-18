@@ -77,3 +77,17 @@ Resources:
       EnableLogFileValidation: true
       CloudWatchLogsLogGroupArn: !Ref CloudWatchLogsLogGroupArn
       CloudWatchLogsRoleArn: !Ref CloudWatchLogsRoleArn
+
+Outputs:
+  CloudTrailBucketName:
+    Value: !Ref CloudTrailBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudTrailBucketName'
+  CloudTrailBucketArn:
+    Value: !GetAtt CloudTrailBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudTrailBucketArn'
+  CloudTrailArn:
+    Value: !GetAtt CloudTrail.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudTrailArn'

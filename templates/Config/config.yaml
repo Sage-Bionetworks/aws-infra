@@ -118,3 +118,13 @@ Resources:
           - Effect: Allow
             Action: 's3:GetBucketAcl'
             Resource: !GetAtt ConfigAuditBucket.Arn
+
+Outputs:
+  ConfigAuditBucketName:
+    Value: !Ref ConfigAuditBucket
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ConfigAuditBucketName'
+  ConfigAuditBucketArn:
+    Value: !GetAtt ConfigAuditBucket.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ConfigAuditBucketArn'
