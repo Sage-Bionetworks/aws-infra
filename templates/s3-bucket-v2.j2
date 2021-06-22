@@ -83,10 +83,6 @@ Parameters:
     Type: String
     Description: (Optional) Name of the created bucket.
     Default: ""
-  AccountOwnerId:
-    Type: String
-    Description: >-
-      The AWS account owner ID (i.e. aws s3api list-buckets --query Owner.ID --output text)
 Conditions:
   AllowWrite: !Equals [!Ref AllowWriteBucket, true]
   AllowUserAccess: !Not [!Equals [!Join ['', !Ref GrantAccess], "[]"]]
@@ -192,7 +188,7 @@ Resources:
               StringNotLike:
                 aws:userid:
                   - arn:aws:iam::325565585839:root
-                  - !Ref AccountOwnerID
+                  - !Ref AWS::AccountId
               StringNotEquals:
                 s3:x-amz-acl: bucket-owner-full-control
           -
