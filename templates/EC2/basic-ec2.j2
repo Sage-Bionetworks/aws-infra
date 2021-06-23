@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Provision EC2 instance with access from SSM session manager
+Parameters:
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t3.nano
+  VpcId:
+    Description: The ID of the VPC to launch the instance into
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Description: The ID of the subnet to launch the instance into
+    Type: AWS::EC2::Subnet::Id
+  EncryptVolume:
+    Type: String
+    Description: true to encrypt root volume, false (default) for no encryption
+    AllowedValues:
+      - true
+      - false
+    Default: true
+    ConstraintDescription: 'Must be true or false'
+  ImageId:
+    Description: Latest amazon linux AMI
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  VolumeSize:
+    Description: The EC2 volume size (in GB)
+    Type: Number
+    Default: 16
+    MinValue: 16
+    MaxValue: 2000
+Resources:
+  OutboundSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Allow outbound traffic"
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+{% if sceptre_user_data.OpenPorts is defined %}
+  InboundSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Allow ports for incoming traffic"
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+  {% for port in sceptre_user_data.OpenPorts %}
+        - CidrIp: "0.0.0.0/0"
+          FromPort: {{ port }}
+          ToPort: {{ port }}
+          IpProtocol: tcp
+  {% endfor %}
+{% endif %}
+  Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+            DeleteOnTermination: true
+            VolumeSize: !Ref VolumeSize
+            Encrypted: !Ref EncryptVolume
+      NetworkInterfaces:
+        - DeleteOnTermination: true
+          DeviceIndex: "0"
+          SubnetId: !Ref SubnetId
+{% if sceptre_user_data.OpenPorts is defined %}
+          GroupSet:
+            - !GetAtt InboundSecurityGroup.GroupId
+{% endif %}
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref 'InstanceRole'
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2008-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+Outputs:
+  InstanceId:
+    Value: !Ref Instance
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InstanceId'
+  InstanceIpAddress:
+    Value: !GetAtt Instance.PrivateIp
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-InstanceIpAddress'
