@@ -185,7 +185,7 @@ Resources:
             Action: s3:PutObject
             Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
             Condition:
-              StringNotLike:
+              ForAllValues:StringNotLike:
                 aws:userid:
                   - arn:aws:iam::325565585839:root
                   - !Ref AWS::AccountId
