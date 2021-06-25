@@ -143,6 +143,9 @@ Resources:
             AllowedOrigins: ['*']
             AllowedMethods: [GET, POST, PUT, HEAD]
             MaxAge: 3000
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
       LifecycleConfiguration:
         Rules:
         - Id: DataLifecycleRule
