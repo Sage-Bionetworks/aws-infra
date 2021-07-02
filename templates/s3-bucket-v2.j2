@@ -29,7 +29,7 @@ Parameters:
     Default: false
   BucketVersioning:
     Type: String
-    Description: Enabled to enable bucket versionsing, default is Suspended
+    Description: Enabled to enable bucket versioning, default is Suspended
     AllowedValues:
       - Enabled
       - Suspended
@@ -172,37 +172,74 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          -
-            Sid: "ReadAccess"
-            Effect: "Allow"
+          - Sid: SynapseBucketAccess
+            # gives Synapse access to the bucket
+            Action:
+              - "s3:ListBucket*"
+              - "s3:GetBucketLocation"
+            Effect: Allow
+            Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
+            Principal:
+              AWS: "325565585839"
+          - Sid: SynapseObjectAccess
+            # gives Synapse access to objects in the bucket (R/O or R/W, depending on AllowWrite)
+            Action:
+              - !If [AllowWrite, "s3:*Object*", "s3:GetObject*"]
+              - "s3:*MultipartUpload*"
+            Effect: Allow
+            Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
+            Principal:
+              AWS: "325565585839"
+          - Sid: BucketAccess
+            # gives grantees access to the bucket
+            Effect: Allow
             Principal:
               AWS: !Ref GrantAccess
             Action:
               - "s3:ListBucket*"
               - "s3:GetBucketLocation"
-            Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
-          -
-            Sid: "RequireCanonicalIdOnObjectUpdates"
-            Effect: Deny
-            Principal: "*"
-            Action: s3:PutObject
-            Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
-            Condition:
-              StringNotLike:
-                aws:userid:
-                  - arn:aws:iam::325565585839:root
-                  - !Ref AWS::AccountId
-              StringNotEquals:
-                s3:x-amz-acl: bucket-owner-full-control
-          -
-            Sid: "WriteAccess"
-            Effect: "Allow"
+             Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
+          - Sid: ReadObjectAccess
+            # give grantees read access to objects
+            Effect: Allow
             Principal:
               AWS: !Ref GrantAccess
             Action:
-              - !If [AllowWrite, "s3:*Object*", "s3:GetObject*"]
-              - "s3:*MultipartUpload*"
+              - "s3:GetObject"
+              - "s3:GetObjectAcl"
+              - "s3:AbortMultipartUpload"
+              - "s3:ListMultipartUploadParts"
             Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
+          - !If
+            - AllowWrite
+            - Sid: InternalPutObjectAccess
+              # gives bucket-account grantees the ability to upload objects
+              Effect: Allow
+              Principal:
+                AWS: !Ref GrantAccess
+              Action:
+                - "s3:PutObject"
+                - "s3:PutObjectAcl"
+              Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
+              Condition:
+                StringEquals:
+                  "aws:PrincipalAccount": "055273631518"
+            - !Ref AWS::NoValue
+          - !If
+            - AllowWrite
+            - Sid: ExternalPutObjectAccess
+              # gives cross-account grantees the ability to upload objects
+              Effect: Allow
+              Principal:
+                AWS: !Ref GrantAccess
+              Action:
+                - "s3:PutObject"
+                - "s3:PutObjectAcl"
+              Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
+              Condition:
+                StringEquals:
+                  s3:x-amz-acl: bucket-owner-full-control
+            - !Ref AWS::NoValue
 
   # Add owner file to the synapse bucket, requires the cloudformation S3 objects macro
   # https://github.com/Sage-Bionetworks/aws-infra/tree/master/lambdas/cfn-s3objects-macro
