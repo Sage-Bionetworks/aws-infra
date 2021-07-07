@@ -285,6 +285,12 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcCidr']]
+  PublicSubnet:
+    Description: "SubnetId of the public subnet"
+    Value: !Ref PublicSubnet
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet']]
   PrivateSubnet:
     Description: "SubnetId of the private subnet"
     Value: !Ref PrivateSubnet
@@ -303,6 +309,18 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet2']]
+  PrivateSubnet3:
+    Description: "SubnetId of the private subnet 3"
+    Value: !Ref PrivateSubnet3
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet3']]
+  PrivateSubnet4:
+    Description: "SubnetId of the private subnet 4"
+    Value: !Ref PrivateSubnet4
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet4']]
   PrivateRouteTable:
     Description: "Route table Id for private subnets"
     Value: !Ref PrivateRouteTable
