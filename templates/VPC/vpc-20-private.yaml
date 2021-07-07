@@ -287,7 +287,7 @@ Outputs:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcCidr']]
   PublicSubnet:
     Description: "SubnetId of the public subnet"
-    Value: !Ref PrivateSubnet
+    Value: !Ref PublicSubnet
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet']]
