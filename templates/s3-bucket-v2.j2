@@ -198,7 +198,7 @@ Resources:
             Action:
               - "s3:ListBucket*"
               - "s3:GetBucketLocation"
-             Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
+            Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
           - Sid: ReadObjectAccess
             # give grantees read access to objects
             Effect: Allow
