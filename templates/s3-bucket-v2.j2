@@ -172,24 +172,18 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: SynapseBucketAccess
-            # gives Synapse access to the bucket
-            Action:
-              - "s3:ListBucket*"
-              - "s3:GetBucketLocation"
-            Effect: Allow
-            Resource: !If [EnableEncryption, !GetAtt SynapseEncryptedExternalBucket.Arn, !GetAtt SynapseExternalBucket.Arn]
-            Principal:
-              AWS: "325565585839"
           - Sid: SynapseObjectAccess
-            # gives Synapse access to objects in the bucket (R/O or R/W, depending on AllowWrite)
+            # If Synapse is a grantee, gives Synapse access to objects in the bucket (R/O or R/W, depending on AllowWrite)
+            Effect: Allow
+            Principal:
+              AWS: !Ref GrantAccess
             Action:
               - !If [AllowWrite, "s3:*Object*", "s3:GetObject*"]
               - "s3:*MultipartUpload*"
-            Effect: Allow
+            Condition:
+              StringEquals:
+                "aws:PrincipalAccount": "325565585839" 
             Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
-            Principal:
-              AWS: "325565585839"
           - Sid: BucketAccess
             # gives grantees access to the bucket
             Effect: Allow
