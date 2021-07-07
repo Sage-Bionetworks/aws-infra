@@ -182,7 +182,7 @@ Resources:
               - "s3:*MultipartUpload*"
             Condition:
               StringEquals:
-                "aws:PrincipalAccount": "325565585839" 
+                "aws:PrincipalAccount": "325565585839"
             Resource: !If [EnableEncryption, !Sub "${SynapseEncryptedExternalBucket.Arn}/*", !Sub "${SynapseExternalBucket.Arn}/*"]
           - Sid: BucketAccess
             # gives grantees access to the bucket
