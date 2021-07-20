@@ -170,7 +170,7 @@ Resources:
     Condition: cDeployLambda
     Properties:
       Description: Send SNS Messages to Slack
-      Runtime: python2.7
+      Runtime: python3.8
       Handler: index.lambda_handler
       Timeout: 80
       Code:
