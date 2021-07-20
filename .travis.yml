@@ -6,7 +6,7 @@ env:
     - REPO_NAME="${PWD##*/}"
 install:
   - pip install pre-commit awscli jinja2
-  - git clone https://github.com/drm/jinja2-lint.git
+  - git clone https://github.com/drm/jinja2-lint.git /tmp/jinja2-lint
 before_script:
   - mkdir -p ~/.aws
   - echo -e "[default]\nregion=us-east-1\nsource_profile=default\nrole_arn=$AwsCfServiceRoleArn" > ~/.aws/config
@@ -23,7 +23,7 @@ jobs:
     - stage: validate
       script:
         - pre-commit run --all-files
-        - find . -type f -name "*.j2" -exec ./jinja2-lint/j2lint.py '{}' +
+        - find . -type f -name "*.j2" -exec /tmp/jinja2-lint/j2lint.py '{}' +
     - stage: deploy
       script:
         - aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/$REPO_NAME/$TRAVIS_BRANCH/ --recursive
