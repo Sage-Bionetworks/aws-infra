@@ -17,6 +17,8 @@ Parameters:
   permissionSetName:
     Type: String
     Default: AdministratorAccess
+    MinLength: 1
+    MaxLength: 32
 
   managedPolicies:
     Type: CommaDelimitedList
