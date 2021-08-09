@@ -37,6 +37,7 @@ Resources:
                         "ec2:DescribeRegions",
                         "ec2:DescribeTransitGateways",
                         "ec2:DescribeVpnGateways",
+                        "ecr:*",
                         "fms:*",
                         "globalaccelerator:*",
                         "health:*",
