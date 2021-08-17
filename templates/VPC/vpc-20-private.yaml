@@ -18,7 +18,7 @@ Parameters:
     Description: Availability zones for private subnets
     Type: List<AWS::EC2::AvailabilityZone::Name>
     ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
-    Default: "us-east-1a, us-east-1b, us-east-1c"
+    Default: "us-east-1a, us-east-1b, us-east-1c, us-east-1d"
   VpnCidr:
     Description: CIDR of the (sophos-utm) VPN
     Type: String
@@ -37,9 +37,9 @@ Mappings:
       CIDR: "8.0/22"  # 10.255.8.1 - 10.255.11.254
     Private3:
       CIDR: "12.0/23" # 10.255.12.1 - 10.255.13.254
-    Private4:
-      CIDR: "14.0/24" # 10.255.14.1 - 10.255.14.254
     Public:
+      CIDR: "14.0/24" # 10.255.14.1 - 10.255.14.254
+    Public1:
       CIDR: "15.0/24" # 10.255.15.1 - 10.255.15.254
 Resources:
   VPC:
@@ -65,6 +65,18 @@ Resources:
           - !FindInMap [SubnetConfig, Public, CIDR]
       AvailabilityZone: !Select
         - 0
+        - !Ref PublicSubnetZones
+  PublicSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+      CidrBlock: !Join
+        - '.'
+        - - !Ref VpcSubnetPrefix
+          - !FindInMap [SubnetConfig, Public1, CIDR]
+      AvailabilityZone: !Select
+        - 1
         - !Ref PublicSubnetZones
   PrivateSubnet:
     Type: "AWS::EC2::Subnet"
@@ -108,18 +120,7 @@ Resources:
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Private3, CIDR]
       AvailabilityZone: !Select
-        - 2
-        - !Ref PrivateSubnetZones
-  PrivateSubnet4:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref VpcSubnetPrefix
-          - !FindInMap [SubnetConfig, Private4, CIDR]
-      AvailabilityZone: !Select
-        - 2
+        - 3
         - !Ref PrivateSubnetZones
   InternetGateway:
     Type: "AWS::EC2::InternetGateway"
@@ -149,6 +150,13 @@ Resources:
     Properties:
       SubnetId:
         Ref: "PublicSubnet"
+      RouteTableId:
+        Ref: "PublicRouteTable"
+  PublicSubnetRouteTableAssociation1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId:
+        Ref: "PublicSubnet1"
       RouteTableId:
         Ref: "PublicRouteTable"
   PublicNetworkAcl:
@@ -187,6 +195,13 @@ Resources:
     Properties:
       SubnetId:
         Ref: "PublicSubnet"
+      NetworkAclId:
+        Ref: "PublicNetworkAcl"
+  PublicSubnetNetworkAclAssociation1:
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId:
+        Ref: "PublicSubnet1"
       NetworkAclId:
         Ref: "PublicNetworkAcl"
   NATGateway:
@@ -291,6 +306,12 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet']]
+  PublicSubnet1:
+    Description: "SubnetId of the public subnet 1"
+    Value: !Ref PublicSubnet1
+    Export:
+      Name:
+        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicSubnet1']]
   PrivateSubnet:
     Description: "SubnetId of the private subnet"
     Value: !Ref PrivateSubnet
@@ -315,12 +336,6 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet3']]
-  PrivateSubnet4:
-    Description: "SubnetId of the private subnet 4"
-    Value: !Ref PrivateSubnet4
-    Export:
-      Name:
-        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet4']]
   PrivateRouteTable:
     Description: "Route table Id for private subnets"
     Value: !Ref PrivateRouteTable
