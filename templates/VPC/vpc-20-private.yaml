@@ -258,13 +258,6 @@ Resources:
         Ref: "PrivateSubnet3"
       RouteTableId:
         Ref: "PrivateRouteTable"
-  PrivateSubnetRouteTableAssociation4:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      SubnetId:
-        Ref: "PrivateSubnet4"
-      RouteTableId:
-        Ref: "PrivateRouteTable"
   # Allow access to EC2 when connected to the Sage VPN
   VpnSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
