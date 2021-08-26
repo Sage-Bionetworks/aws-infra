@@ -78,3 +78,7 @@ Outputs:
     Value: !Ref Alias
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-Alias'
+  KeyArn:
+    Value: !GetAtt Key.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-KeyArn'
