@@ -532,6 +532,22 @@ Resources:
           Value: !Ref Project
         - Key: "OwnerEmail"
           Value: !Ref OwnerEmail
+  # Create VPC endpoint for all S3 traffic to avoid inter-AZ and NAT gateway traffic
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: "*"
+            Resource: "*"
+            Principal: "*"
+      VpcId: !Ref VPC
+      RouteTableIds:
+        - !Ref PublicRouteTable
+        - !Ref PrivateRouteTable
+      ServiceName: "com.amazonaws.us-east-1.s3"
 Outputs:
   VPCId:
     Description: "VPCId of the newly created VPC"
@@ -626,3 +642,8 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpnCidr']]
+  S3GatewayEndpointId:
+    Description: S3 VPC Gateway endpoint ID
+    Value: !Ref S3GatewayEndpoint
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-S3GatewayEndpointId'
