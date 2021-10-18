@@ -42,6 +42,17 @@ Parameters:
     AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
+  IncludeS3GatewayEndpoint:
+    Type: String
+    Description: >
+      true (default) to deploy an S3 VPC gateway endpoint bucket, 
+      false to skip endpoint (e.g., one already being deployed)
+    AllowedValues:
+      - true
+      - false
+    Default: true
+Conditions:
+  EnableS3GatewayEndpoint: !Equals [!Ref IncludeS3GatewayEndpoint, true]
 Mappings:
   SubnetConfig:
     VPC:
@@ -535,6 +546,7 @@ Resources:
   # Create VPC endpoint for all S3 traffic to avoid inter-AZ and NAT gateway traffic
   S3GatewayEndpoint:
     Type: AWS::EC2::VPCEndpoint
+    Condition: EnableS3GatewayEndpoint
     Properties:
       PolicyDocument:
         Version: 2012-10-17
@@ -644,6 +656,7 @@ Outputs:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpnCidr']]
   S3GatewayEndpointId:
     Description: S3 VPC Gateway endpoint ID
+    Condition: EnableS3GatewayEndpoint
     Value: !Ref S3GatewayEndpoint
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-S3GatewayEndpointId'
