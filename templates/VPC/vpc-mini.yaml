@@ -28,8 +28,8 @@ Parameters:
   IncludeS3GatewayEndpoint:
     Type: String
     Description: >
-      true (default) to deploy an S3 VPC gateway endpoint bucket, 
-      false to skip endpoint (e.g., one already being deployed)
+      true (default) to deploy an S3 VPC gateway endpoint,
+      false to skip endpoint (e.g., one has already been deployed)
     AllowedValues:
       - true
       - false
