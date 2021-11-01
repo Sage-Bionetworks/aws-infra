@@ -13,22 +13,29 @@ Parameters:
       - 'IMMEDIATE'
       - 'WEEKLY'
   Subscribers:
-    Type: String
+    Type: List<String>
     Description: >-
-      A dictionary list of subscribers (i.e. [{"Type": "EMAIL", "Address": "abc@def.com"}])
+      A dictionary list of subscribers (i.e. [{"Type": "EMAIL", "Address": "abc@acme.com"},{"Type": "EMAIL", "Address": "def@acme.com"}])
       https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ce-anomalysubscription.html
 Conditions:
-  hasSubscription: !Not [ !Equals [ '', !Ref Subscribers ] ]
+  HasSubscribers: !Not
+    - !Equals
+      - !Join ["", !Ref Subscribers]
+      - ''
 Resources:
-   AnomalyServiceMonitor:
+  AnomalyServiceMonitor:
     Type: 'AWS::CE::AnomalyMonitor'
     Properties:
       MonitorName: 'services-anomaly'
       MonitorType: 'DIMENSIONAL'
       MonitorDimension: 'SERVICE'
-   AnomalySubscription:
+  AnomalySubscription:
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [E3002]
     Type: 'AWS::CE::AnomalySubscription'
-    Condition: hasSubscription
+    Condition: HasSubscribers
     Properties:
       SubscriptionName: "services-anomaly-subscription"
       Threshold: !Ref Threshold
