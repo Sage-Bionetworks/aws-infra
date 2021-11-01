@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  Threshold:
+    Type: Number
+    Default: 500
+    Description: The dollar value that triggers a notification if the threshold is exceeded.
+  Frequency:
+    Type: String
+    Default: 'DAILY'
+    Description: The frequency that anomaly reports are sent over email
+    AllowedValues:
+      - 'DAILY'
+      - 'IMMEDIATE'
+      - 'WEEKLY'
+  Subscribers:
+    Type: String
+    Description: >-
+      A dictionary list of subscribers (i.e. [{"Type": "EMAIL", "Address": "abc@def.com"}])
+      https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ce-anomalysubscription.html
+Conditions:
+  hasSubscription: !Not [ !Equals [ '', !Ref Subscribers ] ]
+Resources:
+   AnomalyServiceMonitor:
+    Type: 'AWS::CE::AnomalyMonitor'
+    Properties:
+      MonitorName: 'services-anomaly'
+      MonitorType: 'DIMENSIONAL'
+      MonitorDimension: 'SERVICE'
+   AnomalySubscription:
+    Type: 'AWS::CE::AnomalySubscription'
+    Condition: hasSubscription
+    Properties:
+      SubscriptionName: "services-anomaly-subscription"
+      Threshold: !Ref Threshold
+      Frequency: !Ref Frequency
+      MonitorArnList:
+        - !Ref AnomalyServiceMonitor
+      Subscribers: !Ref Subscribers
