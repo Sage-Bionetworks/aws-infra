@@ -1,4 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Setup cost anomaly detection to monitor AWS services
 Parameters:
   Threshold:
     Type: Number
