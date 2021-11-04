@@ -14,21 +14,18 @@ Parameters:
       - 'DAILY'
       - 'IMMEDIATE'
       - 'WEEKLY'
-  Subscribers:
-    Type: List<String>
+  Subscriber:
+    Type: String
     Description: >-
-      A dictionary list of subscribers (i.e. [{"Type": "EMAIL", "Address": "abc@acme.com"},{"Type": "EMAIL", "Address": "def@acme.com"}])
-      https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ce-anomalysubscription.html
+      A subscriber email for anomaly detection to send notifications to
+    Default: ''
 Conditions:
-  HasSubscribers: !Not
-    - !Equals
-      - !Join ["", !Ref Subscribers]
-      - ''
+  HasSubscriber: !Not [ !Equals [ '', !Ref Subscriber ] ]
 Resources:
   AnomalyServiceMonitor:
     Type: 'AWS::CE::AnomalyMonitor'
     Properties:
-      MonitorName: 'services-anomaly'
+      MonitorName: 'service-anomaly'
       MonitorType: 'DIMENSIONAL'
       MonitorDimension: 'SERVICE'
   AnomalySubscription:
@@ -37,11 +34,12 @@ Resources:
         config:
           ignore_checks: [E3002]
     Type: 'AWS::CE::AnomalySubscription'
-    Condition: HasSubscribers
+    Condition: HasSubscriber
     Properties:
-      SubscriptionName: "services-anomaly-subscription"
+      SubscriptionName: "service-anomaly-subscription"
       Threshold: !Ref Threshold
       Frequency: !Ref Frequency
       MonitorArnList:
         - !Ref AnomalyServiceMonitor
-      Subscribers: !Ref Subscribers
+      Subscribers:
+        - { "Type": "EMAIL", "Address": !Ref Subscriber }
