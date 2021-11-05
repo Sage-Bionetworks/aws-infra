@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Setup cost anomaly detection to monitor AWS services
+Parameters:
+  Threshold:
+    Type: Number
+    Default: 500
+    Description: The dollar value that triggers a notification if the threshold is exceeded.
+  Frequency:
+    Type: String
+    Default: 'DAILY'
+    Description: The frequency that anomaly reports are sent over email
+    AllowedValues:
+      - 'DAILY'
+      - 'IMMEDIATE'
+      - 'WEEKLY'
+  Subscriber:
+    Type: String
+    Description: >-
+      A subscriber email for anomaly detection to send notifications to
+    Default: ''
+Conditions:
+  HasSubscriber: !Not [ !Equals [ '', !Ref Subscriber ] ]
+Resources:
+  AnomalyServiceMonitor:
+    Type: 'AWS::CE::AnomalyMonitor'
+    Properties:
+      MonitorName: 'service-anomaly'
+      MonitorType: 'DIMENSIONAL'
+      MonitorDimension: 'SERVICE'
+  AnomalySubscription:
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [E3002]
+    Type: 'AWS::CE::AnomalySubscription'
+    Condition: HasSubscriber
+    Properties:
+      SubscriptionName: "service-anomaly-subscription"
+      Threshold: !Ref Threshold
+      Frequency: !Ref Frequency
+      MonitorArnList:
+        - !Ref AnomalyServiceMonitor
+      Subscribers:
+        - { "Type": "EMAIL", "Address": !Ref Subscriber }
