@@ -1,4 +1,4 @@
 ignore_checks:
   - E3001
 ignore_templates:
-  - tags/SageFinancialProgramCodes.json
+  - templates/tags/SageFinancialProgramCodes.json
