@@ -37,3 +37,4 @@ Transform: [PyPlate]
 [Jay McConnell](https://github.com/jaymccon)
 Partner Solutions Architect
 Amazon Web Services
+Source: https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/services/CloudFormation/MacrosExamples/PyPlate
