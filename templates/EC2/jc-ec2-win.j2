@@ -58,9 +58,9 @@ Parameters:
     Type: String
     Default: 'yes'
   AMIId:
-    Description: Deploy with the latest released AWS AMI
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base'
+    Description: The ID of the AMI to deploy
+    Type: 'AWS::EC2::Image::Id'
+    ConstraintDescription: Valid AMIs are at https://ami.sageit.org/
   VolumeSize:
     Description: The EC2 volume size (in GB)
     Type: Number
