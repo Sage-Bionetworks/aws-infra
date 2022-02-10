@@ -58,9 +58,9 @@ Parameters:
     Type: String
     Default: 'yes'
   AMIId:
-    Description: ID of the AMI to deploy
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    Description: The ID of the AMI to deploy
+    Type: AWS::EC2::Image::Id
+    ConstraintDescription: Valid AMIs are at https://ami.sageit.org/
   VolumeSize:
     Description: The EC2 volume size (in GB)
     Type: Number
