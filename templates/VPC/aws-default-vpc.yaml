@@ -1,3 +1,5 @@
+# This template creates the AWS default VPC. The intention is to allow restoring
+# the AWS default VPC in cases where it got accidentally deleted
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   A public VPC with 6 availability zones and 6 subnets
