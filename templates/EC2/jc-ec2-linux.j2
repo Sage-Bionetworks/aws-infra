@@ -15,7 +15,7 @@ Parameters:
   InstanceType:
     Description: EC2 instance type
     Type: String
-    Default: t3.micro
+    Default: t3.small
   JcConnectKey:
     Description: Connection key used to let JC agent connect to a Jumpcloud account.
     Type: String
@@ -86,7 +86,27 @@ Conditions:
   HasKeyName: !Not [!Equals ["", !Ref KeyName]]
   EnableEc2Backup: !Equals [!Ref BackupEc2, true]
 Resources:
-  {% if sceptre_user_data.OpenPorts is defined %}
+  VpnSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Allow traffic from VPN"
+      VpcId: !ImportValue
+        'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
+      SecurityGroupIngress:
+        - CidrIp: "10.1.0.0/16"  # Sophos VPN
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+        - CidrIp: "10.50.0.0/16"  # AWS VPN
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+{% if sceptre_user_data.OpenPorts is defined %}
   InstanceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -94,25 +114,27 @@ Resources:
       VpcId: !ImportValue
         'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
       SecurityGroupIngress:
-      {% for port in sceptre_user_data.OpenPorts %}
+  {% for port in sceptre_user_data.OpenPorts %}
         - CidrIp: "0.0.0.0/0"
           FromPort: {{ port }}
           ToPort: {{ port }}
           IpProtocol: tcp
-      {% endfor %}
+  {% endfor %}
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
           FromPort: -1
           ToPort: -1
           IpProtocol: "-1"
-  {% endif %}
+{% endif %}
   Ec2Instance:
     Type: 'AWS::EC2::Instance'
     Metadata:
-      'AWS::CloudFormation::Init':
+      AWS::CloudFormation::Init:
         configSets:
           SetupCfn:
             - cfn_hup_service
+          SetupTools:
+            - install_tools
           SetupJumpcloud:
             - install_jc
             - config_jc
@@ -135,7 +157,7 @@ Resources:
                 [cfn-auto-reloader-hook]
                 triggers=post.update
                 path=Resources.Ec2Instance.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupJumpcloud --region ${AWS::Region}
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupTools,SetupJumpcloud --region ${AWS::Region}
               mode: "000400"
               owner: root
               group: root
@@ -159,12 +181,26 @@ Resources:
               command: "/bin/systemctl enable cfn-hup.service"
             02_start_cfn-hup:
               command: "/bin/systemctl start cfn-hup.service"
+        install_tools:
+          commands:
+            01_jq:
+{% if sceptre_user_data.Distro.lower() == 'aws' %}
+              command: "/usr/bin/yum install -y jq"
+{% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
+              command: "/usr/bin/apt install -y jq"
+{% endif %}
+            02_curl:
+{% if sceptre_user_data.Distro.lower() == 'aws' %}
+              command: "/usr/bin/yum install -y curl"
+{% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
+              command: "/usr/bin/apt install -y curl"
+{% endif %}
         install_jc:
           commands:
             01_jumpcloud_agent:
               command: !Join
                 - ''
-                - - "/usr/bin/curl --silent --show-error --header 'x-connect-key: "
+                - - "/usr/bin/curl --show-error --header 'x-connect-key: "
                   - !Ref JcConnectKey
                   - "' https://kickstart.jumpcloud.com/Kickstart | sudo bash"
         config_jc:
@@ -192,44 +228,61 @@ Resources:
       KeyName: !If [HasKeyName, !Ref KeyName, !Ref 'AWS::NoValue']
       PropagateTagsToVolumeOnCreation: true
       BlockDeviceMappings:
-        -
-        {% if sceptre_user_data.Distro.lower() == 'aws' %}
-          DeviceName: "/dev/xvda"
-        {% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
-          DeviceName: "/dev/sda1"
-        {% endif %}
+{% if sceptre_user_data.Distro.lower() == 'aws' %}
+        - DeviceName: "/dev/xvda"
+{% elif sceptre_user_data.Distro.lower() == 'ubuntu' %}
+        - DeviceName: "/dev/sda1"
+{% endif %}
           Ebs:
             DeleteOnTermination: true
             VolumeSize: !Ref VolumeSize
             Encrypted: !Ref EncryptVolume
-      NetworkInterfaces:
-        - DeleteOnTermination: true
-          DeviceIndex: "0"
-          GroupSet:
-            - !ImportValue
-              'Fn::Sub': '${AWS::Region}-${VpcName}-VpnSecurityGroup'
-          {% if sceptre_user_data.OpenPorts is defined %}
-            - !GetAtt InstanceSecurityGroup.GroupId
-          {% endif %}
-          SubnetId: !ImportValue
-            'Fn::Sub': '${AWS::Region}-${VpcName}-${VpcSubnet}'
-      IamInstanceProfile: !ImportValue
-        'Fn::Sub': '${AWS::Region}-essentials-TagRootVolumeProfile'
+      SubnetId: !ImportValue
+        'Fn::Sub': '${AWS::Region}-${VpcName}-${VpcSubnet}'
+      SecurityGroupIds:
+        - !GetAtt VpnSecurityGroup.GroupId
+{% if sceptre_user_data.OpenPorts is defined %}
+        - !GetAtt InstanceSecurityGroup.GroupId
+{% endif %}
+      IamInstanceProfile: !Ref InstanceProfile
       UserData:
         Fn::Base64: !Sub |
-          #!/bin/bash
-          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupJumpcloud --region ${AWS::Region}
+          #!/bin/bash -xe
+{% if sceptre_user_data.Distro.lower() == 'ubuntu' %}
+          apt-get update -y
+          mkdir -p /opt/aws/bin
+          wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+          python3 -m easy_install --script-dir /opt/aws/bin aws-cfn-bootstrap-py3-latest.tar.gz
+{% endif %}
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupTools,SetupJumpcloud --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource Ec2Instance --region ${AWS::Region}
       Tags:
         - Key: "parkmycloud"
           Value: !Ref ParkMyCloudManaged
+        - Key: "ManagedInstanceMaintenanceTarget"
+          Value: "yes"
+        - Key: "PatchGroup"
+          Value: "prod-default"
     CreationPolicy:
       ResourceSignal:
-      {% if sceptre_user_data.Distro.lower() == 'ubuntu' %}
-        Timeout: PT10M
-      {% else %}
         Timeout: PT5M
-      {% endif %}
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ssm.amazonaws.com
+            Action: sts:AssumeRole
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref 'InstanceRole'
   Ec2Backup:
     Type: 'AWS::CloudFormation::Stack'
     Condition: EnableEc2Backup
