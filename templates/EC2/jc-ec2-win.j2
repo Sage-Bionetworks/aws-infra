@@ -86,7 +86,27 @@ Conditions:
   HasKeyName: !Not [!Equals ["", !Ref KeyName]]
   EnableEc2Backup: !Equals [!Ref BackupEc2, true]
 Resources:
-  {% if sceptre_user_data.OpenPorts is defined %}
+  VpnSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Allow traffic from VPN"
+      VpcId: !ImportValue
+        'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
+      SecurityGroupIngress:
+        - CidrIp: "10.1.0.0/16"  # Sophos VPN
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+        - CidrIp: "10.50.0.0/16"  # AWS VPN
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+{% if sceptre_user_data.OpenPorts is defined %}
   InstanceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -94,18 +114,18 @@ Resources:
       VpcId: !ImportValue
         'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
       SecurityGroupIngress:
-      {% for port in sceptre_user_data.OpenPorts %}
+  {% for port in sceptre_user_data.OpenPorts %}
         - CidrIp: "0.0.0.0/0"
           FromPort: {{ port }}
           ToPort: {{ port }}
           IpProtocol: tcp
-      {% endfor %}
+  {% endfor %}
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
           FromPort: -1
           ToPort: -1
           IpProtocol: "-1"
-  {% endif %}
+{% endif %}
   Ec2Instance:
     Type: 'AWS::EC2::Instance'
     Metadata:
@@ -213,19 +233,14 @@ Resources:
             DeleteOnTermination: true
             VolumeSize: !Ref VolumeSize
             Encrypted: !Ref EncryptVolume
-      NetworkInterfaces:
-        - DeleteOnTermination: true
-          DeviceIndex: "0"
-          GroupSet:
-            - !ImportValue
-              'Fn::Sub': '${AWS::Region}-${VpcName}-VpnSecurityGroup'
-          {% if sceptre_user_data.OpenPorts is defined %}
-            - !GetAtt InstanceSecurityGroup.GroupId
-          {% endif %}
-          SubnetId: !ImportValue
-            'Fn::Sub': '${AWS::Region}-${VpcName}-${VpcSubnet}'
-      IamInstanceProfile: !ImportValue
-        'Fn::Sub': '${AWS::Region}-essentials-TagRootVolumeProfile'
+      SubnetId: !ImportValue
+        'Fn::Sub': '${AWS::Region}-${VpcName}-${VpcSubnet}'
+      SecurityGroupIds:
+        - !GetAtt VpnSecurityGroup.GroupId
+{% if sceptre_user_data.OpenPorts is defined %}
+        - !GetAtt InstanceSecurityGroup.GroupId
+{% endif %}
+      IamInstanceProfile: !Ref InstanceProfile
       UserData:
         Fn::Base64: !Sub |
           <script>
@@ -235,10 +250,31 @@ Resources:
       Tags:
         - Key: "parkmycloud"
           Value: !Ref ParkMyCloudManaged
+        - Key: "ManagedInstanceMaintenanceTarget"
+          Value: "yes"
+        - Key: "PatchGroup"
+          Value: "prod-default"
     CreationPolicy:
       ResourceSignal:
         Count: 1
         Timeout: "PT30M"
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ssm.amazonaws.com
+            Action: sts:AssumeRole
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref 'InstanceRole'
   Ec2Backup:
     Type: 'AWS::CloudFormation::Stack'
     Condition: EnableEc2Backup
