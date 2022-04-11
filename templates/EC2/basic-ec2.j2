@@ -75,6 +75,11 @@ Resources:
           GroupSet:
             - !GetAtt InboundSecurityGroup.GroupId
 {% endif %}
+      Tags:
+        - Key: "ManagedInstanceMaintenanceTarget"
+          Value: "yes"
+        - Key: "PatchGroup"
+          Value: "prod-default"
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
