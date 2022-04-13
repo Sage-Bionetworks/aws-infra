@@ -321,6 +321,11 @@ Resources:
           ToPort: -1
           IpProtocol: "-1"
           Description: "Allow all VPN traffic"
+        - CidrIp: "10.50.0.0/16"    # AWS TGW Hub
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+          Description: "Allow AWS TGW Hub traffic"
       # CF does not support removing all rules, workaround is to add a pointless rule
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
