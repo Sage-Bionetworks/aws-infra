@@ -1,0 +1,59 @@
+{# Allow Github to access AWS without giving github AWS credentials #}
+{# Must pass in the following jinja parameters    #}
+{#   Repositories:                                #}
+{#     - name: "organizations-infra"              #}
+{#       branch: "master"                         #}
+Parameters:
+  ClientIdList:
+    Type: List<String>
+    Description: >-
+      A list of client IDs (also known as audiences) that are associated with
+      the specified IAM OIDC provider resource object
+    Default: "sts.amazonaws.com"
+  ThumbprintList:
+    Type: List<String>
+    Description: >-
+      A list of certificate thumbprints that are associated with the specified
+      IAM OIDC provider resource object
+  Url:
+    Type: String
+    Description: "The URL that the IAM OIDC provider resource object is associated with"
+    Default: "https://token.actions.githubusercontent.com"
+  GitHubOrg:
+    Type: String
+    Description: "The name of the github organization"
+Resources:
+  Provider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      ClientIdList: !Ref ClientIdList
+      ThumbprintList: !Ref ThumbprintList
+      Url: !Ref Url
+{% for Repository in Repositories %}
+  ProviderRole{{ Repository.name | replace('-','') | replace('_','') }}:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRoleWithWebIdentity
+            Principal:
+              Federated: !Ref Provider
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/{{ Repository.name }}:*
+              ForAllValues:StringEquals:
+                token.actions.githubusercontent.com:aud: !Ref ClientIdList
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/{{ Repository.name }}:ref:refs/heads/{{ Repository.branch }}
+{% endfor %}
+Outputs:
+  ProviderArn:
+    Value: !Ref Provider
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ProviderArn'
+{% for Repository in Repositories %}
+  ProviderRoleArn{{ Repository.name | replace('-','') | replace('_','') }}:
+    Value: !GetAtt ProviderRole{{ Repository.name | replace('-','') | replace('_','') }}.Arn
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-ProviderRoleArn-{{ Repository.name | replace('-','') | replace('_','') }}'
+{% endfor %}
