@@ -6,7 +6,7 @@ env:
     - REPO_NAME="${PWD##*/}"
 install:
   - pip install pre-commit awscli jinja2==3.0.1
-  - git clone --single-branch https://github.com/drm/jinja2-lint.git /tmp/jinja2-lint
+  - git clone --single-branch https://github.com/drm/jinja2-lint.git /tmp/jinja2-lint && pushd /tmp/jinja2-lint && git checkout 75dcd5a && popd
 before_script:
   - mkdir -p ~/.aws
   - echo -e "[default]\nregion=us-east-1\nsource_profile=default\nrole_arn=$AwsCfServiceRoleArn" > ~/.aws/config
