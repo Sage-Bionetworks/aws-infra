@@ -25,7 +25,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Resources:
   {% for parameter in sceptre_user_data.Parameters %}
   {%- set name = parameter.Name -%}
-  {%- set value = parameter.Value -%}
+  {%- set value = parameter.Value|safe -%}
     {{ name }}:
       Type: AWS::SSM::Parameter
       Properties:
