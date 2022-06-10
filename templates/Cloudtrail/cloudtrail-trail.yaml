@@ -10,7 +10,11 @@ Parameters:
   CloudWatchLogsRoleArn:
     Type: String
     Default: ""
-
+  KmsKeyId:
+    Type: String
+    Default: ""
+Conditions:
+    HasKmsKeyId: !Not [!Equals ["", !Ref KmsKeyId]]
 Resources:
   CloudTrailBucket:
     OrganizationBinding: !Ref LogArchiveBinding
@@ -77,6 +81,7 @@ Resources:
       EnableLogFileValidation: true
       CloudWatchLogsLogGroupArn: !Ref CloudWatchLogsLogGroupArn
       CloudWatchLogsRoleArn: !Ref CloudWatchLogsRoleArn
+      KMSKeyId: !If [HasKmsKeyId, !Ref KmsKeyId, !Ref 'AWS::NoValue']
 
 Outputs:
   CloudTrailBucketName:
