@@ -114,7 +114,7 @@ Resources:
             Principal:
               AWS: !Ref GrantAccess
             Action:
-              - !If [AllowWrite, "s3:*Object*"]
+              - !If [AllowWrite, "s3:*Object*", "s3:GetObject*"]
               - "s3:*MultipartUpload*"
             Condition:
               StringEquals:
