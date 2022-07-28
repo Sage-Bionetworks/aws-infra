@@ -159,7 +159,7 @@ Resources:
           - !If
             - AllowWrite
             - Sid: ExternalPutObjectAccess
-              # gives cross-account grantees the ability to upload and delete objects
+              # gives cross-account grantees the ability to upload objects
               Effect: Allow
               Principal:
                 AWS: !Ref GrantAccess
