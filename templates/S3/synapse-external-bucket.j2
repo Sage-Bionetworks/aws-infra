@@ -166,7 +166,6 @@ Resources:
               Action:
                 - "s3:PutObject"
                 - "s3:PutObjectAcl"
-                - "s3:DeleteObject"
               Resource: [ !Sub "${Bucket.Arn}/*" ]
               Condition:
                 StringEquals:
@@ -185,7 +184,7 @@ Resources:
             - E3001
     Properties:
       Target:
-        Bucket: [ !Ref Bucket ]
+        Bucket: !Ref Bucket
         Key: owner.txt
         ContentType: text
         ACL: authenticated-read
