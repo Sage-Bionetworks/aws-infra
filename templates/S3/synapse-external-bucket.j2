@@ -143,13 +143,14 @@ Resources:
           - !If
             - AllowWrite
             - Sid: InternalPutObjectAccess
-              # gives bucket-account grantees the ability to upload objects
+              # gives bucket-account grantees the ability to upload and delete objects
               Effect: Allow
               Principal:
                 AWS: !Ref GrantAccess
               Action:
                 - "s3:PutObject"
                 - "s3:PutObjectAcl"
+                - "s3:DeleteObject"
               Resource: [ !Sub "${Bucket.Arn}/*" ]
               Condition:
                 StringEquals:
@@ -183,7 +184,7 @@ Resources:
             - E3001
     Properties:
       Target:
-        Bucket: [ !Ref Bucket ]
+        Bucket: !Ref Bucket
         Key: owner.txt
         ContentType: text
         ACL: authenticated-read
