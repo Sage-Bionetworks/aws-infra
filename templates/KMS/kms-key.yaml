@@ -19,7 +19,9 @@ Parameters:
     Description: Number of days before KMS delets the key
   AdminPrincipalArns:
     Type: CommaDelimitedList
-    Description: List of user/role/account arns that can administer the key
+    Description: >
+      List of user/role/account arns that can administer the key.
+      Should include "arn:aws:iam::${AWS::AccountId}:root".
   UserPrincipalArns:
     Type: CommaDelimitedList
     Description: List of user/role/account arn that can use the key
@@ -39,18 +41,7 @@ Resources:
             Principal:
               AWS: !Ref AdminPrincipalArns
             Action:
-              - "kms:Create*"
-              - "kms:Describe*"
-              - "kms:Enable*"
-              - "kms:List*"
-              - "kms:Put*"
-              - "kms:Update*"
-              - "kms:Revoke*"
-              - "kms:Disable*"
-              - "kms:Get*"
-              - "kms:Delete*"
-              - "kms:ScheduleKeyDeletion"
-              - "kms:CancelKeyDeletion"
+              - "kms:*"
             Resource: "*"
           -
             Sid: "Allow use of the key"
