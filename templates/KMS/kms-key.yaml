@@ -21,7 +21,7 @@ Parameters:
     Type: CommaDelimitedList
     Description: >
       List of user/role/account arns that can administer the key.
-      Should include "arn:aws:iam::${AWS::AccountId}:root".
+      Should include "arn:aws:iam::<account-id>:root".
   UserPrincipalArns:
     Type: CommaDelimitedList
     Description: List of user/role/account arn that can use the key
