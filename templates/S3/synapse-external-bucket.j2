@@ -128,6 +128,7 @@ Resources:
             Action:
               - "s3:ListBucket*"
               - "s3:GetBucketLocation"
+              - "s3:ListBucketMultipartUploads"
             Resource: [ !GetAtt Bucket.Arn ]
           - Sid: ReadObjectAccess
             # give grantees read access to objects
@@ -137,7 +138,6 @@ Resources:
             Action:
               - "s3:GetObject"
               - "s3:GetObjectAcl"
-              - "s3:AbortMultipartUpload"
               - "s3:ListMultipartUploadParts"
             Resource: [ !Sub "${Bucket.Arn}/*" ]
           - !If
@@ -151,6 +151,7 @@ Resources:
                 - "s3:PutObject"
                 - "s3:PutObjectAcl"
                 - "s3:DeleteObject"
+                - "s3:*MultipartUpload*"
               Resource: [ !Sub "${Bucket.Arn}/*" ]
               Condition:
                 StringEquals:
@@ -166,6 +167,9 @@ Resources:
               Action:
                 - "s3:PutObject"
                 - "s3:PutObjectAcl"
+                # "s3:DeleteObject" returns Conditions do not apply to combination of actions and resources in statement
+                # "s3:*MultipartUpload*" returns  Policy has invalid action
+                # "s3:DeleteObject" returns Conditions do not apply to combination of actions and resources in statement
               Resource: [ !Sub "${Bucket.Arn}/*" ]
               Condition:
                 StringEquals:
