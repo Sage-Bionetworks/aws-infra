@@ -143,7 +143,7 @@ Resources:
           - !If
             - AllowWrite
             - Sid: InternalPutObjectAccess
-              # gives bucket-account grantees the ability to upload and delete objects
+              # gives scicomp bucket-account grantees the ability to upload and delete objects
               Effect: Allow
               Principal:
                 AWS: !Ref GrantAccess
