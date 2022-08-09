@@ -90,7 +90,8 @@ Resources:
             MaxAge: 3000
       OwnershipControls:
         Rules:
-          - ObjectOwnership: BucketOwnerPreferred
+          - ObjectOwnership: BucketOwnerEnforced
+
       LifecycleConfiguration:
         Rules:
         - Id: DataLifecycleRule
@@ -143,7 +144,7 @@ Resources:
           - !If
             - AllowWrite
             - Sid: InternalPutObjectAccess
-              # gives scicomp bucket-account grantees the ability to upload and delete objects
+              # gives bucket-account grantees the ability to upload and delete objects
               Effect: Allow
               Principal:
                 AWS: !Ref GrantAccess
@@ -153,27 +154,6 @@ Resources:
                 - "s3:DeleteObject"
                 - "s3:*MultipartUpload*"
               Resource: [ !Sub "${Bucket.Arn}/*" ]
-              Condition:
-                StringEquals:
-                  "aws:PrincipalAccount": "055273631518"
-            - !Ref AWS::NoValue
-          - !If
-            - AllowWrite
-            - Sid: ExternalPutObjectAccess
-              # gives cross-account grantees the ability to upload objects
-              Effect: Allow
-              Principal:
-                AWS: !Ref GrantAccess
-              Action:
-                - "s3:PutObject"
-                - "s3:PutObjectAcl"
-                # "s3:DeleteObject" returns Conditions do not apply to combination of actions and resources in statement
-                # "s3:*MultipartUpload*" returns  Policy has invalid action
-                # "s3:DeleteObject" returns Conditions do not apply to combination of actions and resources in statement
-              Resource: [ !Sub "${Bucket.Arn}/*" ]
-              Condition:
-                StringEquals:
-                  s3:x-amz-acl: bucket-owner-full-control
             - !Ref AWS::NoValue
 
   # Add owner file to the synapse bucket, requires the cloudformation S3 objects macro
