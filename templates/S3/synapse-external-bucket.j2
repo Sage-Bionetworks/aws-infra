@@ -129,7 +129,6 @@ Resources:
             Action:
               - "s3:ListBucket*"
               - "s3:GetBucketLocation"
-              - "s3:ListBucketMultipartUploads"
             Resource: [ !GetAtt Bucket.Arn ]
           - Sid: ReadObjectAccess
             # give grantees read access to objects
@@ -143,7 +142,7 @@ Resources:
             Resource: [ !Sub "${Bucket.Arn}/*" ]
           - !If
             - AllowWrite
-            - Sid: InternalPutObjectAccess
+            - Sid: PutObjectAccess
               # gives bucket-account grantees the ability to upload and delete objects
               Effect: Allow
               Principal:
