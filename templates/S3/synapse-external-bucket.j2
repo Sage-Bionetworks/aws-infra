@@ -90,7 +90,8 @@ Resources:
             MaxAge: 3000
       OwnershipControls:
         Rules:
-          - ObjectOwnership: BucketOwnerPreferred
+          - ObjectOwnership: BucketOwnerEnforced
+
       LifecycleConfiguration:
         Rules:
         - Id: DataLifecycleRule
@@ -137,12 +138,11 @@ Resources:
             Action:
               - "s3:GetObject"
               - "s3:GetObjectAcl"
-              - "s3:AbortMultipartUpload"
               - "s3:ListMultipartUploadParts"
             Resource: [ !Sub "${Bucket.Arn}/*" ]
           - !If
             - AllowWrite
-            - Sid: InternalPutObjectAccess
+            - Sid: PutObjectAccess
               # gives bucket-account grantees the ability to upload and delete objects
               Effect: Allow
               Principal:
@@ -151,25 +151,8 @@ Resources:
                 - "s3:PutObject"
                 - "s3:PutObjectAcl"
                 - "s3:DeleteObject"
+                - "s3:*MultipartUpload*"
               Resource: [ !Sub "${Bucket.Arn}/*" ]
-              Condition:
-                StringEquals:
-                  "aws:PrincipalAccount": "055273631518"
-            - !Ref AWS::NoValue
-          - !If
-            - AllowWrite
-            - Sid: ExternalPutObjectAccess
-              # gives cross-account grantees the ability to upload objects
-              Effect: Allow
-              Principal:
-                AWS: !Ref GrantAccess
-              Action:
-                - "s3:PutObject"
-                - "s3:PutObjectAcl"
-              Resource: [ !Sub "${Bucket.Arn}/*" ]
-              Condition:
-                StringEquals:
-                  s3:x-amz-acl: bucket-owner-full-control
             - !Ref AWS::NoValue
 
   # Add owner file to the synapse bucket, requires the cloudformation S3 objects macro
