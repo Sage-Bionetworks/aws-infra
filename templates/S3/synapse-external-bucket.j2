@@ -170,7 +170,6 @@ Resources:
         Bucket: !Ref Bucket
         Key: owner.txt
         ContentType: text
-        ACL: authenticated-read
       Body: >-
         {% for SynapseID in sceptre_user_data.SynapseIDs %}
           {{ SynapseID }}
