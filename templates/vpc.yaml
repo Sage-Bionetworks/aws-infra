@@ -503,7 +503,7 @@ Resources:
   # Allow access to bastian hosts
   BastianSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
-    Condition: EnableBastionSecurityGroup
+    Condition: EnableBastianSecurityGroup
     Properties:
       GroupDescription: Security Group for bastians
       VpcId:
