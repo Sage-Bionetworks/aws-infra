@@ -51,8 +51,18 @@ Parameters:
       - true
       - false
     Default: true
+  IncludeBastianSecurityGroup:
+    Type: String
+    Description: >
+      true (default) to deploy a bastian security group
+      false to skip the bastian security group
+    AllowedValues:
+      - true
+      - false
+    Default: true
 Conditions:
   EnableS3GatewayEndpoint: !Equals [!Ref IncludeS3GatewayEndpoint, true]
+  EnableBastianSecurityGroup: !Equals [!Ref IncludeBastianSecurityGroup, true]
 Mappings:
   SubnetConfig:
     VPC:
@@ -493,6 +503,7 @@ Resources:
   # Allow access to bastian hosts
   BastianSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
+    Condition: EnableBastionSecurityGroup
     Properties:
       GroupDescription: Security Group for bastians
       VpcId:
@@ -643,6 +654,7 @@ Outputs:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpnSecurityGroup']]
   BastianSecurityGroup:
     Description: "Bastian Security Group Id"
+    Condition: EnableBastianSecurityGroup
     Value: !Ref BastianSecurityGroup
     Export:
       Name:
