@@ -19,9 +19,9 @@ Parameters:
     ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
     Default: "us-east-1a, us-east-1b, us-east-1c"
   VpnCidr:
-    Description: CIDR of the (sophos-utm) VPN
+    Description: CIDR of the TGW VPN
     Type: String
-    Default: "10.1.0.0/16"
+    Default: "10.50.0.0/16"
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
   Department:
@@ -479,11 +479,6 @@ Resources:
           ToPort: -1
           IpProtocol: "-1"
           Description: "Allow all VPN traffic"
-        - CidrIp: "10.50.0.0/16"    # AWS TGW Hub
-          FromPort: -1
-          ToPort: -1
-          IpProtocol: "-1"
-          Description: "Allow AWS TGW Hub traffic"
       # CF does not support removing all rules, workaround is to add a pointless rule
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
