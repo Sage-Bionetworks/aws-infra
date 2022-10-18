@@ -25,6 +25,11 @@ Parameters:
     Default: ''
     Description: 'A list of AWS managed policy ARNs for a SSO permission set'
 
+  customerManagedPolicyName:
+    Type: String
+    Default: ''
+    Description: 'The name of an optional customer managed policy for a SSO permission set'
+
   inlinePolicy:
     Type: String
     Default: ''
@@ -43,6 +48,7 @@ Conditions:
   includePermissionSet: !Equals [ '', !Ref permissionSetArn ]
   includeMaster: !Not [ !Equals [ '', !Ref masterAccountId ] ]
   includeInlinePolicy: !Not [ !Equals [ '', !Ref inlinePolicy ] ]
+  includeCustomerManagedPolicy: !Not [ !Equals [ '', !Ref customerManagedPolicyName ] ]
   includeManagedPolicies: !Not
     - !Equals
       - !Join ['', !Ref managedPolicies]
@@ -58,6 +64,13 @@ Resources:
       Description: !Sub '${permissionSetName} access to AWS organization'
       InstanceArn: !Ref instanceArn
       ManagedPolicies: !If [ includeManagedPolicies, !Ref managedPolicies, !Ref 'AWS::NoValue' ]
+      CustomerManagedPolicyReferences:
+        !If
+          - includeCustomerManagedPolicy
+          - # If we are setting a value, we are also embedding it as a single item in a list
+            -
+              Name: !Ref customerManagedPolicyName
+          - !Ref 'AWS::NoValue'
       SessionDuration: !Ref sessionDuration
       InlinePolicy: !If [ includeInlinePolicy, !Ref inlinePolicy, !Ref 'AWS::NoValue' ]
 
