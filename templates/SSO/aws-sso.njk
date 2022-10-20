@@ -58,6 +58,13 @@ Resources:
       Description: !Sub '${permissionSetName} access to AWS organization'
       InstanceArn: !Ref instanceArn
       ManagedPolicies: !If [ includeManagedPolicies, !Ref managedPolicies, !Ref 'AWS::NoValue' ]
+      {% if ( customerManagedPolicies | default(false) ) %}
+      CustomerManagedPolicyReferences:
+        {% for policy in customerManagedPolicies %}
+        - Name: {{ policy['Name'] }}
+          Path: {{ policy['Path'] | default('/') }}
+        {% endfor %}
+      {% endif %}
       SessionDuration: !Ref sessionDuration
       InlinePolicy: !If [ includeInlinePolicy, !Ref inlinePolicy, !Ref 'AWS::NoValue' ]
 

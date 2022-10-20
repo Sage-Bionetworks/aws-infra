@@ -1,4 +1,6 @@
 ignore_checks:
+  - E1001
+  - E2531
   - E3001
 ignore_templates:
   - templates/tags/*.json

@@ -18,11 +18,17 @@ Parameters:
             }
           ]
         }
+  PolicyName:
+    Type: String
+    Default: ''
+Conditions:
+  includeName: !Not [ !Equals [ '', !Ref PolicyName ] ]
 Resources:
   ManagedPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
       PolicyDocument: !Ref PolicyDocument
+      ManagedPolicyName: !If [ includeName, !Ref PolicyName, !Ref 'AWS::NoValue' ]
 Outputs:
   ManagedPolicyArn:
     Value: !Ref ManagedPolicy
