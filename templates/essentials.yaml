@@ -33,30 +33,6 @@ Parameters:
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
 Resources:
-  # ofn manages cloudtrail now. we keep legacy bucket to retain the old data
-  # https://github.com/Sage-Bionetworks-IT/organizations-infra/tree/master/org-formation/060-cloudtrail
-  AWSS3CloudtrailBucket:
-    Type: "AWS::S3::Bucket"
-    Properties:
-      Tags:
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
-  # ofn manages aws config now. we keep legacy bucket to retain the old data
-  # https://github.com/Sage-Bionetworks-IT/organizations-infra/tree/master/org-formation/80-aws-config-inventory
-  AWSS3ConfigBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      Tags:
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
   # Bucket for lambda artifacts
   AWSS3LambdaArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -279,22 +255,6 @@ Resources:
                 Resource:
                   - 'arn:aws:ec2:*::snapshot/*'
 Outputs:
-  AWSS3CloudtrailBucket:
-    Value: !Ref AWSS3CloudtrailBucket
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucket'
-  AWSS3CloudtrailBucketArn:
-    Value: !GetAtt AWSS3CloudtrailBucket.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudtrailBucketArn'
-  AWSS3ConfigBucket:
-    Value: !Ref AWSS3ConfigBucket
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-AwsConfigBucket'
-  AWSS3ConfigBucketArn:
-    Value: !GetAtt AWSS3ConfigBucket.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-AwsConfigBucketArn'
   AWSS3LambdaArtifactsBucket:
     Value: !Ref AWSS3LambdaArtifactsBucket
     Export:
