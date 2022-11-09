@@ -29,25 +29,6 @@ Parameters:
     ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
     Default: 'it@sagebase.org'
 Resources:
-  # !! IMPORTANT !! - AWS API will refuse to remove users that have attached resources.
-  # Therefore you must do the following before deleting them from this file:
-  # 1. Detach or remove the following user resources: login profile, attached
-  #    MFA device, access-keys, ssh-keys, and policies.
-  # 2. Detach the user from all groups.
-  AWSIAMTravisUserAccessKey:
-    Type: 'AWS::IAM::AccessKey'
-    Properties:
-      UserName: !Ref AWSIAMTravisUser
-  AWSIAMTravisUser:
-    Type: 'AWS::IAM::User'
-    Properties:
-      Groups:
-        - !Ref AWSIAMCiGroup
-  AWSIAMCiGroup:
-    Type: 'AWS::IAM::Group'
-    Properties:
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AdministratorAccess
   # Cloudformation bucket for CF templates
   AWSS3CloudformationBucket:
     Type: "AWS::S3::Bucket"
@@ -77,35 +58,6 @@ Resources:
               AWS: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}/*"
-  # CF Service roles
-  AWSIAMCfServiceRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Principal:
-              AWS:
-                - !GetAtt AWSIAMTravisUser.Arn
-            Action:
-              - "sts:AssumeRole"
-      Path: "/"
-  AWSIAMCfServicePolicy:
-    Type: "AWS::IAM::Policy"
-    Properties:
-      PolicyName: "CfService"
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          -
-            Effect: "Allow"
-            Action: "*"
-            Resource: "*"
-      Roles:
-        -
-          !Ref AWSIAMCfServiceRole
   # This role is used by the SsmParam Lambda to read keys
   # See https://github.com/Sage-Bionetworks-IT/cfn-macro-ssm-param
   AWSIAMSsmParamLambdaExecutionRole:
@@ -134,18 +86,6 @@ Resources:
             Action: 'kms:Decrypt'
             Resource: '*'
 Outputs:
-  AWSIAMTravisUser:
-    Value: !Ref AWSIAMTravisUser
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUser'
-  AWSIAMTravisUserArn:
-    Value: !GetAtt AWSIAMTravisUser.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUserArn'
-  AWSIAMTravisUserAccessKey:
-    Value: !Ref AWSIAMTravisUserAccessKey
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-TravisUserAccessKey'
   AWSS3CloudformationBucket:
     Value: !Ref AWSS3CloudformationBucket
     Export:
@@ -154,14 +94,6 @@ Outputs:
     Value: !GetAtt AWSS3CloudformationBucket.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudformationBucketArn'
-  AWSIAMCfServiceRoleArn:
-    Value: !GetAtt AWSIAMCfServiceRole.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleArn'
-  AWSIAMCfServiceRoleId:
-    Value: !GetAtt AWSIAMCfServiceRole.RoleId
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-CfServiceRoleId'
   AWSIAMSsmParamLambdaExecutionRoleArn:
     Value: !GetAtt AWSIAMSsmParamLambdaExecutionRole.Arn
     Export:
