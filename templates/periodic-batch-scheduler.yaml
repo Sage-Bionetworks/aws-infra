@@ -27,10 +27,6 @@ Parameters:
     Description: The schedule (cron) expression to trigger the batch job
     Type: String
     Default: "rate(1 day)"
-  LambdaFailureAlarmAction:
-    Description: The alarm failure action
-    Type: String
-    Default: "us-east-1-AccountAlertTopics-SNSAlertsErrorArn"
 Resources:
   LambdaExecutionRole:
     Type: 'AWS::IAM::Role'
@@ -153,27 +149,7 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt LambdaPeriodicEvent.Arn
-  LambdaFailureAlarm:
-    Type: "AWS::CloudWatch::Alarm"
-    Properties:
-      ActionsEnabled: true
-      AlarmActions:
-        - 'Fn::ImportValue': !Sub '${LambdaFailureAlarmAction}'
-      MetricName: !Sub "${SubmitBatchJobLambda}-FailureAlarm"
-      ComparisonOperator: GreaterThanThreshold
-      Dimensions:
-        - Name: FunctionName
-          Value: !Ref SubmitBatchJobLambda
-      EvaluationPeriods: 1
-      Namespace: AWS/Lambda
-      Period: 60
-      Statistic: Sum
-      Threshold: 0
 Outputs:
-  LambdaFailureAlarm:
-    Value: !Ref 'LambdaFailureAlarm'
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaFailureAlarm'
   SubmitBatchJobLambda:
     Value: !Ref 'SubmitBatchJobLambda'
     Export:
