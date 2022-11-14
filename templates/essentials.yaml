@@ -119,6 +119,7 @@ Resources:
         - '-'
         - - !Ref AWS::StackName
           - "InfraKey"
+      EnableKeyRotation: "true"
       KeyPolicy:
         Version: "2012-10-17"
         Statement:
