@@ -251,9 +251,9 @@ Resources:
           #!/bin/bash -xe
 {% if sceptre_user_data.Distro.lower() == 'ubuntu' %}
           apt-get update -y
-          mkdir -p /opt/aws/bin
-          wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-          python3 -m easy_install --script-dir /opt/aws/bin aws-cfn-bootstrap-py3-latest.tar.gz
+          apt-get -y install python3-pip python3-venv
+          python3 -m venv /opt/aws
+          /opt/aws/bin/pip3 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
 {% endif %}
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupTools,SetupJumpcloud --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource Ec2Instance --region ${AWS::Region}
