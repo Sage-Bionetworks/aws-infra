@@ -45,6 +45,18 @@ Resources:
             Action:
               - s3:GetObject
             Resource: !Sub '${TrustedIpsBucket.Arn}/trusted_ips.txt'
+          # https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule
+          - Sid: RequireSSL
+            Effect: Deny
+            Action:
+              - 's3:*'
+            Principal: '*'
+            Resource:
+              - !GetAtt TrustedIpsBucket.Arn
+              - !Sub '${TrustedIpsBucket.Arn}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': false
 
 Outputs:
   BucketName:
