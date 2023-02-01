@@ -1,0 +1,31 @@
+# This template sets up a Route 53 CNAME entry
+# Partial copy of `templates/s3-redirector.yaml`
+AWSTemplateFormatVersion: 2010-09-09
+Description: Provision a Route 53 CNAME at `SourceHostName` that redirects to `TargetHostName`.
+Parameters:
+  SourceHostName:
+    Description: The name of the new CNAME record to create
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+  SourceHostedZoneId:
+    Description: The ID of the hosted zone where the CNAME will be created. Needs to be in same account.
+    Type: String
+    MaxLength: 32
+    AllowedPattern: "[A-Z0-9]*"
+    ConstraintDescription: Must be a valid hosted zone ID
+  TargetHostName:
+    Description: The existing A record to refer to
+    Type: String
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+Resources:
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref SourceHostedZoneId
+      Name: !Ref SourceHostName
+      Type: CNAME
+      TTL: 3600
+      ResourceRecords:
+      - !Ref TargetHostName
