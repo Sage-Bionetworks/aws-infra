@@ -1,12 +1,6 @@
 Description: Essential resources common to all AWS accounts
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  VpcPeeringRequesterAwsAccountId:
-    Type: String
-    NoEcho: true
-    Description: The AWS account running the Sophos-VPN
-    AllowedPattern: '[0-9]*'
-    ConstraintDescription: Must be account number without dashes
   LambdaBucketVersioning:
     Type: String
     Description: Enabled to enable bucket versionsing, default is Suspended
@@ -62,31 +56,6 @@ Resources:
               AWS: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${AWSS3LambdaArtifactsBucket}/*"
-  # Create a role to authorize the VPC Peering request from a specific account,
-  # this is used to create the VPC Peer between different accounts in  CloudFormation
-  # https://github.com/awslabs/aws-cloudformation-templates/tree/master/aws/solutions/VPCPeering
-  VPCPeeringAuthorizerRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS: !Join
-                - ''
-                - - 'arn:aws:iam::'
-                  - !Ref VpcPeeringRequesterAwsAccountId
-                  - ':root'
-            Action: 'sts:AssumeRole'
-      Policies:
-        - PolicyName: VPCAuthorizer
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'ec2:AcceptVpcPeeringConnection'
-                Resource:
-                  - '*'
   # KMS Keys
   AWSKmsInfraKey:
     Type: "AWS::KMS::Key"
@@ -262,11 +231,6 @@ Outputs:
     Value: !GetAtt AWSS3LambdaArtifactsBucket.Arn
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-LambdaArtifactsBucketArn'
-  VPCPeeringAuthorizerRole:
-    Description: Cross Account Role Name
-    Value: !Ref VPCPeeringAuthorizerRole
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-VPCPeeringAuthorizerRole'
   AWSKmsInfraKey:
     Value: !Ref AWSKmsInfraKey
     Export:
