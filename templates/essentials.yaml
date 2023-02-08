@@ -74,7 +74,6 @@ Resources:
             Principal:
               AWS:
                 - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-                - !ImportValue us-east-1-bootstrap-CfServiceRoleArn
             Action:
               - "kms:Create*"
               - "kms:Describe*"
@@ -95,7 +94,6 @@ Resources:
             Principal:
               AWS:
                 - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-                - !ImportValue us-east-1-bootstrap-CfServiceRoleArn
                 - !ImportValue us-east-1-bootstrap-SsmParamLambdaExecutionRoleArn
             Action:
               - "kms:Encrypt"
