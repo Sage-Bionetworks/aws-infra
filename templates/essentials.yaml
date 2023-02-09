@@ -74,6 +74,7 @@ Resources:
             Principal:
               AWS:
                 - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+                - !ImportValue us-east-1-sagebase-github-oidc-sage-bionetworks-it-ProviderRoleArn-organizationsinfra
             Action:
               - "kms:Create*"
               - "kms:Describe*"
@@ -95,6 +96,7 @@ Resources:
               AWS:
                 - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
                 - !ImportValue us-east-1-bootstrap-SsmParamLambdaExecutionRoleArn
+                - !ImportValue us-east-1-sagebase-github-oidc-sage-bionetworks-it-ProviderRoleArn-organizationsinfra
             Action:
               - "kms:Encrypt"
               - "kms:Decrypt"
