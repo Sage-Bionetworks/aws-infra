@@ -32,16 +32,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    # - name: Configure AWS credentials from Test account
-    #   uses: aws-actions/configure-aws-credentials@v1
-    #   with:
-    #     role-to-assume: 
-    #     aws-region: us-east-1
-
     - name: Copy files to the test website with the AWS CLI
       run: |
-#        aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/$REPO_NAME/$TRAVIS_BRANCH/ --recursive
         echo $REPO_NAME
         echo $BRANCH
         echo ${{ github.ref_name }}
-
