@@ -1,0 +1,33 @@
+name: validate
+
+on:
+  pull_request:
+    branches: ['*']
+  push:
+    branches: ['*']
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - uses: pre-commit/action@v3.0.0
+  jinja-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Install jinja libraries
+        run: |
+          python -m pip install --upgrade jinja2==3.0.1
+      - name: Install jinja linter tool
+        run: git clone --single-branch https://github.com/drm/jinja2-lint.git /tmp/jinja2-lint && pushd /tmp/jinja2-lint && git checkout 75dcd5a
+      - name: Execute jinja linter
+        run: find . -type f -name "*.j2" -exec /tmp/jinja2-lint/j2lint.py '{}' +
