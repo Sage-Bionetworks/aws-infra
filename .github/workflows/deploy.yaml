@@ -4,18 +4,14 @@ on:
   workflow_dispatch:
 
   workflow_run:
-    workflows: [ "validate" ]
-    branches:
-      - master
-      - m-it-2672
-    tag:
-      - v*
-    types:
-      - completed
+    branches: [ 'master' ]
+    tags: [ 'v*' ]
+    workflows: [ 'validate' ]
+    types: [ 'completed' ]
 
 env:
-  REPO_NAME=${{ github.event.repository.name }}
-  BRANCH=${GITHUB_REF##*/}
+  REPO_NAME: ${{ github.event.repository.name }}
+  BRANCH_OR_TAG: ${{ github.ref_name }}
 
 concurrency:
   group: ${{ github.workflow }}
@@ -31,9 +27,13 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-
-    - name: Copy files to the test website with the AWS CLI
+    - name: Assume AWS Role
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        role-to-assume: arn:aws:iam::745159704268:role/sagebase-github-oidc-sage-ProviderRoleorganization-QJWJ1AG8LNON
+        role-session-name: GitHubActions-${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ github.run_id }}
+        role-duration-seconds: 120
+    - name: Copy files with the AWS CLI
       run: |
-        echo $REPO_NAME
-        echo $BRANCH
-        echo ${{ github.ref_name }}
+        echo aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/$REPO_NAME/$BRANCH_OR_TAG/ --recursive

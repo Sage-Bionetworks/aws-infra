@@ -2,9 +2,9 @@ name: validate
 
 on:
   pull_request:
-    branches: ['*']
+    branches: [ '*' ]
   push:
-    branches: ['*']
+    branches: [ 'master' ]
 
 jobs:
   pre-commit:
