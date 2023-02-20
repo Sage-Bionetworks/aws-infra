@@ -39,6 +39,8 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-HostedZoneId'
   HostedZoneNameServers:
-    Value: !GetAtt HostedZone.NameServers
+    Value: !Join
+      - ','
+      - !GetAtt HostedZone.NameServers
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-HostedZoneNameServers'
