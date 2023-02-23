@@ -2,18 +2,10 @@
 Description: Setup an ACM Certificate
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  Department:
-    Description: 'The department for this resource'
+  CostCenter:
     Type: String
-    AllowedPattern: '^\S*$'
-    ConstraintDescription: 'Must be string with no spaces'
-    Default: 'Platform'
-  Project:
-    Description: 'The name of the project that this resource is used for'
-    Type: String
-    AllowedPattern: '^\S*$'
-    ConstraintDescription: 'Must be string with no spaces'
-    Default: 'Infrastructure'
+    Description: 'Cost Center for this resource'
+    Default: ''
   OwnerEmail:
     Description: 'Email address of the owner of this resource'
     Type: String
@@ -28,6 +20,8 @@ Parameters:
     Description: Sub domain (default is '*') to secure with certificate (i.e. "cancer" of cancer.sagebionetworks.org)
     Type: String
     Default: "*"
+Conditions:
+  HasCostCenter: !Not [!Equals ['', !Ref CostCenter]]
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
@@ -48,14 +42,11 @@ Resources:
           Key: "Name"
           Value: !Ref AWS::StackName
         -
-          Key: "Department"
-          Value: !Ref Department
-        -
-          Key: "Project"
-          Value: !Ref Project
-        -
           Key: "OwnerEmail"
           Value: !Ref OwnerEmail
+        -
+          Key: "CostCenter"
+          Value: !If [HasCostCenter, !Ref CostCenter, !Ref "AWS::NoValue"]
 Outputs:
   CertificateArn:
     Value: !Ref Certificate
