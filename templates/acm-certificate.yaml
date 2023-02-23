@@ -2,10 +2,6 @@
 Description: Setup an ACM Certificate
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  CostCenter:
-    Type: String
-    Description: 'Cost Center for this resource'
-    Default: ''
   OwnerEmail:
     Description: 'Email address of the owner of this resource'
     Type: String
@@ -20,8 +16,6 @@ Parameters:
     Description: Sub domain (default is '*') to secure with certificate (i.e. "cancer" of cancer.sagebionetworks.org)
     Type: String
     Default: "*"
-Conditions:
-  HasCostCenter: !Not [!Equals ['', !Ref CostCenter]]
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
@@ -44,9 +38,6 @@ Resources:
         -
           Key: "OwnerEmail"
           Value: !Ref OwnerEmail
-        -
-          Key: "CostCenter"
-          Value: !If [HasCostCenter, !Ref CostCenter, !Ref "AWS::NoValue"]
 Outputs:
   CertificateArn:
     Value: !Ref Certificate

@@ -1,10 +1,6 @@
 Description: Setup a hosted zone for DNS
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  CostCenter:
-    Type: String
-    Description: 'Cost Center for this resource'
-    Default: ''
   OwnerEmail:
     Description: 'Email address of the owner of this resource'
     Type: String
@@ -14,8 +10,6 @@ Parameters:
   DnsDomainName:
     Description: A fully qualified domain name (i.e. sagebionetworks.org)
     Type: String
-Conditions:
-  HasCostCenter: !Not [!Equals ['', !Ref CostCenter]]
 Resources:
   HostedZone:
     Type: "AWS::Route53::HostedZone"
@@ -30,9 +24,6 @@ Resources:
         -
           Key: "OwnerEmail"
           Value: !Ref OwnerEmail
-        -
-          Key: "CostCenter"
-          Value: !If [HasCostCenter, !Ref CostCenter, !Ref "AWS::NoValue"]
 Outputs:
   HostedZoneId:
     Value: !Ref HostedZone
