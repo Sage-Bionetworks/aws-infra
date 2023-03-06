@@ -3,7 +3,7 @@ name: aws-deploy
 on:
   push:
     branches: [ '*' ]
-    tags: [ 'v*' ]
+    tags: [ 'v[0-9]+\.[0-9]+\.[0-9]+' ]
   pull_request:
     branches: [ '*' ]
 
@@ -54,9 +54,9 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-region: us-east-1
-        role-to-assume: arn:aws:iam::745159704268:role/sagebase-github-oidc-sage-ProviderRoleorganization-QJWJ1AG8LNON
+        role-to-assume: arn:aws:iam::745159704268:role/sagebase-github-oidc-sage-bio-ProviderRoleawsinfra-17DRC23HA177D
         role-session-name: GitHubActions-${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ github.run_id }}
         role-duration-seconds: 120
     - name: Copy files with the AWS CLI
       run: |
-        echo aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/$REPO_NAME/$BRANCH_OR_TAG/ --recursive
+        aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/$REPO_NAME/$BRANCH_OR_TAG/ --recursive
