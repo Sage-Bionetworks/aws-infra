@@ -7,10 +7,6 @@ on:
   pull_request:
     branches: [ '*' ]
 
-env:
-  REPO_NAME: ${{ github.event.repository.name }}
-  BRANCH_OR_TAG: ${{ github.ref_name }}
-
 concurrency:
   group: ${{ github.workflow }}
 
@@ -59,4 +55,4 @@ jobs:
         role-duration-seconds: 120
     - name: Copy files with the AWS CLI
       run: |
-        aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/$REPO_NAME/$BRANCH_OR_TAG/ --recursive
+        aws s3 cp templates s3://bootstrap-awss3cloudformationbucket-19qromfd235z9/${{ github.event.repository.name }}/${{ github.ref_name }}/ --recursive
