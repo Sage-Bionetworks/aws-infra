@@ -18,21 +18,6 @@ Parameters:
     Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
     AllowedPattern: "arn:aws:acm:.*"
     ConstraintDescription: must be a valid certificate ARN.
-  Department:
-    Description: 'The department for this resource'
-    Type: String
-    AllowedPattern: '^\S*$'
-    ConstraintDescription: 'Must be string with no spaces'
-  Project:
-    Description: 'The name of the project that this resource is used for'
-    Type: String
-    AllowedPattern: '^\S*$'
-    ConstraintDescription: 'Must be string with no spaces'
-  OwnerEmail:
-    Description: 'Email address of the owner of this resource'
-    Type: String
-    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
-    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
 Resources:
   WebsiteLogBucket:
     Type: 'AWS::S3::Bucket'
@@ -41,13 +26,6 @@ Resources:
       BucketName: !Join
         - '.'
         - [!Ref SubDomainName, !Ref DomainName, 'logs']
-      Tags:
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -64,13 +42,6 @@ Resources:
         ErrorDocument: error.html
       LoggingConfiguration:
         DestinationBucketName: !Ref WebsiteLogBucket
-      Tags:
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -124,13 +95,6 @@ Resources:
         ViewerCertificate:
           AcmCertificateArn: !Ref AcmCertificateArn
           SslSupportMethod: sni-only
-      Tags:
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
 Outputs:
   CloudfrontId:
     Value: !Ref Cloudfront
