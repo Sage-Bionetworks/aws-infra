@@ -6,7 +6,7 @@ Parameters:
   SourceHostName:
     Description: The name of the new CNAME record to create
     Type: String
-    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,255}(?<!-)
     ConstraintDescription: must be a valid DNS zone name.
   SourceHostedZoneId:
     Description: The ID of the hosted zone where the CNAME will be created. Needs to be in same account.
@@ -17,7 +17,7 @@ Parameters:
   TargetHostName:
     Description: The existing A record to refer to
     Type: String
-    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,255}(?<!-)
     ConstraintDescription: must be a valid DNS zone name.
 Resources:
   DnsRecord:
