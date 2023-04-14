@@ -2,24 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Provision a custom EBS volume and attach it to an instance
 Parameters:
-  Department:
-    Description: 'The department for this resource'
-    Type: String
-    AllowedPattern: '^\S*$'
-    ConstraintDescription: 'Must be string with no spaces'
-    Default: 'Platform'
-  Project:
-    Description: 'The name of the project that this resource is used for'
-    Type: String
-    AllowedPattern: '^\S*$'
-    ConstraintDescription: 'Must be string with no spaces'
-    Default: 'Infrastructure'
-  OwnerEmail:
-    Description: 'Email address of the owner of this resource'
-    Type: String
-    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
-    ConstraintDescription: 'Must be an acceptable email address syntax(i.e. joe.smith@sagebase.org)'
-    Default: 'it@sagebase.org'
   AvailabilityZone:
     Description: Availability Zone for the volume
     Type: "AWS::EC2::AvailabilityZone::Name"
@@ -92,12 +74,6 @@ Resources:
             - '-'
             - - !Ref Ec2InstanceId
               - !Ref AttachmentDevice
-        - Key: "Department"
-          Value: !Ref Department
-        - Key: "Project"
-          Value: !Ref Project
-        - Key: "OwnerEmail"
-          Value: !Ref OwnerEmail
   EbsAttachment:
     Type: AWS::EC2::VolumeAttachment
     Properties:
