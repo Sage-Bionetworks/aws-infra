@@ -8,6 +8,9 @@ Parameters:
       - Enabled
       - Suspended
     Default: Suspended
+  KmsInfraKeyPrincipals:
+    Type: String
+    Description: Principals that are allowed access to the infra kms key
 Resources:
   # Bucket for lambda artifacts
   AWSS3LambdaArtifactsBucket:
@@ -47,9 +50,7 @@ Resources:
             Sid: "Allow administration of the key"
             Effect: "Allow"
             Principal:
-              AWS:
-                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-                - !ImportValue us-east-1-sagebase-github-oidc-sage-bionetworks-it-ProviderRoleArn-organizationsinfra
+              AWS: !Ref KmsInfraKeyPrincipals
             Action:
               - "kms:Create*"
               - "kms:Describe*"
@@ -68,10 +69,7 @@ Resources:
             Sid: "Allow use of the key"
             Effect: "Allow"
             Principal:
-              AWS:
-                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-                - !ImportValue us-east-1-bootstrap-SsmParamLambdaExecutionRoleArn
-                - !ImportValue us-east-1-sagebase-github-oidc-sage-bionetworks-it-ProviderRoleArn-organizationsinfra
+              AWS: !Ref KmsInfraKeyPrincipals
             Action:
               - "kms:Encrypt"
               - "kms:Decrypt"
