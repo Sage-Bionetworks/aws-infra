@@ -9,7 +9,7 @@ Parameters:
       - Suspended
     Default: Suspended
   KmsInfraKeyPrincipals:
-    Type: String
+    Type: List<String>
     Description: Principals that are allowed access to the infra kms key
 Resources:
   # Bucket for lambda artifacts
