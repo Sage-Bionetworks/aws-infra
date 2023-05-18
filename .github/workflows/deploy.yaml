@@ -50,7 +50,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-region: us-east-1
-        role-to-assume: arn:aws:iam::745159704268:role/sagebase-github-oidc-sage-bionetworks-awsinfra
+        role-to-assume: arn:aws:iam::745159704268:role/sagebase-github-oidc-cfn-template-deploy
         role-session-name: GitHubActions-${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ github.run_id }}
         role-duration-seconds: 900
     - name: Copy files with the AWS CLI
