@@ -10,10 +10,10 @@ Parameters:
   Policies:
     Type: CommaDelimitedList
     Description: In-line policies
-    Default: []
+    Default: ''
   ManagedPolicyArns:
     Type: CommaDelimitedList
-    Default: []
+    Default: ''
     Description: A list of managed policies for the role.
   MaxSessionDuration:
     Type: Number
