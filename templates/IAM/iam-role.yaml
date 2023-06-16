@@ -7,10 +7,6 @@ Parameters:
     Type: String
     Description: Policy describing trust relationships
     Default: ''
-  Policies:
-    Type: List<AWS::IAM::Policy>
-    Description: In-line policies
-    Default: ''
   ManagedPolicyArns:
     Type: CommaDelimitedList
     Default: ''
@@ -27,7 +23,6 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument: !Ref AssumeRolePolicyDocument
-      Policies: !Ref Policies
       ManagedPolicyArns: !Ref ManagedPolicyArns
       MaxSessionDuration: !Ref MaxSessionDuration
       RoleName: !Ref RoleName
