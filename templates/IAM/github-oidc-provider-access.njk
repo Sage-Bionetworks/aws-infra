@@ -4,11 +4,6 @@
 {#    ProviderArn: !CopyValue [ !Sub '${resourcePrefix}-${appName}-ProviderArn' ] #}
 {#    ManagedPolicyArns:                                                          #}
 {#      - "arn:aws:iam::aws:policy/AdministratorAccess"                           #}
-{#  TemplatingContext:                                                            #}
-{#    GitHubOrg: "Sage-Bionetworks"                                               #}
-{#    Repositories:                                                               #}
-{#      - name: "myrepo"                                                          #}
-{#        branch: "master"                                                        #}
 
 {# Make template compatible with both sceptre and org-formation     #}
 {% if sceptre_user_data.Repositories is defined %}
@@ -64,7 +59,9 @@ Parameters:
     MaxValue: 43200
     MinValue: 3600
     Default: 3600
-
+  GitHubOrg:
+      Type: String
+      Description: "The name of the github organization"
 Conditions:
   HasManagedPolicyArns: !Not
     - !Equals
