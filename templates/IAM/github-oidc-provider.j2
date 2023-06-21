@@ -57,6 +57,13 @@ Parameters:
             }
           ]
         }
+  MaxSessionDuration:
+    Type: Number
+    Description: "The IAM role's maximum session duration"
+    MaxValue: 43200
+    MinValue: 3600
+    Default: 3600
+
 Conditions:
   HasManagedPolicyArns: !Not
     - !Equals
@@ -79,6 +86,7 @@ Resources:
   ProviderRole{{ Repository.name | replace('-','') | replace('_','') }}:
     Type: AWS::IAM::Role
     Properties:
+      MaxSessionDuration: !Ref MaxSessionDuration
       # Concatinate managed policy and custom policy
       ManagedPolicyArns: !Split
         - ","
