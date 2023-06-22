@@ -8,6 +8,9 @@
 {#     - name: "organizations-infra"                                              #}
 {#       branch: "master"                                                         #}
 
+{% set Repositories = sceptre_user_data.Repositories %}
+{% set GitHubOrg = sceptre_user_data.GitHubOrg %}
+
 AWSTemplateFormatVersion: 2010-09-09
 Description: Github OIDC
 Parameters:
