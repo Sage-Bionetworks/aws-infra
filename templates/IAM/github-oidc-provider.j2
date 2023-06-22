@@ -4,14 +4,12 @@
 {#    ProviderArn: !CopyValue [ !Sub '${resourcePrefix}-${appName}-ProviderArn' ] #}
 {#    ManagedPolicyArns:                                                          #}
 {#      - "arn:aws:iam::aws:policy/AdministratorAccess"                           #}
-
-{# Make template compatible with both sceptre and org-formation     #}
-{% if sceptre_user_data.Repositories is defined %}
-    {% set Repositories = sceptre_user_data.Repositories %}
-{% endif %}
+{#   Repositories:                                                                #}
+{#     - name: "organizations-infra"                                              #}
+{#       branch: "master"                                                         #}
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Setup github OIDC access
+Description: Github OIDC
 Parameters:
   ClientIdList:
     Type: List<String>
@@ -59,9 +57,6 @@ Parameters:
     MaxValue: 43200
     MinValue: 3600
     Default: 3600
-  GitHubOrg:
-      Type: String
-      Description: "The name of the github organization"
 Conditions:
   HasManagedPolicyArns: !Not
     - !Equals
@@ -104,7 +99,7 @@ Resources:
       {% else %}
                   "repo:{{ GitHubOrg}}/{{ Repository.name }}:ref:refs/heads/{{ branch }}",
       {% endif %}
-  {% endfor %}
+{% endfor %}
                   "repo:{{ GitHubOrg }}/{{ Repository.name }}:ref:refs/tags/*",
 {% endfor %}
                 ]
