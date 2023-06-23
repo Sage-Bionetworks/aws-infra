@@ -2,14 +2,19 @@
 {# Must pass in the following templating parameters                               #}
 {#  Parameters:                                                                   #}
 {#    ProviderArn: !CopyValue [ !Sub '${resourcePrefix}-${appName}-ProviderArn' ] #}
+{#    ProviderRoleName:                                                           #}
 {#    ManagedPolicyArns:                                                          #}
 {#      - "arn:aws:iam::aws:policy/AdministratorAccess"                           #}
-{#   Repositories:                                                                #}
+{#  Sceptre_user_data:                                                            #}
+{#    Repositories:                                                               #}
 {#     - name: "organizations-infra"                                              #}
 {#       branch: "master"                                                         #}
+{#    GitHubOrg: "Sage-Bionetworks"                                               #}
 
-{% set Repositories = sceptre_user_data.Repositories %}
-{% set GitHubOrg = sceptre_user_data.GitHubOrg %}
+{% if sceptre_user_data.Repositories is defined %}
+    {% set Repositories = sceptre_user_data.Repositories %}
+    {% set GitHubOrg = sceptre_user_data.GitHubOrg %}
+{% endif %}
 
 AWSTemplateFormatVersion: 2010-09-09
 Description: Github OIDC
