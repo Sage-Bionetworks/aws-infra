@@ -1,12 +1,21 @@
-{# Allow Github to access AWS without giving github AWS credentials #}
-{# Must pass in the following templating parameters                 #}
-{#   Repositories:                                                  #}
-{#     - name: "organizations-infra"                                #}
-{#       branch: "master"                                           #}
+{# Allow Github to access AWS without giving github AWS credentials               #}
+{# Must pass in the following templating parameters                               #}
+{#  Parameters:                                                                   #}
+{#    ProviderArn: !CopyValue [ !Sub '${resourcePrefix}-${appName}-ProviderArn' ] #}
+{#    ProviderRoleName:                                                           #}
+{#    ManagedPolicyArns:                                                          #}
+{#      - "arn:aws:iam::aws:policy/AdministratorAccess"                           #}
+{#  Sceptre_user_data:                                                            #}
+{#    Repositories:                                                               #}
+{#     - name: "organizations-infra"                                              #}
+{#       branch: "master"                                                         #}
+{#    GitHubOrg: "Sage-Bionetworks"                                               #}
 
-{# Make template compatible with both sceptre and org-formation     #}
 {% if sceptre_user_data.Repositories is defined %}
     {% set Repositories = sceptre_user_data.Repositories %}
+{% endif %}
+{% if sceptre_user_data.GitHubOrg is defined %}
+    {% set GitHubOrg = sceptre_user_data.GitHubOrg %}
 {% endif %}
 
 AWSTemplateFormatVersion: 2010-09-09
@@ -18,18 +27,13 @@ Parameters:
       A list of client IDs (also known as audiences) that are associated with
       the specified IAM OIDC provider resource object
     Default: "sts.amazonaws.com"
-  ThumbprintList:
-    Type: List<String>
-    Description: >-
-      A list of certificate thumbprints that are associated with the specified
-      IAM OIDC provider resource object
-  Url:
+  ProviderArn:
     Type: String
-    Description: "The URL that the IAM OIDC provider resource object is associated with"
-    Default: "https://token.actions.githubusercontent.com"
-  GitHubOrg:
+    Description: "The OIDC provider ARN"
+  ProviderRoleName:
     Type: String
-    Description: "The name of the github organization"
+    Description: "The OIDC provider role name"
+    MaxLength: 64
   # Must provide either a list of ManagePolicyArns or a custom PolicyDocument.
   # Can also provide both a list of ManagePolicyArns and a custom PolicyDocument.
   ManagedPolicyArns:
@@ -71,21 +75,15 @@ Conditions:
       - ''
   HasPolicyDocument: !Not [!Equals [!Ref PolicyDocument, ""]]
 Resources:
-  Provider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      ClientIdList: !Ref ClientIdList
-      ThumbprintList: !Ref ThumbprintList
-      Url: !Ref Url
   ServicePolicy:
     Condition: HasPolicyDocument
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
       PolicyDocument: !Ref PolicyDocument
-{% for Repository in Repositories %}
-  ProviderRole{{ Repository.name | replace('-','') | replace('_','') }}:
+  ProviderRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Ref ProviderRoleName
       MaxSessionDuration: !Ref MaxSessionDuration
       # Concatinate managed policy and custom policy
       ManagedPolicyArns: !Split
@@ -99,20 +97,25 @@ Resources:
           - Effect: Allow
             Action: sts:AssumeRoleWithWebIdentity
             Principal:
-              Federated: !Ref Provider
+              Federated: !Ref ProviderArn
             Condition:
-              ForAllValues:StringEquals:
+              StringEquals:
                 token.actions.githubusercontent.com:aud: !Ref ClientIdList
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/{{ Repository.name }}:ref:refs/heads/{{ Repository.branch }}
-{% endfor %}
-Outputs:
-  ProviderArn:
-    Value: !Ref Provider
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ProviderArn'
+              StringLike:
+                token.actions.githubusercontent.com:sub: [
 {% for Repository in Repositories %}
-  ProviderRoleArn{{ Repository.name | replace('-','') | replace('_','') }}:
-    Value: !GetAtt ProviderRole{{ Repository.name | replace('-','') | replace('_','') }}.Arn
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-ProviderRoleArn-{{ Repository.name | replace('-','') | replace('_','') }}'
+  {% for branch in Repository.branches %}
+      {% if branch == '*' %}
+                  "repo:{{ GitHubOrg}}/{{ Repository.name }}:{{ branch }}",
+      {% else %}
+                  "repo:{{ GitHubOrg}}/{{ Repository.name }}:ref:refs/heads/{{ branch }}",
+      {% endif %}
 {% endfor %}
+                  "repo:{{ GitHubOrg }}/{{ Repository.name }}:ref:refs/tags/*",
+{% endfor %}
+                ]
+Outputs:
+  ProviderRoleArn:
+    Value: !GetAtt ProviderRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ProviderRoleArn'
