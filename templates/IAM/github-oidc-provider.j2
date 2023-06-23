@@ -13,6 +13,8 @@
 
 {% if sceptre_user_data.Repositories is defined %}
     {% set Repositories = sceptre_user_data.Repositories %}
+{% endif %}
+{% if sceptre_user_data.GitHubOrg is defined %}
     {% set GitHubOrg = sceptre_user_data.GitHubOrg %}
 {% endif %}
 
