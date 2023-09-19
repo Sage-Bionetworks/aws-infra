@@ -3,27 +3,27 @@ Description: Setup an ACM Certificate
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html#cfn-certificatemanager-certificate-domainname
-  DnsDomainName:
-    Description: Domain to secure with the certificate (i.e. sagebionetworks.org)
+  DomainName:
+    Description: Domain to secure with the certificate (i.e. sagebionetworks.org, dev.sagebionetworks.org, *.sagebionetworks.org)
     Type: String
-  DnsSubDomainName:
-    Description: Sub domain (default is '*') to secure with certificate (i.e. "cancer" of cancer.sagebionetworks.org)
+  AlternativeNames:
+    Description: List of alternative FQDNs to be used on the certificate
+    Type: CommaDelimitedList
+  ValidationDomainName:
+    Description: Domain to use to validate the certificate (i.e. "cancer" of cancer.sagebionetworks.org)
     Type: String
-    Default: "*"
+Conditions:
+  HasAlternativeNames: !Not [!Equals [!Join ['', !Ref AlternativeNames], '' ]]
+  HasValidationDomainName: !Not [!Equals [!Ref ValidationDomainName, '' ]]
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: !Join
-        - '.'
-        - - !Ref DnsSubDomainName
-          - !Ref DnsDomainName
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames: !If [HasAlternativeNames, !Split [',', !Ref AlternativeNames], !Ref AWS::NoValue ]
       DomainValidationOptions:
-        - DomainName: !Join
-            - '.'
-            - - !Ref DnsSubDomainName
-              - !Ref DnsDomainName
-          ValidationDomain: !Ref DnsDomainName
+        - DomainName: !Ref DomainName
+          ValidationDomain: !If [HasValidationDomainName, !Ref ValidationDomainName, !Ref DomainName]
       ValidationMethod: "DNS"
       Tags:
         -
