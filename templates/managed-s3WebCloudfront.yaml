@@ -26,20 +26,13 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Sub 'CloudFront OAI for ${SubDomainName}.${DomainName}'
-  WebsiteLogBucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      AccessControl: LogDeliveryWrite
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName, 'logs']
+  # WebsiteLogBucket:
+  #   Type: 'AWS::S3::Bucket'
+  #   Properties:
+  #     AccessControl: LogDeliveryWrite
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName]
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -55,8 +48,8 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-      LoggingConfiguration:
-        DestinationBucketName: !Ref WebsiteLogBucket
+      # LoggingConfiguration:
+      #   DestinationBucketName: !Ref WebsiteLogBucket
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
