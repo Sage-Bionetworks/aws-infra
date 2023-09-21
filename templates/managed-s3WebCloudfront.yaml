@@ -26,10 +26,6 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Sub 'CloudFront OAI for ${SubDomainName}.${DomainName}'
-  # WebsiteLogBucket:
-  #   Type: 'AWS::S3::Bucket'
-  #   Properties:
-  #     AccessControl: LogDeliveryWrite
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -48,8 +44,6 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-      # LoggingConfiguration:
-      #   DestinationBucketName: !Ref WebsiteLogBucket
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
