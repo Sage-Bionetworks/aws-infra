@@ -21,11 +21,15 @@ Parameters:
 Conditions:
   IsProd: !Equals [!Ref SubDomainName, 'prod']
 Resources:
-  CloudFrontOAI:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+  CloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
     Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub 'CloudFront OAI for ${SubDomainName}.${DomainName}'
+      OriginAccessControlConfig:
+        Description: Default Origin Access Control
+        Name: !Ref AWS::StackName
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -47,18 +51,21 @@ Resources:
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
+      Bucket: !Ref WebsiteBucket
       PolicyDocument:
         Id: BucketPolicy
         Version: 2012-10-17
         Statement:
-          - Sid: CFOAIReadForGetBucketObjects
-            Effect: Allow
-            Principal:
-              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
+          - Sid: CFOACReadForGetBucketObjects
             Action: 's3:GetObject'
-            Resource: !Join ['', ['arn:aws:s3:::', !Ref WebsiteBucket, '/*']]
-      Bucket: !Ref WebsiteBucket
-  Cloudfront:
+            Effect: Allow
+            Resource: !Sub ${WebsiteBucket.Arn}/*
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudfrontDistribution}
+  CloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     DependsOn:
       - WebsiteBucket
@@ -69,8 +76,8 @@ Resources:
           - DomainName: !Sub '${WebsiteBucket}.s3.amazonaws.com'
             Id: S3Origin
             S3OriginConfig:
-              OriginAccessIdentity:
-                !Join [ "", [ "origin-access-identity/cloudfront/", !Ref CloudFrontOAI ] ]
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt CloudFrontOAC.Id
         Enabled: true
         HttpVersion: 'http2'
         DefaultRootObject: index.html
@@ -105,7 +112,7 @@ Resources:
           SslSupportMethod: sni-only
 Outputs:
   CloudfrontId:
-    Value: !Ref Cloudfront
+    Value: !Ref CloudfrontDistribution
     Description: ID of the Cloudfront distribution
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontId'
@@ -113,7 +120,7 @@ Outputs:
     Value: !Join
       - ''
       - - 'https://'
-        - !GetAtt Cloudfront.DomainName
+        - !GetAtt CloudfrontDistribution.DomainName
     Description: URL for cloudfront
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontEndpoint'
