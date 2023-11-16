@@ -16,33 +16,25 @@ Resources:
   SnowflakeServicePolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
-      PolicyDocument: |
-        {
-          "Version": "2012-10-17",
-          "Statement": [
-              {
-                  "Effect": "Allow",
-                  "Action": [
-                      "s3:GetObject",
-                      "s3:GetObjectVersion"
-                  ],
-                  "Resource": !Sub "arn:aws:s3:::${Stack}.datawarehouse.sagebase.org/warehouse/*"
-              },
-              {
-                  "Effect": "Allow",
-                  "Action": [
-                      "s3:ListBucket",
-                      "s3:GetBucketLocation"
-                  ],
-                  "Resource": !Sub "arn:aws:s3:::${Stack}.datawarehouse.sagebase.org",
-                  "Condition": {
-                      "StringLike": {
-                        "s3:prefix": [ "warehouse/*" ]
-                      }
-                  }
-              }
-          ]
-        }
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource: !Sub "arn:aws:s3:::${Stack}.datawarehouse.sagebase.org/warehouse/*"
+          -
+            Effect: Allow
+            Action:
+                - s3:ListBucket
+                - s3:GetBucketLocation
+            Resource: !Sub "arn:aws:s3:::${Stack}.datawarehouse.sagebase.org"
+            Condition:
+              StringLike":
+                "s3:prefix":
+                  - "warehouse/*"
   SnowflakeServiceRole:
     Type: "AWS::IAM::Role"
     Properties:
