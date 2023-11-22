@@ -16,7 +16,6 @@ Resources:
     Type: "AWS::S3::Bucket"
     DeletionPolicy: Delete
     Properties:
-      AccessControl: PublicRead
       VersioningConfiguration:
         Status: !Ref CfBucketVersioning
   AWSIAMS3CloudformationBucketPolicy:
