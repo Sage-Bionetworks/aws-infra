@@ -1,13 +1,12 @@
 Description: >
-  Setup cross account IAM access for Snowflake.
+  Setup cross account IAM access to a bucket/prefix for Snowflake.
   See https://docs.snowflake.com/en/user-guide/data-load-s3-config-storage-integration
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  Stack:
+  BucketArn:
     Type: String
-    AllowedValues:
-      - dev
-      - prod
+  BucketPrefix:
+    Type: String
   SnowflakeAccountArn:
     Type: String
   SnowflakeAccountExternalId:
@@ -24,17 +23,17 @@ Resources:
             Action:
               - s3:GetObject
               - s3:GetObjectVersion
-            Resource: !Sub "arn:aws:s3:::${Stack}.datawarehouse.sagebase.org/warehouse/*"
+            Resource: !Sub "${BucketArn}/${BucketPrefix}/*"
           -
             Effect: Allow
             Action:
-                - s3:ListBucket
-                - s3:GetBucketLocation
-            Resource: !Sub "arn:aws:s3:::${Stack}.datawarehouse.sagebase.org"
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource: !Sub "${BucketArn}/${BucketPrefix}"
             Condition:
               StringLike":
                 "s3:prefix":
-                  - "warehouse/*"
+                  - !Sub "${BucketPrefix}/*"
   SnowflakeServiceRole:
     Type: "AWS::IAM::Role"
     Properties:
