@@ -1,0 +1,59 @@
+Description: >
+  Setup cross account IAM access to a bucket/prefix for Snowflake.
+  See https://docs.snowflake.com/en/user-guide/data-load-s3-config-storage-integration
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  BucketArn:
+    Type: String
+  BucketPrefix:
+    Type: String
+  SnowflakeAccountArn:
+    Type: String
+  SnowflakeAccountExternalId:
+    Type: String
+Resources:
+  SnowflakeServicePolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource: !Sub "${BucketArn}/${BucketPrefix}/*"
+          -
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource: !Sub "${BucketArn}/${BucketPrefix}"
+            Condition:
+              StringLike":
+                "s3:prefix":
+                  - !Sub "${BucketPrefix}/*"
+  SnowflakeServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+        - !Ref SnowflakeServicePolicy
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub ${SnowflakeAccountArn}
+            Action:
+              - sts:AssumeRole
+              - sts:TagSession
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Sub ${SnowflakeAccountExternalId}
+Outputs:
+  SnowflakeServiceRoleArn:
+    Value: !GetAtt SnowflakeServiceRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-SnowflakeServiceRoleArn'
