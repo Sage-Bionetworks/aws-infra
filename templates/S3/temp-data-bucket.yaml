@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  S3 Bucket to store temporary files,
+  accessed through API in SSO role
+Parameters:
+  LifecycleDataExpiration:
+    Type: Number
+    Description: Number of days (from creation) when objects are deleted from S3 and the LifecycleDataStorageClass
+    Default: 14
+  BucketName:
+    Type: String
+    Description: (Optional) Name of the created bucket.
+    Default: ""
+Conditions:
+  HasBucketName: !Not [!Equals [!Ref BucketName, ""]]
+Resources:
+  Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !If [HasBucketName, !Ref BucketName, !Ref 'AWS::NoValue']
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LifecycleConfiguration:
+        Rules:
+        - Id: DataLifecycleRule
+          Status: Enabled
+          ExpirationInDays: !Ref LifecycleDataExpiration
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true        
+
+Outputs:
+  Bucket:
+    Value: !Ref Bucket
+    Export:
+      Name: !Sub '${AWS::StackName}-Bucket'
+  BucketArn:
+    Value: !GetAtt Bucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketArn'
