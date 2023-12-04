@@ -17,7 +17,13 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
-      AccessControl: PublicRead
+      PublicAccessBlockConfiguration:
+        # Explicitly comfigure public bucket
+        # https://repost.aws/questions/QUMcgxysOFRBmKIt9KRkYccg/api-s3-putbucketpolicy-access-denied-error-during-a-cloudformation-stack-creation
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
       VersioningConfiguration:
         Status: !Ref LambdaBucketVersioning
   AWSIAMS3LambdaArtifactsBucketPolicy:
