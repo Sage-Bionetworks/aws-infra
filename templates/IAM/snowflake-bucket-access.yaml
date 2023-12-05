@@ -15,25 +15,33 @@ Resources:
   SnowflakeServicePolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - s3:GetObject
-              - s3:GetObjectVersion
-            Resource: !Sub "${BucketArn}/${BucketPrefix}/*"
-          -
-            Effect: Allow
-            Action:
-              - s3:ListBucket
-              - s3:GetBucketLocation
-            Resource: !Sub "${BucketArn}/${BucketPrefix}"
-            Condition:
-              StringLike":
-                "s3:prefix":
-                  - !Sub "${BucketPrefix}/*"
+      PolicyDocument: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion"
+              ],
+              "Resource": "${BucketArn}/${BucketPrefix}/*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation"
+              ],
+              "Resource": "${BucketArn}/${BucketPrefix}",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": "${BucketPrefix}/*"
+                }
+              }
+            }
+          ]
+        }
   SnowflakeServiceRole:
     Type: "AWS::IAM::Role"
     Properties:
