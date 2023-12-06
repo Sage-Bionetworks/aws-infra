@@ -18,67 +18,81 @@ Parameters:
     Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
     AllowedPattern: "arn:aws:acm:.*"
     ConstraintDescription: must be a valid certificate ARN.
+Conditions:
+  IsProd: !Equals [!Ref SubDomainName, 'prod']
 Resources:
-  WebsiteLogBucket:
-    Type: 'AWS::S3::Bucket'
+  CloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
     Properties:
-      AccessControl: LogDeliveryWrite
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName, 'logs']
+      OriginAccessControlConfig:
+        Description: Default Origin Access Control
+        Name: !Ref AWS::StackName
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName]
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-      LoggingConfiguration:
-        DestinationBucketName: !Ref WebsiteLogBucket
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
+      Bucket: !Ref WebsiteBucket
       PolicyDocument:
-        Id: MyPolicy
+        Id: BucketPolicy
         Version: 2012-10-17
         Statement:
-          - Sid: PublicReadForGetBucketObjects
-            Effect: Allow
-            Principal: '*'
+          - Sid: CFOACReadForGetBucketObjects
             Action: 's3:GetObject'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref WebsiteBucket
-                - /*
-      Bucket: !Ref WebsiteBucket
-  Cloudfront:
+            Effect: Allow
+            Resource: !Sub ${WebsiteBucket.Arn}/*
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudfrontDistribution}
+  CloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - WebsiteBucket
     Properties:
       DistributionConfig:
         Comment: Cloudfront Distribution pointing to S3 bucket
         Origins:
-          - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
+          - DomainName: !Sub '${WebsiteBucket}.s3.amazonaws.com'
             Id: S3Origin
-            CustomOriginConfig:
-              HTTPPort: 80
-              HTTPSPort: 443
-              OriginProtocolPolicy: http-only
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt CloudFrontOAC.Id
         Enabled: true
         HttpVersion: 'http2'
         DefaultRootObject: index.html
         Aliases:
-          - !Join
-            - '.'
-            - - !Ref SubDomainName
-              - !Ref DomainName
+          - !Sub '${SubDomainName}.${DomainName}'
+          - !If [IsProd, !Ref DomainName, !Ref AWS::NoValue]
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
         DefaultCacheBehavior:
           DefaultTTL: 3600
           AllowedMethods:
@@ -91,13 +105,14 @@ Resources:
             Cookies:
               Forward: none
           ViewerProtocolPolicy: redirect-to-https
-        PriceClass: PriceClass_All
+        PriceClass: PriceClass_100
         ViewerCertificate:
           AcmCertificateArn: !Ref AcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
 Outputs:
   CloudfrontId:
-    Value: !Ref Cloudfront
+    Value: !Ref CloudfrontDistribution
     Description: ID of the Cloudfront distribution
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontId'
@@ -105,7 +120,7 @@ Outputs:
     Value: !Join
       - ''
       - - 'https://'
-        - !GetAtt Cloudfront.DomainName
+        - !GetAtt CloudfrontDistribution.DomainName
     Description: URL for cloudfront
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontEndpoint'

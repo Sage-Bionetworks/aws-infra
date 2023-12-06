@@ -1,0 +1,34 @@
+# Setting up a certificate requires a manual step to enter the DNS Validation on godaddy.
+Description: Setup an ACM Certificate
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-certificatemanager-certificate.html#cfn-certificatemanager-certificate-domainname
+  DomainName:
+    Description: Domain to secure with the certificate (i.e. sagebionetworks.org, dev.sagebionetworks.org, *.sagebionetworks.org)
+    Type: String
+  AlternativeNames:
+    Description: Comma-delimited list of alternative FQDNs to be used on the certificate
+    Type: String
+    Default: ''
+  ValidationDomainName:
+    Description: Domain to use to validate the certificate (if different than DomainName)
+    Type: String
+    Default: ''
+Conditions:
+  HasAlternativeNames: !Not [!Equals [!Ref AlternativeNames, '' ]]
+  HasValidationDomainName: !Not [!Equals [!Ref ValidationDomainName, '' ]]
+Resources:
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames: !If [HasAlternativeNames, !Split [',', !Ref AlternativeNames], !Ref AWS::NoValue ]
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          ValidationDomain: !If [HasValidationDomainName, !Ref ValidationDomainName, !Ref DomainName]
+      ValidationMethod: "DNS"
+Outputs:
+  CertificateArn:
+    Value: !Ref Certificate
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-CertificateArn'
