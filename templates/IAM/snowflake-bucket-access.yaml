@@ -33,7 +33,7 @@ Resources:
                 "s3:ListBucket",
                 "s3:GetBucketLocation"
               ],
-              "Resource": "${BucketArn}/${BucketPrefix}",
+              "Resource": "${BucketArn}",
               "Condition": {
                 "StringLike": {
                   "s3:prefix": "${BucketPrefix}/*"
