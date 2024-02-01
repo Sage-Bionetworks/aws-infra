@@ -55,6 +55,7 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - !Ref DecryptSecureKeysPolicy
   DecryptSecureKeysPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
