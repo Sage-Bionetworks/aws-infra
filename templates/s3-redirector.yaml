@@ -38,6 +38,9 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
       BucketName: !Ref SourceHostName
       WebsiteConfiguration:
         IndexDocument: index.html

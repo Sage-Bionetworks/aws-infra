@@ -5,6 +5,9 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       AccessControl: PublicRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
   BucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
