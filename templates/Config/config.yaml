@@ -1,13 +1,6 @@
 # From https://github.com/org-formation/org-formation-reference/blob/master/src/templates/080-aws-config-inventory/config.yml
 AWSTemplateFormatVersion: '2010-09-09'
 
-# This is an org-formation file, not a cloudformation file therefore some cfn-lint rules do not apply
-# rules reference: https://github.com/aws-cloudformation/cfn-python-lint/blob/master/docs/rules.md#rules-1
-Metadata:
-  cfn-lint:
-    config:
-      ignore_checks: [W2001]
-
 Parameters:
   resourcePrefix:
     Type: String
