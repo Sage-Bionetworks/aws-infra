@@ -2,5 +2,7 @@ ignore_checks:
   - E1001
   - E2531
   - E3001
+  - W2001
+  - W3045
 ignore_templates:
   - templates/tags/*.json

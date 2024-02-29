@@ -24,6 +24,9 @@ Resources:
     Properties:
       BucketName: !Sub '${resourcePrefix}-guardduty-finding'
       AccessControl: Private
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true

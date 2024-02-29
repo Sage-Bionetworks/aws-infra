@@ -18,6 +18,9 @@ Resources:
     Type: 'AWS::S3::Bucket'
     Properties:
       AccessControl: LogDeliveryWrite
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
       BucketName: !Join
         - '.'
         - [!Ref SubDomainName, !Ref DomainName, 'logs']
@@ -25,6 +28,9 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
       BucketName: !Join
         - '.'
         - [!Ref SubDomainName, !Ref DomainName]

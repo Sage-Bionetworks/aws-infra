@@ -1,11 +1,6 @@
 # From https://github.com/org-formation/org-formation-reference/tree/master/src/templates/070-guard-duty
 AWSTemplateFormatVersion: '2010-09-09'
 
-Metadata:
-  cfn-lint:
-    config:
-      ignore_checks: [W2001]
-
 Parameters:
   resourcePrefix:
     Type: String
