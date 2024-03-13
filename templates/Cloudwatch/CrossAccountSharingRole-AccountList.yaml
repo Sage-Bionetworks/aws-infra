@@ -1,0 +1,75 @@
+# This template is downloaded from the AWS Console (from org-sagebase-monitorcentral account)
+# Cloudwatch -> Settings -> Share your CloudWatch data -> Create CloudFormation stack
+# It should be deployed to all member accounts except for the org-sagebase-monitorcentral account
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Enables CloudWatch in central monitoring accounts to assume permissions to view CloudWatch data in the current account
+
+Parameters:
+  MonitoringAccountIds:
+    Description: Allows one or more monitoring accounts to view your data. Enter AWS account ids, 12 numeric digits in comma-separated list
+    Type: CommaDelimitedList
+
+  Policy:
+    Description: The level of access to give to the Monitoring accounts
+    Type: String
+    Default: CloudWatch-and-AutomaticDashboards
+    AllowedValues:
+      - CloudWatch-and-AutomaticDashboards
+      - CloudWatch-and-ServiceLens
+      - CloudWatch-AutomaticDashboards-and-ServiceLens
+      - CloudWatch-core-permissions
+      - View-Access-for-all-services
+
+Conditions:
+  DoFullReadOnly: !Equals [ !Ref Policy, View-Access-for-all-services ]
+  DoAutomaticDashboards: !Equals [ !Ref Policy, CloudWatch-and-AutomaticDashboards ]
+  DoServiceLens: !Equals [ !Ref Policy, CloudWatch-and-ServiceLens ]
+  DoServiceLensAndAutomaticDashboards: !Equals [ !Ref Policy, CloudWatch-AutomaticDashboards-and-ServiceLens ]
+  DoCWReadOnly: !Equals [ !Ref Policy, CloudWatch-core-permissions ]
+
+Resources:
+  CWCrossAccountSharingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CloudWatch-CrossAccountSharingRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Split
+                - ','
+                - !Sub
+                  - 'arn:aws:iam::${inner}:root'
+                  - inner: !Join
+                      - ':root,arn:aws:iam::'
+                      - Ref: MonitoringAccountIds
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns: !If
+        - DoFullReadOnly
+        -
+          - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+          - arn:aws:iam::aws:policy/CloudWatchAutomaticDashboardsAccess
+          - arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+          - arn:aws:iam::aws:policy/AWSXrayReadOnlyAccess
+        - !If
+          - DoAutomaticDashboards
+          -
+            - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+            - arn:aws:iam::aws:policy/CloudWatchAutomaticDashboardsAccess
+          - !If
+            - DoServiceLens
+            -
+              - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+              - arn:aws:iam::aws:policy/AWSXrayReadOnlyAccess
+            - !If
+              - DoServiceLensAndAutomaticDashboards
+              -
+                - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+                - arn:aws:iam::aws:policy/CloudWatchAutomaticDashboardsAccess
+                - arn:aws:iam::aws:policy/AWSXrayReadOnlyAccess
+              -
+                - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
