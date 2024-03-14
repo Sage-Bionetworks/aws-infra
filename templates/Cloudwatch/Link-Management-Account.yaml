@@ -1,0 +1,25 @@
+# This template is downloaded from the AWS Console (from org-sagebase-monitorcentral account)
+# Cloudwatch -> Settings -> Determine how to link your source accounts
+# It should be deployed to all member accounts except for the org-sagebase-monitorcentral account
+
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  MonitoringAccountId:
+    Description: Allows one or more monitoring accounts to view your data. Enter AWS account ids, 12 numeric digits in comma-separated list
+    Type: String
+  SinkIdentifier:
+    Description: ID of the attachment point in the cloudwatch monitoring account.
+    Type: String
+
+Resources:
+  Link:
+    Type: AWS::Oam::Link
+    Properties:
+      LabelTemplate: "$AccountName"
+      ResourceTypes:
+        - "AWS::CloudWatch::Metric"
+        - "AWS::Logs::LogGroup"
+        - "AWS::XRay::Trace"
+        - "AWS::ApplicationInsights::Application"
+      SinkIdentifier: !Sub "arn:aws:oam:us-east-1:${MonitoringAccountId}:sink/${SinkIdentifier}"

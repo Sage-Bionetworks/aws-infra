@@ -4,5 +4,6 @@ ignore_checks:
   - E3001
   - W2001
   - W3045
+  - W8001
 ignore_templates:
   - templates/tags/*.json
