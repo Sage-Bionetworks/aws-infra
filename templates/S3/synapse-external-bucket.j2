@@ -139,6 +139,7 @@ Resources:
               - "s3:GetObject"
               - "s3:GetObjectAcl"
               - "s3:ListMultipartUploadParts"
+              - "s3:HeadObject"
             Resource: [ !Sub "${Bucket.Arn}/*" ]
           - !If
             - AllowWrite
