@@ -114,12 +114,12 @@ Resources:
       VpcId: !ImportValue
         'Fn::Sub': '${AWS::Region}-${VpcName}-VPCId'
       SecurityGroupIngress:
-  {% for port in sceptre_user_data.OpenPorts %}
+{%     for port in sceptre_user_data.OpenPorts %}
         - CidrIp: "0.0.0.0/0"
           FromPort: {{ port }}
           ToPort: {{ port }}
           IpProtocol: tcp
-  {% endfor %}
+{%     endfor %}
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
           FromPort: -1

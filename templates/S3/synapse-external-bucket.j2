@@ -172,9 +172,9 @@ Resources:
         Key: owner.txt
         ContentType: text
       Body: >-
-        {% for SynapseID in sceptre_user_data.SynapseIDs %}
+  {%     for SynapseID in sceptre_user_data.SynapseIDs %}
           {{ SynapseID }}
-        {% endfor %}
+  {%     endfor %}
   {% endif %}
 
   IPAddressRestictionLambda:
