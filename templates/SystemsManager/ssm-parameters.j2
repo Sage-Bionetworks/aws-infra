@@ -9,7 +9,7 @@
   template_path: remote/ssm-parameters.j2
   hooks:
     before_launch:
-      - !cmd "curl https://{{stack_group_config.admincentral_cf_bucket}}.s3.amazonaws.com/aws-infra/master/ssm-parameters.j2 --create-dirs -o templates/remote/ssm-parameters.j2"
+      - !cmd "curl https://{{ stack_group_config.admincentral_cf_bucket }}.s3.amazonaws.com/aws-infra/master/ssm-parameters.j2 --create-dirs -o templates/remote/ssm-parameters.j2"
   stack_name: my-ssm-vars
   sceptre_user_data:
     Prefix: /my-ssm-vars/
@@ -24,8 +24,8 @@ Description: "Setup parameters in the SSM parameter store"
 AWSTemplateFormatVersion: "2010-09-09"
 Resources:
   {% for parameter in sceptre_user_data.Parameters %}
-  {%- set name = parameter.Name -%}
-  {%- set value = parameter.Value|safe -%}
+  {%     set name = parameter.Name %}
+  {%     set value = parameter.Value | safe %}
     {{ name }}:
       Type: AWS::SSM::Parameter
       Properties:
@@ -39,8 +39,8 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-Prefix'
   {% for parameter in sceptre_user_data.Parameters %}
-  {%- set name = parameter.Name -%}
-  {%- set value = parameter.Value -%}
+  {%     set name = parameter.Name %}
+  {%     set value = parameter.Value %}
     {{ name }}:
       Value: !GetAtt {{ name }}.Value
       Export:

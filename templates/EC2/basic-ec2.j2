@@ -48,12 +48,12 @@ Resources:
       GroupDescription: "Allow ports for incoming traffic"
       VpcId: !Ref VpcId
       SecurityGroupIngress:
-  {% for port in sceptre_user_data.OpenPorts %}
+{%     for port in sceptre_user_data.OpenPorts %}
         - CidrIp: "0.0.0.0/0"
           FromPort: {{ port }}
           ToPort: {{ port }}
           IpProtocol: tcp
-  {% endfor %}
+{%     endfor %}
 {% endif %}
   Instance:
     Type: 'AWS::EC2::Instance'

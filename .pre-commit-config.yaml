@@ -18,3 +18,8 @@ repos:
     rev: v1.5.4
     hooks:
     -   id: remove-tabs
+-   repo: https://github.com/aristanetworks/j2lint.git
+    rev: v1.1.0
+    hooks:
+      - id: j2lint
+        args: [--ignore, V1, --]
