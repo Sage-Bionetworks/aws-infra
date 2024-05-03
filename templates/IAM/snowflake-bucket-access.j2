@@ -3,10 +3,6 @@ Description: >
   See https://docs.snowflake.com/en/user-guide/data-load-s3-config-storage-integration
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  BucketArn:
-    Type: String
-  BucketPrefix:
-    Type: String
   SnowflakeAccountArn:
     Type: String
   SnowflakeAccountExternalId:
@@ -15,33 +11,25 @@ Resources:
   SnowflakeServicePolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
-      PolicyDocument: !Sub |
-        {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Action": [
-                "s3:GetObject",
-                "s3:GetObjectVersion"
-              ],
-              "Resource": "${BucketArn}/${BucketPrefix}/*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "s3:ListBucket",
-                "s3:GetBucketLocation"
-              ],
-              "Resource": "${BucketArn}",
-              "Condition": {
-                "StringLike": {
-                  "s3:prefix": "${BucketPrefix}/*"
-                }
-              }
-            }
-          ]
-        }
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+{% for bucket in sceptre_user_data.Buckets %}
+          - Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:GetObjectVersion'
+            Resource:
+              - "{{ bucket.Arn }}/{{ bucket.Prefix }}/*"
+          - Effect: Allow
+            Action:
+              - 's3:ListBucket'
+              - 's3:GetBucketLocation'
+            Resource: "{{ bucket.Arn }}"
+            Condition:
+              StringLike:
+                's3:prefix': "{{ bucket.Prefix }}/*"
+{% endfor %}
   SnowflakeServiceRole:
     Type: "AWS::IAM::Role"
     Properties:
