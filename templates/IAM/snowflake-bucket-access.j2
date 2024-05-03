@@ -19,8 +19,7 @@ Resources:
             Action:
               - 's3:GetObject'
               - 's3:GetObjectVersion'
-            Resource:
-              - "{{ bucket.Arn }}/{{ bucket.Prefix }}/*"
+            Resource: "{{ bucket.Arn }}/{{ bucket.Prefix }}/*"
           - Effect: Allow
             Action:
               - 's3:ListBucket'
