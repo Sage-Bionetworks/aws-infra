@@ -477,6 +477,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Condition: EnableOpenSearchServerlessVPCEndpoint
     Properties:
+      GroupDescription: Security Group for the OpenSearch Serverless VPC endpoint
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - CidrIp: !Join
@@ -506,7 +507,6 @@ Resources:
         - !Ref PrivateSubnet
       SecurityGroupIds:
         - !Ref OpenSearchServerlessVPCEndpointSecurityGroup
-      
 Outputs:
   VPCId:
     Description: "VPCId of the newly created VPC"
