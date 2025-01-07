@@ -42,9 +42,19 @@ Parameters:
       - true
       - false
     Default: true
+  IncludeOpenSearchServerlessEndpoint:
+    Type: String
+    Description: >
+      true to deploy an OpenSearch Serverless VPC endpoint
+      false (default) to skip the OpenSearch Serverless VPC endpoint
+    AllowedValues:
+      - true
+      - false
+    Default: false
 Conditions:
   EnableS3GatewayEndpoint: !Equals [!Ref IncludeS3GatewayEndpoint, true]
   EnableBastianSecurityGroup: !Equals [!Ref IncludeBastianSecurityGroup, true]
+  EnableOpenSearchServerlessVPCEndpoint: !Equals [!Ref IncludeOpenSearchServerlessEndpoint, true]
 Mappings:
   SubnetConfig:
     VPC:
@@ -463,6 +473,40 @@ Resources:
         - !Ref PublicRouteTable
         - !Ref PrivateRouteTable
       ServiceName: "com.amazonaws.us-east-1.s3"
+  OpenSearchServerlessVPCEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: EnableOpenSearchServerlessVPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - CidrIp: !Join
+            - '.'
+            - - !Ref VpcSubnetPrefix
+              - !FindInMap [SubnetConfig, VPC, CIDR]
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: tcp
+          Description: "Allows HTTPS connection from the VPC"
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: "-1"
+      Tags:
+        - Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+  OpenSearchServerlessVPCEndpoint:
+    Type: AWS::OpenSearchServerless::VpcEndpoint
+    Condition: EnableOpenSearchServerlessVPCEndpoint
+    Properties:
+      Name: !Sub '${AWS::StackName}-OSSVPCEndpoint'
+      VpcId: !Ref VPC
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref OpenSearchServerlessVPCEndpointSecurityGroup
+      
 Outputs:
   VPCId:
     Description: "VPCId of the newly created VPC"
@@ -564,3 +608,9 @@ Outputs:
     Value: !Ref S3GatewayEndpoint
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-S3GatewayEndpointId'
+  OpenSearchServerlessVPCEndpointId:
+    Description: OpenSearch Serverless VPC endpoint ID
+    Condition: EnableOpenSearchServerlessVPCEndpoint
+    Value: !Ref OpenSearchServerlessVPCEndpoint
+    Export:
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-OSSVpcEndpointId'
