@@ -501,7 +501,7 @@ Resources:
     Type: AWS::OpenSearchServerless::VpcEndpoint
     Condition: EnableOpenSearchServerlessVPCEndpoint
     Properties:
-      Name: !Sub '${AWS::StackName}-OSSVPCEndpoint'
+      Name: !Sub '${AWS::StackName}-oss-vpce'
       VpcId: !Ref VPC
       SubnetIds:
         - !Ref PrivateSubnet
