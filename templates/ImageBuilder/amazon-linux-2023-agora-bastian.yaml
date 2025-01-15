@@ -1,0 +1,128 @@
+# based off of https://github.com/aws-samples/amazon-ec2-image-builder-samples/tree/master/CloudFormation/Linux/amazon-linux-2-with-latest-ssm-agent
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  AwsOrganizationId:
+    Description: Share the generated image with this Organization
+    Type: String
+    Default: "o-69lcdj4kro"
+  ImageVersion:
+    Description: The generated image version.
+    Type: String
+    Default: "0.0.0"
+Resources:
+  # By default, AWS Services do not have permission to perform actions on your instances. This grants
+  # AWS Systems Manager (SSM) and EC2 Image Builder the necessary permissions to build an image.
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
+  # https://docs.aws.amazon.com/imagebuilder/latest/userguide/image-builder-setting-up.html
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      Comment: Role to be used by instance during image build.
+    Properties:
+      ManagedPolicyArns:
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/EC2InstanceProfileForImageBuilder
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - !Sub 'ec2.${AWS::URLSuffix}'
+        Version: '2012-10-17'
+      Path: /executionServiceEC2Role/
+  # To pass the InstanceRole to an EC2 instance, we need an InstanceProfile.
+  # This profile will be used during the image build process.
+  # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /executionServiceEC2Role/
+      Roles:
+        - Ref: InstanceRole
+
+  # Specifies the infrastructure within which to build and test your image.
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-infrastructureconfiguration.html
+  ImageInfrastructureConfiguration:
+    Type: AWS::ImageBuilder::InfrastructureConfiguration
+    Properties:
+      Name: !Sub '${AWS::StackName}-Configuration'
+      InstanceProfileName:
+        Ref: InstanceProfile
+
+  # Recipe which references the latest (x.x.x) version of the Amazon Linux 2023 AMI).
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-imagerecipe.html
+  ImageRecipe:
+    Type: AWS::ImageBuilder::ImageRecipe
+    Properties:
+      Name: !Sub ${AWS::StackName}
+      Version: !Sub ${ImageVersion}
+      # ${AWS::Partition} returns the partition where you are running the CloudFormation template. For standard AWS regions, the
+      # partition is aws. For resources elsewhere, the partition is aws-partitionname. For example, China (Beijing and Ningxia)
+      # regions use aws-cn and AWS GovCloud (US) regions are aws-us-gov.
+      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
+      ParentImage:
+        Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-x86/x.x.x
+      Components:
+        - ComponentArn:
+            Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+      # Make sure the latest version of the Amazon SSM Agent is installed on the image.
+      AdditionalInstanceConfiguration:
+        UserDataOverride:
+          Fn::Base64:
+            Fn::Sub: |
+              #!/bin/bash
+              sudo yum install -y https://s3.${AWS::Region}.${AWS::URLSuffix}/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
+
+              # Add mongodb yum repository
+              sudo cat > /etc/yum.repos.d/mongodb-org-8.0.repo << EOF
+              [mongodb-org-8.0]
+              name=MongoDB Repository
+              baseurl=https://repo.mongodb.org/yum/amazon/2023/mongodb-org/8.0/x86_64/
+              gpgcheck=1
+              enabled=1
+              gpgkey=https://pgp.mongodb.com/server-8.0.asc
+              EOF
+
+              # install python and mongo tools
+              sudo dnf update
+              sudo dnf install -y python python-pip mongodb-mongosh-shared-openssl3 mongodb-database-tools
+
+              # install synapse client
+              sudo pip install synapseclient
+
+              # install dotnet (needed by github runner)
+              sudo rpm -Uvh https://packages.microsoft.com/config/centos/8/packages-microsoft-prod.rpm
+              sudo yum install -y dotnet-sdk-8.0
+
+
+  # The Image resource will show complete in CloudFormation once your image is done building. Use this resource later in your
+  # stack to reference the image within other resources.
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-image.html
+  Image:
+    Type: AWS::ImageBuilder::Image
+    Properties:
+      ImageRecipeArn:
+        Ref: ImageRecipe
+      InfrastructureConfigurationArn:
+        Ref: ImageInfrastructureConfiguration
+      DistributionConfigurationArn:
+        Ref: ImageDistributionConfiguration
+      Tags:
+        Name: !Sub ${AWS::StackName}
+
+  ImageDistributionConfiguration:
+    Type: AWS::ImageBuilder::DistributionConfiguration
+    Properties:
+      Name: !Sub '${AWS::StackName}-Distributions'
+      Distributions:
+        - Region: !Ref 'AWS::Region'
+          AmiDistributionConfiguration:
+            AmiTags:    # apply tags to generated AMIs
+              Name: !Sub '${AWS::StackName}'
+            LaunchPermissionConfiguration:
+              OrganizationArns:
+                - !Sub 'arn:${AWS::Partition}:organizations::${AWS::AccountId}:organization/${AwsOrganizationId}'
+              UserGroups:
+                - all   # Make AMI globally public
