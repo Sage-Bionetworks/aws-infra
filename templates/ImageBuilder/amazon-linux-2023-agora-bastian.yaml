@@ -119,10 +119,10 @@ Resources:
       Distributions:
         - Region: !Ref 'AWS::Region'
           AmiDistributionConfiguration:
-            AmiTags:   # generated image tags
+            AmiTags:    # apply tags to generated AMIs
               Name: !Sub '${AWS::StackName}'
             LaunchPermissionConfiguration:
               OrganizationArns:
                 - !Sub 'arn:${AWS::Partition}:organizations::${AWS::AccountId}:organization/${AwsOrganizationId}'
-#              UserGroups:
-#                - all      # Make AMI globally publicly
+              UserGroups:
+                - all   # Make AMI globally public
