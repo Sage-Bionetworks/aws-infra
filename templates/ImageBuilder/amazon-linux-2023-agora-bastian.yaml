@@ -9,6 +9,12 @@ Parameters:
     Description: The generated image version.
     Type: String
     Default: "0.0.0"
+  VolumeSize:
+    Description: The EBS volume size (in GB)
+    Type: Number
+    Default: 30
+    MinValue: 16
+    MaxValue: 500
 Resources:
   # By default, AWS Services do not have permission to perform actions on your instances. This grants
   # AWS Systems Manager (SSM) and EC2 Image Builder the necessary permissions to build an image.
@@ -67,6 +73,10 @@ Resources:
       Components:
         - ComponentArn:
             Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+      BlockDeviceMappings:
+        - Ebs:
+            DeleteOnTermination: true
+            VolumeSize: !Ref VolumeSize
       # Make sure the latest version of the Amazon SSM Agent is installed on the image.
       AdditionalInstanceConfiguration:
         UserDataOverride:
