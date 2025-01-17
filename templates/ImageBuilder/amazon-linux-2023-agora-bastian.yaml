@@ -12,8 +12,8 @@ Parameters:
   VolumeSize:
     Description: The EBS volume size (in GB)
     Type: Number
-    Default: 30
-    MinValue: 16
+    Default: 32
+    MinValue: 8
     MaxValue: 500
 Resources:
   # By default, AWS Services do not have permission to perform actions on your instances. This grants
@@ -74,8 +74,8 @@ Resources:
         - ComponentArn:
             Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
       BlockDeviceMappings:
-        - Ebs:
-            DeleteOnTermination: true
+        - DeviceName: /dev/xvda
+          Ebs:
             VolumeSize: !Ref VolumeSize
       # Make sure the latest version of the Amazon SSM Agent is installed on the image.
       AdditionalInstanceConfiguration:
