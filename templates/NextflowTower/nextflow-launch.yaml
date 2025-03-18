@@ -7,6 +7,12 @@ Parameters:
   SubnetIds:
     Type: CommaDelimitedList
     Description: List of public Subnet Ids for the load balancer
+  MinvCpus:
+    Type: Number
+    Description: The number of min CPUs for Batch compute environments
+    MinValue: 1
+    MaxValue: 16
+    Default: 1
   MaxvCpus:
     Type: Number
     Description: The number of max CPUs for Batch compute environments
@@ -119,6 +125,7 @@ Resources:
       ServiceRole: !Ref BatchServiceRole
       ComputeResources:
         Type: EC2
+        MinvCpus: !Ref MinvCpus
         MaxvCpus: !Ref MaxvCpus
         Subnets: !Ref SubnetIds
         SecurityGroupIds:
@@ -144,6 +151,7 @@ Resources:
       ServiceRole: !Ref BatchServiceRole
       ComputeResources:
         Type: SPOT
+        MinvCpus: !Ref MinvCpus
         MaxvCpus: !Ref MaxvCpus
         Subnets: !Ref SubnetIds
         SecurityGroupIds:
