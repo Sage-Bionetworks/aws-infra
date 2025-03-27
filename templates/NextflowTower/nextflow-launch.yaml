@@ -10,15 +10,21 @@ Parameters:
   MinvCpus:
     Type: Number
     Description: The number of min CPUs for Batch compute environments
-    MinValue: 1
+    MinValue: 0
     MaxValue: 16
-    Default: 1
+    Default: 0
   MaxvCpus:
     Type: Number
     Description: The number of max CPUs for Batch compute environments
-    MinValue: 1
-    MaxValue: 16
-    Default: 1
+    MinValue: 8
+    MaxValue: 64
+    Default: 8
+  DesiredvCpus:
+    Type: Number
+    Description: The number of desired CPUs for Batch compute environments
+    MinValue: 0
+    MaxValue: 8
+    Default: 0
 Resources:
   UserManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -84,21 +90,6 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole
-  InstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2008-10-17'
-        Statement:
-          - Sid: ''
-            Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - !Ref JobManagedPolicy
   SpotFleetRole:
     Type: AWS::IAM::Role
     Properties:
@@ -112,6 +103,27 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
+  BatchInstanceIAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role'
+  BatchInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - !Ref BatchInstanceIAMRole
   ComputeEnvironmentOnDemand:
     Type: AWS::Batch::ComputeEnvironment
     Metadata:
@@ -127,14 +139,15 @@ Resources:
         Type: EC2
         MinvCpus: !Ref MinvCpus
         MaxvCpus: !Ref MaxvCpus
+        DesiredvCpus: !Ref DesiredvCpus
         Subnets: !Ref SubnetIds
         SecurityGroupIds:
           - !Ref EcsSecurityGroupId
-        InstanceRole: !Ref InstanceRole
+        InstanceRole: !Ref BatchInstanceProfile
+        InstanceTypes:
+          - optimal
         LaunchTemplate:
           LaunchTemplateId: !ImportValue
-            'Fn::Sub': '${AWS::Region}-nextflow-ecs-cluster-EcsLaunchTemplate'
-          LaunchTemplateName: !ImportValue
             'Fn::Sub': '${AWS::Region}-nextflow-ecs-cluster-EcsLaunchTemplate'
           Version: !ImportValue
             'Fn::Sub': '${AWS::Region}-nextflow-ecs-cluster-EcsLaunchTemplateLatestVersionNumber'
@@ -153,15 +166,16 @@ Resources:
         Type: SPOT
         MinvCpus: !Ref MinvCpus
         MaxvCpus: !Ref MaxvCpus
+        DesiredvCpus: !Ref DesiredvCpus
         Subnets: !Ref SubnetIds
         SecurityGroupIds:
           - !Ref EcsSecurityGroupId
         SpotIamFleetRole: !Ref SpotFleetRole
-        InstanceRole: !Ref InstanceRole
+        InstanceRole: !Ref BatchInstanceProfile
+        InstanceTypes:
+          - optimal
         LaunchTemplate:
           LaunchTemplateId: !ImportValue
-            'Fn::Sub': '${AWS::Region}-nextflow-ecs-cluster-EcsLaunchTemplate'
-          LaunchTemplateName: !ImportValue
             'Fn::Sub': '${AWS::Region}-nextflow-ecs-cluster-EcsLaunchTemplate'
           Version: !ImportValue
             'Fn::Sub': '${AWS::Region}-nextflow-ecs-cluster-EcsLaunchTemplateLatestVersionNumber'
@@ -186,10 +200,10 @@ Outputs:
     Value: !Ref BatchServiceRole
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-BatchServiceRole'
-  InstanceRole:
-    Value: !Ref InstanceRole
+  BatchInstanceIAMRole:
+    Value: !Ref BatchInstanceIAMRole
     Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-InstanceRole'
+      Name: !Sub '${AWS::Region}-${AWS::StackName}-BatchInstanceIAMRole'
   SpotFleetRole:
     Value: !Ref SpotFleetRole
     Export:
