@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+
+  costAuditEmail:
+    Type: String
+    Default: 'cloud-cost-audit@sagebase.org'
+
+  synapseAdminEmail:
+    Type: String
+    Default: 'platform@sagebase.org'
+
+  techTeamEmail:
+    Type: String
+    Default: 'tech-team@sagebase.org'
+
+  budgetAmount:
+    Type: Number
+
+Resources:
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Data Transfer Budget Notifications
+
+  costAuditSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref costAuditEmail
+      Protocol: email
+      TopicArn: !Ref NotificationTopic
+
+  synapseAdminSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref synapseAdminEmail
+      Protocol: email
+      TopicArn: !Ref NotificationTopic
+
+  techTeamSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref techTeamEmail
+      Protocol: email
+      TopicArn: !Ref NotificationTopic
+
+  NotificationTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref NotificationTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowBudgetsPublish
+            Effect: Allow
+            Principal:
+              Service: budgets.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref NotificationTopic
+
+  Budget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetLimit:
+          Amount: !Ref budgetAmount
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+        CostTypes:
+          IncludeSupport: false
+          IncludeTax: false
+        CostFilters:
+          UsageType:
+            # Found using Cost Explorer
+            - "DataTransfer-Out-Bytes"
+            - "AP-DataTransfer-Out-Bytes"
+            - "AU-DataTransfer-Out-Bytes"
+            - "CA-DataTransfer-Out-Bytes"
+            - "EU-DataTransfer-Out-Bytes"
+            - "JP-DataTransfer-Out-Bytes"
+            - "US-DataTransfer-Out-Bytes"
+            - "USE1-EU-AWS-Out-Bytes"
+            - "USE1-APE1-AWS-Out-Bytes"
+            - "USE1-APN1-AWS-Out-Bytes"
+            - "USE1-APS1-AWS-Out-Bytes"
+            - "USE1-APS3-AWS-Out-Bytes"
+            - "USE1-EUW2-AWS-Out-Bytes"
+            - "USE1-USE2-AWS-Out-Bytes"
+            - "USE1-USW1-AWS-Out-Bytes"
+            - "USE1-USW2-AWS-Out-Bytes"
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref NotificationTopic
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref NotificationTopic
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref NotificationTopic
