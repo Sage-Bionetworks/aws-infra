@@ -82,20 +82,14 @@ Resources:
       WorkingDirectory: "/root"
       BlockDeviceMappings:
       - Ebs:
-          Throughput: 125
-          VolumeType: gp3
-          Iops: 3000
           VolumeSize: !Ref VolumeSize
           DeleteOnTermination: true
         DeviceName: "/dev/xvda"
-      AdditionalInstanceConfiguration:
-        SystemsManagerAgent:
-          UninstallAfterBuild: false
 
   CISforEBImageBuilderComponent:
     Type: AWS::ImageBuilder::Component
     Properties:
-      Name: CISforEBImageBuilderComponent
+      Name: !Sub ${AWS::StackName}-CISforEBImageBuilderComponent
       Version: 1.0.0
       Description: Modify CIS Level 1 image to work with Elastic Beanstalk
       Platform: Linux
