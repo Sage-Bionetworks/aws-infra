@@ -15,6 +15,12 @@ Parameters:
     Default: 50
     MinValue: 8
     MaxValue: 500
+  ImageLifecycleMonths:
+    Description: Number of months for images to exist before being deleted
+    Type: Number
+    Default: 6
+    MinValue: 1
+    MaxValue: 60
 Resources:
   # By default, AWS Services do not have permission to perform actions on your instances. This grants
   # AWS Systems Manager (SSM) and EC2 Image Builder the necessary permissions to build an image.
@@ -130,3 +136,36 @@ Resources:
               UserIds:
                 - 449435941126   # Synapse dev
                 - 325565585839   # Synapse prod
+
+  ImageBuilderLifecyclePolicy:
+    Type: AWS::ImageBuilder::LifecyclePolicy
+    Properties:
+      Name: !Sub '${AWS::StackName}-ImageLifecyclePolicy'
+      Description: Deletes pipeline images after six months
+      ExecutionRole: !Ref ImageBuilderLifecyclePolicyRole
+      ResourceType: AMI_IMAGE
+      Status: ENABLED
+      PolicyDetails:
+        - Action:
+            Type: DELETE
+          Filter:
+            Type: AGE
+            Unit: MONTHS
+            Value: !Ref ImageLifecycleMonths
+      ResourceSelection:
+        Recipes:
+          - Name: !GetAtt Recipe.Name
+            SemanticVersion: !Ref ImageVersion
+
+  ImageBuilderLifecyclePolicyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: imagebuilder.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/EC2ImageBuilderLifecycleExecutionPolicy
