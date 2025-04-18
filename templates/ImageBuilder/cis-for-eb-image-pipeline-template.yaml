@@ -141,8 +141,8 @@ Resources:
     Type: AWS::ImageBuilder::LifecyclePolicy
     Properties:
       Name: !Sub '${AWS::StackName}-ImageLifecyclePolicy'
-      Description: Deletes pipeline images after six months
-      ExecutionRole: !Ref ImageBuilderLifecyclePolicyRole
+      Description: Deletes pipeline images after the specified time period
+      ExecutionRole: !Ref ImageBuilderLifecycleExecutionRole
       ResourceType: AMI_IMAGE
       Status: ENABLED
       PolicyDetails:
@@ -157,7 +157,7 @@ Resources:
           - Name: !GetAtt Recipe.Name
             SemanticVersion: !Ref ImageVersion
 
-  ImageBuilderLifecyclePolicyRole:
+  ImageBuilderLifecycleExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
