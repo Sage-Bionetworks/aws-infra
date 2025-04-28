@@ -91,7 +91,6 @@ Resources:
       OwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerEnforced
-
       LifecycleConfiguration:
         Rules:
         - Id: DataLifecycleRule
@@ -100,6 +99,11 @@ Resources:
           Transitions:
             - TransitionInDays: !Ref LifecycleDataTransition
               StorageClass: !Ref LifecycleDataStorageClass
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
 
   BucketPolicy:
     Type: "AWS::S3::BucketPolicy"
