@@ -111,6 +111,18 @@ Resources:
                 inputs:
                   commands:
                     - sudo /usr/sbin/useradd --user-group xray -s /sbin/nologin --no-create-home
+              - name: CIS-5.1.1.4
+                # Edit ... /etc/rsyslog.conf ... and set $FileCreateMode to 0640 or more restrictive: $FileCreateMode 0640
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - sudo sed -i "s|#### GLOBAL DIRECTIVES ####|#### GLOBAL DIRECTIVES ####\n\$FileCreateMode 0640|g" /etc/rsyslog.conf
+              - name: CIS-5.1.1.3
+                # Ensure journald is configured to send logs to rsyslog. Edit the /etc/systemd/journald.conf file and add the following line: ForwardToSyslog=yes
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - sudo sed -i "s|#ForwardToSyslog=no|ForwardToSyslog=yes|g" /etc/systemd/journald.conf
 
   # Specifies the infrastructure within which to build and test your image.
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-infrastructureconfiguration.html
