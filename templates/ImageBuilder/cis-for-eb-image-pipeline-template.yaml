@@ -111,18 +111,43 @@ Resources:
                 inputs:
                   commands:
                     - sudo /usr/sbin/useradd --user-group xray -s /sbin/nologin --no-create-home
-              - name: CIS-5114
+              - name: CIS-5_1_14
                 # Edit ... /etc/rsyslog.conf ... and set $FileCreateMode to 0640 or more restrictive: $FileCreateMode 0640
                 action: ExecuteBash
                 inputs:
                   commands:
                     - sudo echo "\\$FileCreateMode 0640" >> /etc/rsyslog.conf
-              - name: CIS-5113
+              - name: CIS-5_1_13
                 # Ensure journald is configured to send logs to rsyslog. Edit the /etc/systemd/journald.conf file and add the following line: ForwardToSyslog=yes
                 action: ExecuteBash
                 inputs:
                   commands:
                     - sudo sed -i "s|#ForwardToSyslog=no|ForwardToSyslog=yes|g" /etc/systemd/journald.conf
+              - name: CIS-4_2_20
+                # Ensure SSH Idle Timeout Interval is configured
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - sudo sed -i "s|ClientAliveInterval 0|ClientAliveInterval 300|g" /etc/ssh/sshd_config
+              - name: CIS-4_2_18
+                # Ensure SSH MaxSessions is set to 10 or less
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - sudo sed -i "s|#MaxSessions 10|MaxSessions 10|g" /etc/ssh/sshd_config
+              - name: CIS-4_2_6
+                # Ensure SSH PAM is enabled
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - sudo sed -i "s|#UsePAM no|UsePAM yes|g" /etc/ssh/sshd_config
+              - name: CIS-4_6_6
+                # Ensure root password is set
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - pw=`openssl rand -base64 12`
+                    - echo "root:$pw" | sudo chpasswd
 
   # Specifies the infrastructure within which to build and test your image.
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-infrastructureconfiguration.html
