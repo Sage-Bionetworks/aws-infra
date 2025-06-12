@@ -163,11 +163,15 @@ Resources:
               - name: CIS-6_1_12
                 # "Ensure no unowned or ungrouped files or directories exist"
                 # There is an empty directory, /var/lib/private/systemd/journal-upload,
-                # whose owner is a non-existent user.  Delete the empty directory.
+                # whose owner is a non-existent user.
+                #
+                # The user is a temporary user created by systemd-journal-upload
+                # everything gets cleaned up except this lingering directory
+                # The workaround is simply to create the directory as root and let other users access it
                 action: ExecuteBash
                 inputs:
                   commands:
-                    - rmdir /var/lib/private/systemd/journal-upload
+                    - mkdir -p -m 777 /var/lib/private/systemd/journal-upload
               - name: CIS_4_6_2
                 # Ensure system accounts are secured
                 # finds that the user 'webapp' does not have the 'nologin' option
