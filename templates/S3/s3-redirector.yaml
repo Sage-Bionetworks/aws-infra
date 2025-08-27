@@ -1,6 +1,6 @@
 # This template sets up an S3 static website with a routing rule to redirect (307)
-# to another website, optionally replacing the key. Also sets up a Cloudfront
-# distribution to handle https.
+# a subdomain of one website to another, optionally replacing the key.
+# Also sets up a Cloudfront distribution to handle https.
 AWSTemplateFormatVersion: 2010-09-09
 Description: Provision a website at https://SourceHostName that redirects (307) to https://TargetHostName[/targetKey].
 Parameters:
