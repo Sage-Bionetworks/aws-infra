@@ -1,69 +1,123 @@
-# Setup a redirect from one apex domain to another
+# Set up a redirect from one apex domain to another using a cloudfront function
 # For example: redirect all traffic from my-site.org to mysite.org
-# This template is based on https://repost.aws/knowledge-center/redirect-domain-route-53
-# It currently only works in us-east-1 region
+# This setup requires that the source and target zones are in the same account.
 AWSTemplateFormatVersion: 2010-09-09
-Description: Setup redirect from one apex domain to another using S3 static website redirect
+Description: >-
+  Setup redirect from one apex domain to another
 Parameters:
-  SourceHostName:
-    Description: The source endpoint (to redirect from)
+  SourceDomainName:
     Type: String
-    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
-    ConstraintDescription: must be a valid DNS zone name (i.e. my-site.org).
-  SourceHostedZoneId:
-    Description: The ID of the hosted zone of the source domain. Needs to be in the same account.
+    Description: Source Domain name (i.e. my-site.org
+  TargetDomainName:
     Type: String
-    MaxLength: 32
-    AllowedPattern: "[A-Z0-9]*"
-    ConstraintDescription: Must be a valid hosted zone ID
-    Default: ""
-  TargetHostName:
-    Description: The target endpoint
+    Description: Target Domain name
+    ConstraintDescription: must be a resolvable DNS domain (i.e mysite.org)
+  AcmCertificateArn:
     Type: String
-    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
-    ConstraintDescription: must be a valid DNS zone name (i.e. mysite.org).
-Conditions:
-  HasHostedZoneId: !Not [ !Equals [ "", !Ref SourceHostedZoneId ] ]
-Mappings:
-  # S3 Website endpoints, see https://docs.aws.amazon.com/general/latest/gr/s3.html
-  S3WebsiteEndpoints:
-    us-east-1:
-      Endpoint: "s3-website-us-east-1.amazonaws.com"
-      HostedZoneId: "Z3AQBSTGFYJSTF"
+    Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
+    AllowedPattern: "arn:aws:acm:.*"
+    ConstraintDescription: must be a valid certificate ARN
+  RedirectFctName:
+    Type: String
+    Description: Redirect function name
 Resources:
-  Bucket:
-    Type: AWS::S3::Bucket
+  Cloudfront:
+    Type: AWS::CloudFront::Distribution
     Properties:
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerEnforced
-      BucketName: !Ref SourceHostName
-      WebsiteConfiguration:
-        RedirectAllRequestsTo:
-          HostName: !Ref TargetHostName
-          Protocol: https
+      DistributionConfig:
+        Comment: Cloudfront Distribution pointing to S3 bucket
+        Origins:
+          - Id: dummy
+            DomainName: dummy.org
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              OriginSSLProtocols: [ TLSv1.2 ]
+        Enabled: true
+        HttpVersion: 'http2'
+        DefaultRootObject: index.html
+        Aliases:
+          - !Ref SourceDomainName
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+        DefaultCacheBehavior:
+          DefaultTTL: 3600
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          TargetOriginId: dummy
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          FunctionAssociations:
+          -
+            EventType: viewer-request
+            FunctionARN: !GetAtt RedirectFct.FunctionARN
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+  RedirectFct:
+    Type: AWS::CloudFront::Function
+    Properties:
+      AutoPublish: true
+      FunctionCode:
+        Fn::Sub: |
+          function handler(event) {
+              var request = event.request;
+              var uri = request.uri;
+              var queryparams = request.querystring;
+              var response = {
+                  statusCode: 307,
+                  statusDescription: 'OK',
+                  headers: {
+                      'cloudfront-functions': { value: 'generated-by-CloudFront-Functions' },
+                      'location': { value: 'https://${TargetDomainName}' }
+                  }
+                };
+              return response;
+          }
+      FunctionConfig:
+        Comment: Redirects requests from /Explore/Programs/DetailsPage
+        Runtime: cloudfront-js-1.0
+      Name: !Ref RedirectFctName
+  HostedZone:
+    Type: "AWS::Route53::HostedZone"
+    Properties:
+      Name: !Ref SourceDomainName
   DnsRecord:
-    Condition: HasHostedZoneId
-    DependsOn: Bucket
     Type: AWS::Route53::RecordSet
     Properties:
-      Name: !Ref SourceHostName
-      Type: A
+      Name: !Ref SourceDomainName
+      Type: "A"
       Region: !Sub '${AWS::Region}'
-      HostedZoneId: !Ref SourceHostedZoneId
+      HostedZoneId: !Ref HostedZone
       SetIdentifier: !Sub '${AWS::StackName}'
       AliasTarget:
-        DNSName: !FindInMap [S3WebsiteEndpoints, !Ref "AWS::Region", Endpoint]
-        EvaluateTargetHealth: true
-        HostedZoneId: !FindInMap [S3WebsiteEndpoints, !Ref "AWS::Region", HostedZoneId]
+        DNSName: !GetAtt Cloudfront.DomainName
+        HostedZoneId: "Z2FDTNDATAQYW2"    # hosted zone ID for cloudfront
 Outputs:
-  BucketWebsiteUrl:
-    Value: !GetAtt Bucket.WebsiteURL
-    Description: URL for redirector
+  CloudfrontId:
+    Value: !Ref Cloudfront
+    Description: ID of the Cloudfront distribution
     Export:
-      Name: !Sub '${AWS::StackName}-BucketWebsiteUrl'
-  WebsiteBucket:
-    Value: !Ref Bucket
-    Description: The bucket containing the website redirect
+      Name: !Sub '${AWS::StackName}-CloudfrontId'
+  CloudfrontEndpoint:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt Cloudfront.DomainName
+    Description: URL for cloudfront
     Export:
-      Name: !Sub '${AWS::StackName}-WebsiteBucket'
+      Name: !Sub '${AWS::StackName}-CloudfrontEndpoint'
