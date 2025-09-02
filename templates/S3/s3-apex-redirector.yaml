@@ -12,7 +12,7 @@ Description: >-
 Parameters:
   SourceDomainName:
     Type: String
-    Description: Source Domain name (i.e. my-site.org
+    Description: Source Domain name (i.e. my-site.org)
   TargetDomainName:
     Type: String
     Description: Target Domain name
@@ -94,7 +94,7 @@ Resources:
               return response;
           }
       FunctionConfig:
-        Comment: Redirects requests from /Explore/Programs/DetailsPage
+        Comment: Redirects all requests from the source domain to the target domain
         Runtime: cloudfront-js-1.0
       Name: !Ref RedirectFctName
 Outputs:
