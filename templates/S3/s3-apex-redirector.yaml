@@ -1,6 +1,11 @@
 # Set up a redirect from one apex domain to another using a cloudfront function
 # For example: redirect all traffic from my-site.org to mysite.org
-# This setup requires that the source and target zones are in the same account.
+# Requirements:
+#  * The source and target zones are in the same account.
+#  * An existing Hosted Zone for the source domain
+#  * An existing SSL Certificate in us-east-1 for the source domain
+#  * Manually create an A or CNAME record in the source domain's
+#     hosted zone to the target domain
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Setup redirect from one apex domain to another
@@ -92,21 +97,6 @@ Resources:
         Comment: Redirects requests from /Explore/Programs/DetailsPage
         Runtime: cloudfront-js-1.0
       Name: !Ref RedirectFctName
-  HostedZone:
-    Type: "AWS::Route53::HostedZone"
-    Properties:
-      Name: !Ref SourceDomainName
-  DnsRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      Name: !Ref SourceDomainName
-      Type: "A"
-      Region: !Sub '${AWS::Region}'
-      HostedZoneId: !Ref HostedZone
-      SetIdentifier: !Sub '${AWS::StackName}'
-      AliasTarget:
-        DNSName: !GetAtt Cloudfront.DomainName
-        HostedZoneId: "Z2FDTNDATAQYW2"    # hosted zone ID for cloudfront
 Outputs:
   CloudfrontId:
     Value: !Ref Cloudfront
