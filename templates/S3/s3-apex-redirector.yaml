@@ -1,0 +1,113 @@
+# Set up a redirect from one apex domain to another using a cloudfront function
+# For example: redirect all traffic from my-site.org to mysite.org
+# Requirements:
+#  * The source and target zones are in the same account.
+#  * An existing Hosted Zone for the source domain
+#  * An existing SSL Certificate in us-east-1 for the source domain
+#  * Manually create an A or CNAME record in the source domain's
+#     hosted zone to the target domain
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Setup redirect from one apex domain to another
+Parameters:
+  SourceDomainName:
+    Type: String
+    Description: Source Domain name (i.e. my-site.org)
+  TargetDomainName:
+    Type: String
+    Description: Target Domain name
+    ConstraintDescription: must be a resolvable DNS domain (i.e mysite.org)
+  AcmCertificateArn:
+    Type: String
+    Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
+    AllowedPattern: "arn:aws:acm:.*"
+    ConstraintDescription: must be a valid certificate ARN
+  RedirectFctName:
+    Type: String
+    Description: Redirect function name
+Resources:
+  Cloudfront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Cloudfront Distribution pointing to S3 bucket
+        Origins:
+          - Id: dummy
+            DomainName: dummy.org
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              OriginSSLProtocols: [ TLSv1.2 ]
+        Enabled: true
+        HttpVersion: 'http2'
+        DefaultRootObject: index.html
+        Aliases:
+          - !Ref SourceDomainName
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+        DefaultCacheBehavior:
+          DefaultTTL: 3600
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          TargetOriginId: dummy
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          FunctionAssociations:
+          -
+            EventType: viewer-request
+            FunctionARN: !GetAtt RedirectFct.FunctionARN
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+  RedirectFct:
+    Type: AWS::CloudFront::Function
+    Properties:
+      AutoPublish: true
+      FunctionCode:
+        Fn::Sub: |
+          function handler(event) {
+              var request = event.request;
+              var uri = request.uri;
+              var queryparams = request.querystring;
+              var response = {
+                  statusCode: 307,
+                  statusDescription: 'OK',
+                  headers: {
+                      'cloudfront-functions': { value: 'generated-by-CloudFront-Functions' },
+                      'location': { value: 'https://${TargetDomainName}' }
+                  }
+                };
+              return response;
+          }
+      FunctionConfig:
+        Comment: Redirects all requests from the source domain to the target domain
+        Runtime: cloudfront-js-1.0
+      Name: !Ref RedirectFctName
+Outputs:
+  CloudfrontId:
+    Value: !Ref Cloudfront
+    Description: ID of the Cloudfront distribution
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudfrontId'
+  CloudfrontEndpoint:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt Cloudfront.DomainName
+    Description: URL for cloudfront
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudfrontEndpoint'
