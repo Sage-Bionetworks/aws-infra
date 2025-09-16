@@ -7,15 +7,12 @@
 {#      - "arn:aws:iam::aws:policy/AdministratorAccess"                           #}
 {#  Sceptre_user_data:                                                            #}
 {#    Repositories:                                                               #}
-{#     - name: "organizations-infra"                                              #}
+{#     - owner: "Sage-Bionetworks"                                                #}
+{#       name: "organizations-infra"                                              #}
 {#       branch: "master"                                                         #}
-{#    GitHubOrg: "Sage-Bionetworks"                                               #}
 
 {% if sceptre_user_data.Repositories is defined %}
 {%     set Repositories = sceptre_user_data.Repositories %}
-{% endif %}
-{% if sceptre_user_data.GitHubOrg is defined %}
-{%     set GitHubOrg = sceptre_user_data.GitHubOrg %}
 {% endif %}
 
 AWSTemplateFormatVersion: 2010-09-09
@@ -106,13 +103,13 @@ Resources:
 {% for Repository in Repositories %}
 {%     for branch in Repository.branches %}
 {%         if branch == '*' %}
-                  "repo:{{ GitHubOrg }}/{{ Repository.name }}:{{ branch }}",
+                  "repo:{{ Repository.owner }}/{{ Repository.name }}:{{ branch }}",
 {%         else %}
-                  "repo:{{ GitHubOrg }}/{{ Repository.name }}:ref:refs/heads/{{ branch }}",
+                  "repo:{{ Repository.owner }}/{{ Repository.name }}:ref:refs/heads/{{ branch }}",
 {%         endif %}
 {%     endfor %}
-                  "repo:{{ GitHubOrg }}/{{ Repository.name }}:ref:refs/tags/*",
-                  "repo:{{ GitHubOrg }}/{{ Repository.name }}:environment:*",
+                  "repo:{{ Repository.owner }}/{{ Repository.name }}:ref:refs/tags/*",
+                  "repo:{{ Repository.owner }}/{{ Repository.name }}:environment:*",
 {% endfor %}
                 ]
 Outputs:
