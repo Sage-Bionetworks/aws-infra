@@ -61,7 +61,7 @@ Resources:
       Status: "ENABLED"
       Schedule:
         ScheduleExpression:
-          rate(7 days)
+          rate(1 day)
       InfrastructureConfigurationArn:
         Ref: ImageInfrastructureConfiguration
       ImageScanningConfiguration:
