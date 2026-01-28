@@ -1,0 +1,190 @@
+# based off of https://github.com/aws-samples/amazon-ec2-image-builder-samples/tree/master/CloudFormation/Linux/amazon-linux-2-with-latest-ssm-agent
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  AwsOrganizationId:
+    Description: Share the generated image with this Organization
+    Type: String
+    Default: "o-69lcdj4kro"
+  ImageVersion:
+    Description: The generated image version.
+    Type: String
+    Default: "0.0.0"
+  VolumeSize:
+    Description: The EBS volume size (in GB)
+    Type: Number
+    Default: 32
+    MinValue: 8
+    MaxValue: 500
+Resources:
+  # By default, AWS Services do not have permission to perform actions on your instances. This grants
+  # AWS Systems Manager (SSM) and EC2 Image Builder the necessary permissions to build an image.
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
+  # https://docs.aws.amazon.com/imagebuilder/latest/userguide/image-builder-setting-up.html
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      Comment: Role to be used by instance during image build.
+    Properties:
+      ManagedPolicyArns:
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/EC2InstanceProfileForImageBuilder
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - !Sub 'ec2.${AWS::URLSuffix}'
+        Version: '2012-10-17'
+      Path: /executionServiceEC2Role/
+  # To pass the InstanceRole to an EC2 instance, we need an InstanceProfile.
+  # This profile will be used during the image build process.
+  # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /executionServiceEC2Role/
+      Roles:
+        - Ref: InstanceRole
+
+  # Specifies the infrastructure within which to build and test your image.
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-infrastructureconfiguration.html
+  ImageInfrastructureConfiguration:
+    Type: AWS::ImageBuilder::InfrastructureConfiguration
+    Properties:
+      Name: !Sub '${AWS::StackName}-Configuration'
+      InstanceProfileName:
+        Ref: InstanceProfile
+
+  # Recipe which references the latest (x.x.x) version of the Amazon Linux 2023 AMI).
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-imagerecipe.html
+  ImageRecipeX86:
+    Type: AWS::ImageBuilder::ImageRecipe
+    Properties:
+      Name: !Sub '${AWS::StackName}-x86'
+      Version: !Sub ${ImageVersion}
+      # ${AWS::Partition} returns the partition where you are running the CloudFormation template. For standard AWS regions, the
+      # partition is aws. For resources elsewhere, the partition is aws-partitionname. For example, China (Beijing and Ningxia)
+      # regions use aws-cn and AWS GovCloud (US) regions are aws-us-gov.
+      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
+      ParentImage:
+        Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-x86/x.x.x
+      Components:
+        - ComponentArn:
+            Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            Encrypted: False  # Needed for public images
+      # Make sure the latest version of the Amazon SSM Agent is installed on the image.
+      AdditionalInstanceConfiguration:
+        UserDataOverride:
+          Fn::Base64: |
+            #!/bin/bash
+
+            # Supplemental Packages for Amazon Linux
+            # needed for docker-compose
+            sudo yum install spal-release
+            sudo yum update
+
+            sudo yum install amazon-ssm-agent aws-cfn-bootstrap docker-compose git python3-pip python3-wheel
+
+            # install synapseclient and show installed packages
+            sudo pip3 install --target /usr/lib synapseclient[pandas,pysftp]
+            sudo pip3 freeze
+
+            # start docker at boot, and also now
+            sudo systemctl enable --now docker.service
+
+            # add ec2-user and ssm-user to docker group
+            sudo gpasswd -a ec2-user docker
+            sudo gpasswd -a ssm-user docker
+
+  # Recipe which references the latest (x.x.x) version of the Amazon Linux 2023 AMI).
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-imagerecipe.html
+  ImageRecipeArm64:
+    Type: AWS::ImageBuilder::ImageRecipe
+    Properties:
+      Name: !Sub '${AWS::StackName}-arm64'
+      Version: !Sub ${ImageVersion}
+      # ${AWS::Partition} returns the partition where you are running the CloudFormation template. For standard AWS regions, the
+      # partition is aws. For resources elsewhere, the partition is aws-partitionname. For example, China (Beijing and Ningxia)
+      # regions use aws-cn and AWS GovCloud (US) regions are aws-us-gov.
+      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
+      ParentImage:
+        Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-arm64/x.x.x
+      Components:
+        - ComponentArn:
+            Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            Encrypted: False  # Needed for public images
+      # Make sure the latest version of the Amazon SSM Agent is installed on the image.
+      AdditionalInstanceConfiguration:
+        UserDataOverride:
+          Fn::Base64: |
+            #!/bin/bash
+
+            # Supplemental Packages for Amazon Linux
+            # needed for docker-compose
+            sudo yum install spal-release
+            sudo yum update
+
+            sudo yum install amazon-ssm-agent aws-cfn-bootstrap docker-compose git python3-pip python3-wheel
+
+            # install synapseclient and show installed packages
+            sudo pip3 install --target /usr/lib synapseclient[pandas,pysftp]
+            sudo pip3 freeze
+
+            # start docker at boot, and also now
+            sudo systemctl enable --now docker.service
+
+            # add ec2-user and ssm-user to docker group
+            sudo gpasswd -a ec2-user docker
+            sudo gpasswd -a ssm-user docker
+
+  # The Image resource will show complete in CloudFormation once your image is done building. Use this resource later in your
+  # stack to reference the image within other resources.
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-image.html
+  ImageX86:
+    Type: AWS::ImageBuilder::Image
+    Properties:
+      ImageRecipeArn:
+        Ref: ImageRecipeX86
+      InfrastructureConfigurationArn:
+        Ref: ImageInfrastructureConfiguration
+      DistributionConfigurationArn:
+        Ref: ImageDistributionConfiguration
+      Tags:
+        Name: !Sub ${AWS::StackName}
+
+  ImageArm64:
+    Type: AWS::ImageBuilder::Image
+    Properties:
+      ImageRecipeArn:
+        Ref: ImageRecipeArm64
+      InfrastructureConfigurationArn:
+        Ref: ImageInfrastructureConfiguration
+      DistributionConfigurationArn:
+        Ref: ImageDistributionConfiguration
+      Tags:
+        Name: !Sub ${AWS::StackName}
+
+  ImageDistributionConfiguration:
+    Type: AWS::ImageBuilder::DistributionConfiguration
+    Properties:
+      Name: !Sub '${AWS::StackName}-Distributions'
+      Distributions:
+        - Region: !Ref 'AWS::Region'
+          AmiDistributionConfiguration:
+            AmiTags:    # apply tags to generated AMIs
+              Name: !Sub '${AWS::StackName}'
+            LaunchPermissionConfiguration:
+              OrganizationArns:
+                - !Sub 'arn:${AWS::Partition}:organizations::${AWS::AccountId}:organization/${AwsOrganizationId}'
+              UserGroups:
+                - all   # Make AMI globally public
