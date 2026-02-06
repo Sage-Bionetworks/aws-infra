@@ -40,6 +40,16 @@ Resources:
               AWS: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${AWSS3LambdaArtifactsBucket}/*"
+          - Sid: RestrictToTLSRequestsOnly
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !Sub "arn:aws:s3:::${AWSS3LambdaArtifactsBucket}"
+              - !Sub "arn:aws:s3:::${AWSS3LambdaArtifactsBucket}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
   # KMS Keys
   AWSKmsInfraKey:
     Type: "AWS::KMS::Key"

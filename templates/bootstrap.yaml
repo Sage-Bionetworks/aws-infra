@@ -39,6 +39,16 @@ Resources:
               AWS: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}/*"
+          - Sid: RestrictToTLSRequestsOnly
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}"
+              - !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
   # This role is used by the SsmParam Lambda to read keys
   # See https://github.com/Sage-Bionetworks-IT/cfn-macro-ssm-param
   AWSIAMSsmParamLambdaExecutionRole:
