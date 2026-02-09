@@ -26,8 +26,8 @@ Resources:
       Comment: Role to be used by instance during image build.
     Properties:
       ManagedPolicyArns:
-        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
-        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/EC2InstanceProfileForImageBuilder
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilder
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -57,6 +57,49 @@ Resources:
       InstanceProfileName:
         Ref: InstanceProfile
 
+  InstallComponent:
+    Type: AWS::ImageBuilder::Component
+    Properties:
+      Name: !Sub '${AWS::StackName}-component'
+      Platform: Linux
+      Version: !Ref ImageVersion
+      Description: 'Install Docker and Docker Compose on Amazon Linux 2023'
+      SupportedOsVersions:
+        - 'Amazon Linux 2023'
+      Data: |
+        name: install-docker
+        description: Install Docker and Docker Compose on Amazon Linux 2023
+        schemaVersion: 1.0
+        phases:
+          - name: build
+            steps:
+              - name: InstallPackages
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - set -e
+                    - dnf install -y spal-release  # needed for docker compose
+                    - dnf install -y docker-compose git psutils python3-pip python3-wheel
+                    - dnf install -y gcc python3-devel  # needed to build psutil python wheel for synapseclient
+                    - pip3 install --upgrade synapseclient[pandas,pysftp]
+                    - systemctl enable docker
+              - name: GroupMembership
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - set -e
+                    - usermod -a -G docker,wheel ec2-user
+                    - adduser -m -s /bin/bash -G docker,wheel ssm-user
+          - name: test
+            steps:
+              - name: TestPackages
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - set -e
+                    - docker compose ls
+                    - python3 -c "import synapseclient, pandas, pysftp; print('Python packages verified')"
+
   # Recipe which references the latest (x.x.x) version of the Amazon Linux 2023 AMI).
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-imagerecipe.html
   ImageRecipeX86:
@@ -64,43 +107,30 @@ Resources:
     Properties:
       Name: !Sub '${AWS::StackName}-x86'
       Version: !Sub ${ImageVersion}
-      # ${AWS::Partition} returns the partition where you are running the CloudFormation template. For standard AWS regions, the
-      # partition is aws. For resources elsewhere, the partition is aws-partitionname. For example, China (Beijing and Ningxia)
-      # regions use aws-cn and AWS GovCloud (US) regions are aws-us-gov.
-      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
-      ParentImage:
-        Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-x86/x.x.x
+      ParentImage: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-x86/x.x.x
       Components:
-        - ComponentArn:
-            Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/amazon-cloudwatch-agent-linux/x.x.x
+        - ComponentArn: !Ref InstallComponent
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeSize: !Ref VolumeSize
             Encrypted: False  # Needed for public images
-      # Make sure the latest version of the Amazon SSM Agent is installed on the image.
       AdditionalInstanceConfiguration:
         UserDataOverride:
           Fn::Base64: |
-            #!/bin/bash
+            #!/bin/bash -eu
 
-            # Supplemental Packages for Amazon Linux
-            # needed for docker-compose
-            sudo yum install spal-release
-            sudo yum update
+            # This script runs when the EC2 instance boots
+            # Make sure the latest package versions are installed on the host
 
-            sudo yum install amazon-ssm-agent aws-cfn-bootstrap docker-compose git python3-pip python3-wheel
+            # update system packages
+            sudo dnf upgrade -y
 
-            # install synapseclient and show installed packages
-            sudo pip3 install --target /usr/lib synapseclient[pandas,pysftp]
+            # update python packages
+            sudo pip3 install --upgrade synapseclient[pandas,pysftp]
             sudo pip3 freeze
-
-            # start docker at boot, and also now
-            sudo systemctl enable --now docker.service
-
-            # add ec2-user and ssm-user to docker group
-            sudo gpasswd -a ec2-user docker
-            sudo gpasswd -a ssm-user docker
 
   # Recipe which references the latest (x.x.x) version of the Amazon Linux 2023 AMI).
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-imagerecipe.html
@@ -109,43 +139,30 @@ Resources:
     Properties:
       Name: !Sub '${AWS::StackName}-arm64'
       Version: !Sub ${ImageVersion}
-      # ${AWS::Partition} returns the partition where you are running the CloudFormation template. For standard AWS regions, the
-      # partition is aws. For resources elsewhere, the partition is aws-partitionname. For example, China (Beijing and Ningxia)
-      # regions use aws-cn and AWS GovCloud (US) regions are aws-us-gov.
-      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
-      ParentImage:
-        Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-arm64/x.x.x
+      ParentImage: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-arm64/x.x.x
       Components:
-        - ComponentArn:
-            Fn::Sub: arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
+        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/amazon-cloudwatch-agent-linux/x.x.x
+        - ComponentArn: !Ref InstallComponent
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeSize: !Ref VolumeSize
             Encrypted: False  # Needed for public images
-      # Make sure the latest version of the Amazon SSM Agent is installed on the image.
       AdditionalInstanceConfiguration:
         UserDataOverride:
           Fn::Base64: |
-            #!/bin/bash
+            #!/bin/bash -eu
 
-            # Supplemental Packages for Amazon Linux
-            # needed for docker-compose
-            sudo yum install spal-release
-            sudo yum update
+            # This script runs when the EC2 instance boots
+            # Make sure the latest package versions are installed on the host
 
-            sudo yum install amazon-ssm-agent aws-cfn-bootstrap docker-compose git python3-pip python3-wheel
+            # update system packages
+            sudo dnf upgrade -y
 
-            # install synapseclient and show installed packages
-            sudo pip3 install --target /usr/lib synapseclient[pandas,pysftp]
+            # update python packages
+            sudo pip3 install --upgrade synapseclient[pandas,pysftp]
             sudo pip3 freeze
-
-            # start docker at boot, and also now
-            sudo systemctl enable --now docker.service
-
-            # add ec2-user and ssm-user to docker group
-            sudo gpasswd -a ec2-user docker
-            sudo gpasswd -a ssm-user docker
 
   # The Image resource will show complete in CloudFormation once your image is done building. Use this resource later in your
   # stack to reference the image within other resources.
@@ -160,7 +177,7 @@ Resources:
       DistributionConfigurationArn:
         Ref: ImageDistributionConfiguration
       Tags:
-        Name: !Sub ${AWS::StackName}
+        Name: !Sub '${AWS::StackName}-x86'
 
   ImageArm64:
     Type: AWS::ImageBuilder::Image
@@ -172,7 +189,7 @@ Resources:
       DistributionConfigurationArn:
         Ref: ImageDistributionConfiguration
       Tags:
-        Name: !Sub ${AWS::StackName}
+        Name: !Sub '${AWS::StackName}-arm64'
 
   ImageDistributionConfiguration:
     Type: AWS::ImageBuilder::DistributionConfiguration
