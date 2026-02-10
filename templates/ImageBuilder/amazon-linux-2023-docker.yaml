@@ -88,8 +88,11 @@ Resources:
                 inputs:
                   commands:
                     - set -e
-                    - usermod -a -G docker,wheel ec2-user
-                    - adduser -m -s /bin/bash -G docker,wheel ssm-user
+                    - usermod -a -G docker ec2-user
+                    - adduser -m -s /bin/bash -G docker ssm-user
+                    - echo "ssm-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ssm-agent-users
+                    - chmod 440 /etc/sudoers.d/ssm-agent-users
+                    - chown root:root /etc/sudoers.d/ssm-agent-users
           - name: test
             steps:
               - name: TestPackages
@@ -99,6 +102,7 @@ Resources:
                     - set -e
                     - docker compose ls
                     - python3 -c "import synapseclient, pandas, pysftp; print('Python packages verified')"
+                    - visudo -c
 
   # Recipe which references the latest (x.x.x) version of the Amazon Linux 2023 AMI).
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-imagerecipe.html
