@@ -5,6 +5,7 @@ Parameters:
     Description: Share the generated image with this Organization
     Type: String
     Default: "o-69lcdj4kro"
+  # This version needs to be updated any time changes are made to the Component or ImageRecipe
   ImageVersion:
     Description: The generated image version.
     Type: String
@@ -26,8 +27,8 @@ Resources:
       Comment: Role to be used by instance during image build.
     Properties:
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-        - arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilder
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/EC2InstanceProfileForImageBuilder'
       AssumeRolePolicyDocument:
         Statement:
           - Action:
@@ -57,6 +58,7 @@ Resources:
       InstanceProfileName:
         Ref: InstanceProfile
 
+  # Specifies commands to run during image creation, and commands to verify the created image.
   InstallComponent:
     Type: AWS::ImageBuilder::Component
     Properties:
@@ -79,17 +81,23 @@ Resources:
                   commands:
                     - set -e
                     - dnf install -y spal-release  # needed for docker compose
-                    - dnf install -y docker-compose git psutils python3-pip python3-wheel
-                    - dnf install -y gcc python3-devel  # needed to build psutil python wheel for synapseclient
+                    - dnf install -y git psutils python3-pip python3-wheel
+                    - dnf install -y docker-compose  # pulls in default docker engine as a dependency
+                    - dnf install -y gcc python3-devel  # needed to build psutil wheel for pysftp
                     - pip3 install --upgrade synapseclient[pandas,pysftp]
-                    - systemctl enable docker
-              - name: GroupMembership
+                    - systemctl enable  docker
+              - name: DockerGroupMembership
                 action: ExecuteBash
                 inputs:
                   commands:
                     - set -e
                     - usermod -a -G docker ec2-user
                     - adduser -m -s /bin/bash -G docker ssm-user
+              - name: SsmSudoAccess
+                action: ExecuteBash
+                inputs:
+                  commands:
+                    - set -e
                     - echo "ssm-user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ssm-agent-users
                     - chmod 440 /etc/sudoers.d/ssm-agent-users
                     - chown root:root /etc/sudoers.d/ssm-agent-users
@@ -100,9 +108,9 @@ Resources:
                 inputs:
                   commands:
                     - set -e
-                    - docker compose ls
+                    - docker compose ls  # validate docker service starts and docker-compose is installed
                     - python3 -c "import synapseclient, pandas, pysftp; print('Python packages verified')"
-                    - visudo -c
+                    - visudo -c  # validate sudoers configuration
 
   # Recipe which references the latest (x.x.x) version of the Amazon Linux 2023 AMI).
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-imagebuilder-imagerecipe.html
@@ -111,10 +119,10 @@ Resources:
     Properties:
       Name: !Sub '${AWS::StackName}-x86'
       Version: !Sub ${ImageVersion}
-      ParentImage: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-x86/x.x.x
+      ParentImage: !Sub 'arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-x86/x.x.x'
       Components:
-        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
-        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/amazon-cloudwatch-agent-linux/x.x.x
+        - ComponentArn: !Sub 'arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x'
+        - ComponentArn: !Sub 'arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/amazon-cloudwatch-agent-linux/x.x.x'
         - ComponentArn: !Ref InstallComponent
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
@@ -143,10 +151,10 @@ Resources:
     Properties:
       Name: !Sub '${AWS::StackName}-arm64'
       Version: !Sub ${ImageVersion}
-      ParentImage: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-arm64/x.x.x
+      ParentImage: !Sub 'arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:image/amazon-linux-2023-arm64/x.x.x'
       Components:
-        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x
-        - ComponentArn: !Sub arn:aws:imagebuilder:${AWS::Region}:aws:component/amazon-cloudwatch-agent-linux/x.x.x
+        - ComponentArn: !Sub 'arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/update-linux/x.x.x'
+        - ComponentArn: !Sub 'arn:${AWS::Partition}:imagebuilder:${AWS::Region}:aws:component/amazon-cloudwatch-agent-linux/x.x.x'
         - ComponentArn: !Ref InstallComponent
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
