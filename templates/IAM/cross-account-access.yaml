@@ -31,10 +31,13 @@ Parameters:
   ExternalId:
     Type: String
     Default: ""
+    NoEcho: true
     Description: >-
-      An external ID to prevent the confused deputy problem.
-      Example:
-        "my-unique-external-id-12345"
+      An optional external ID to prevent the confused deputy problem.
+      A dynamic reference to Secrets Manager or SSM Parameter Store.
+      Examples:
+        "{{resolve:secretsmanager:my-secret:SecretString:ExternalId}}"
+        "{{resolve:ssm-secure:/path/to/external-id}}"
   PrincipalArns:
     Type: CommaDelimitedList
     Description: >-
