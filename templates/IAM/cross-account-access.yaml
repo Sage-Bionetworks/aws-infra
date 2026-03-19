@@ -28,6 +28,13 @@ Parameters:
             }
           ]
         }
+  ExternalId:
+    Type: String
+    Default: ""
+    Description: >-
+      An external ID to prevent the confused deputy problem.
+      Example:
+        "my-unique-external-id-12345"
   PrincipalArns:
     Type: CommaDelimitedList
     Description: >-
@@ -40,6 +47,7 @@ Conditions:
       - !Join ["", !Ref ManagedPolicyArns]
       - ''
   HasPolicyDocument: !Not [!Equals [!Ref PolicyDocument, ""]]
+  HasExternalId: !Not [!Equals [!Ref ExternalId, ""]]
 Resources:
   ServicePolicy:
     Condition: HasPolicyDocument
@@ -66,6 +74,11 @@ Resources:
             Action:
               - "sts:AssumeRole"
               - "sts:TagSession"
+            Condition: !If
+              - HasExternalId
+              - StringEquals:
+                  "sts:ExternalId": !Ref ExternalId
+              - !Ref "AWS::NoValue"
 Outputs:
   ServiceRoleArn:
     Value: !GetAtt ServiceRole.Arn
