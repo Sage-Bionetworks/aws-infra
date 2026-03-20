@@ -31,7 +31,6 @@ Parameters:
   ExternalId:
     Type: String
     Default: ""
-    NoEcho: true
     Description: >-
       An optional external ID to prevent the confused deputy problem.
       A dynamic reference to Secrets Manager or SSM Parameter Store.
