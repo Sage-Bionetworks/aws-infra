@@ -28,6 +28,15 @@ Parameters:
             }
           ]
         }
+  ExternalId:
+    Type: String
+    Default: ""
+    Description: >-
+      An optional external ID to prevent the confused deputy problem.
+      A dynamic reference to Secrets Manager or SSM Parameter Store.
+      Examples:
+        "{{resolve:secretsmanager:my-secret:SecretString:ExternalId}}"
+        "{{resolve:ssm-secure:/path/to/external-id}}"
   PrincipalArns:
     Type: CommaDelimitedList
     Description: >-
@@ -40,6 +49,7 @@ Conditions:
       - !Join ["", !Ref ManagedPolicyArns]
       - ''
   HasPolicyDocument: !Not [!Equals [!Ref PolicyDocument, ""]]
+  HasExternalId: !Not [!Equals [!Ref ExternalId, ""]]
 Resources:
   ServicePolicy:
     Condition: HasPolicyDocument
@@ -66,6 +76,11 @@ Resources:
             Action:
               - "sts:AssumeRole"
               - "sts:TagSession"
+            Condition: !If
+              - HasExternalId
+              - StringEquals:
+                  "sts:ExternalId": !Ref ExternalId
+              - !Ref "AWS::NoValue"
 Outputs:
   ServiceRoleArn:
     Value: !GetAtt ServiceRole.Arn
