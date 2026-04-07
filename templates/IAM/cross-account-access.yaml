@@ -29,14 +29,12 @@ Parameters:
           ]
         }
   # ExternalId supports dynamic references. Examples:
-  #   ExternalId: "{{resolve:secretsmanager:my-secret:SecretString:ExternalId}}"
-  #   ExternalId: "{{resolve:ssm-secure:/path/to/external-id}}"
+  #   ExternalId: "{{resolve:secretsmanager:my-secrets:SecretString:my-secret-key}}"
   ExternalId:
     Type: String
     Default: ""
     Description: >-
-      An optional external ID to prevent the confused deputy problem.
-      A dynamic reference to Secrets Manager or SSM Parameter Store.
+      An optional dynamic reference to the AWS Secrets Manager containing the ExternalId value
   PrincipalArns:
     Type: CommaDelimitedList
     Description: >-
