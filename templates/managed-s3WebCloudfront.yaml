@@ -18,9 +18,33 @@ Parameters:
     Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
     AllowedPattern: "arn:aws:acm:.*"
     ConstraintDescription: must be a valid certificate ARN.
+  LogPrefix:
+    Type: String
+    Default: "cloudfront-logs/"
+    Description: Prefix for log files in the log bucket
 Conditions:
   IsProd: !Equals [!Ref SubDomainName, 'prod']
 Resources:
+  AccessLogBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Status: Enabled
+            ExpirationInDays: 365
+            Prefix: !Ref LogPrefix
   CloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -46,6 +70,9 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref AccessLogBucket
+        LogFilePrefix: !Sub 's3-access/${AWS::StackName}/'
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -106,6 +133,10 @@ Resources:
           AcmCertificateArn: !Ref AcmCertificateArn
           MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
+        Logging:
+          Bucket: !GetAtt AccessLogBucket.DomainName
+          Prefix: !Ref LogPrefix
+          IncludeCookies: false
 Outputs:
   CloudfrontId:
     Value: !Ref Cloudfront
