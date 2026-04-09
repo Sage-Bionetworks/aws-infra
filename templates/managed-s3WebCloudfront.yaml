@@ -18,73 +18,79 @@ Parameters:
     Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
     AllowedPattern: "arn:aws:acm:.*"
     ConstraintDescription: must be a valid certificate ARN.
+Conditions:
+  IsProd: !Equals [!Ref SubDomainName, 'prod']
 Resources:
-  WebsiteLogBucket:
-    Type: 'AWS::S3::Bucket'
+  CloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
     Properties:
-      AccessControl: LogDeliveryWrite
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerEnforced
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName, 'logs']
+      OriginAccessControlConfig:
+        Description: Default Origin Access Control
+        Name: !Ref AWS::StackName
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerEnforced
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName]
+      BucketName: !Join ['.',  [!Ref SubDomainName, !Ref DomainName]]
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: error.html
-      LoggingConfiguration:
-        DestinationBucketName: !Ref WebsiteLogBucket
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
+      Bucket: !Ref WebsiteBucket
       PolicyDocument:
-        Id: MyPolicy
+        Id: BucketPolicy
         Version: 2012-10-17
         Statement:
-          - Sid: PublicReadForGetBucketObjects
-            Effect: Allow
-            Principal: '*'
+          - Sid: CFOACReadForGetBucketObjects
             Action: 's3:GetObject'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref WebsiteBucket
-                - /*
-      Bucket: !Ref WebsiteBucket
+            Effect: Allow
+            Resource: !Sub ${WebsiteBucket.Arn}/*
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${Cloudfront}
   Cloudfront:
     Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - WebsiteBucket
     Properties:
       DistributionConfig:
         Comment: Cloudfront Distribution pointing to S3 bucket
         Origins:
-          - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
+          - DomainName: !Sub '${WebsiteBucket}.s3.${AWS::Region}.amazonaws.com'
             Id: S3Origin
-            CustomOriginConfig:
-              HTTPPort: 80
-              HTTPSPort: 443
-              OriginProtocolPolicy: http-only
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt CloudFrontOAC.Id
         Enabled: true
         HttpVersion: 'http2'
         DefaultRootObject: index.html
         Aliases:
-          - !Join
-            - '.'
-            - - !Ref SubDomainName
-              - !Ref DomainName
+          - !Sub '${SubDomainName}.${DomainName}'
+          - !If [IsProd, !Sub '${DomainName}', !Ref AWS::NoValue]
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
+          - ErrorCachingMinTTL: 60
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: '/index.html'
         DefaultCacheBehavior:
           DefaultTTL: 3600
           AllowedMethods:
@@ -92,14 +98,13 @@ Resources:
             - HEAD
           Compress: true
           TargetOriginId: S3Origin
-          ForwardedValues:
-            QueryString: true
-            Cookies:
-              Forward: none
+          # AWS managed cache policy "CachingOptimized" (see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html)
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           ViewerProtocolPolicy: redirect-to-https
-        PriceClass: PriceClass_All
+        PriceClass: PriceClass_100
         ViewerCertificate:
           AcmCertificateArn: !Ref AcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
 Outputs:
   CloudfrontId:
@@ -108,18 +113,10 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontId'
   CloudfrontEndpoint:
-    Value: !Join
-      - ''
-      - - 'https://'
-        - !GetAtt Cloudfront.DomainName
+    Value: !Join ['', ['https://', !GetAtt Cloudfront.DomainName ]]
     Description: URL for cloudfront
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontEndpoint'
-  BucketWebsiteUrl:
-    Value: !GetAtt WebsiteBucket.WebsiteURL
-    Description: URL for website hosted in S3 bucket
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-BucketWebsiteUrl'
   WebsiteBucket:
     Value: !Ref WebsiteBucket
     Description: The bucket containing the website content
