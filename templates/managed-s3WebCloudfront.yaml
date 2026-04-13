@@ -18,8 +18,16 @@ Parameters:
     Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
     AllowedPattern: "arn:aws:acm:.*"
     ConstraintDescription: must be a valid certificate ARN.
+  OnErrorGotoRoot:
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+    Description: Set to true to redirect 403/404 errors to /index.html (SPA routing)
 Conditions:
   IsProd: !Equals [!Ref SubDomainName, 'prod']
+  UseCustomErrorResponses: !Equals [!Ref OnErrorGotoRoot, 'true']
 Resources:
   AccessLogBucket:
     Type: AWS::S3::Bucket
@@ -105,15 +113,17 @@ Resources:
         Aliases:
           - !Sub '${SubDomainName}.${DomainName}'
           - !If [IsProd, !Sub '${DomainName}', !Ref AWS::NoValue]
-        CustomErrorResponses:
-          - ErrorCachingMinTTL: 60
-            ErrorCode: 404
-            ResponseCode: 200
-            ResponsePagePath: '/index.html'
-          - ErrorCachingMinTTL: 60
-            ErrorCode: 403
-            ResponseCode: 200
-            ResponsePagePath: '/index.html'
+        CustomErrorResponses: !If
+          - UseCustomErrorResponses
+          - - ErrorCachingMinTTL: 60
+              ErrorCode: 404
+              ResponseCode: 200
+              ResponsePagePath: '/index.html'
+            - ErrorCachingMinTTL: 60
+              ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: '/index.html'
+          - !Ref "AWS::NoValue"
         DefaultCacheBehavior:
           DefaultTTL: 3600
           AllowedMethods:
