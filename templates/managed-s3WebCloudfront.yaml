@@ -18,10 +18,6 @@ Parameters:
     Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
     AllowedPattern: "arn:aws:acm:.*"
     ConstraintDescription: must be a valid certificate ARN.
-  LogPrefix:
-    Type: String
-    Default: "cloudfront-logs/"
-    Description: Prefix for log files in the log bucket
 Conditions:
   IsProd: !Equals [!Ref SubDomainName, 'prod']
 Resources:
@@ -44,7 +40,7 @@ Resources:
         Rules:
           - Status: Enabled
             ExpirationInDays: 365
-            Prefix: !Ref LogPrefix
+            Prefix: !Sub 's3-access/${AWS::StackName}/'
   CloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -135,7 +131,7 @@ Resources:
           SslSupportMethod: sni-only
         Logging:
           Bucket: !GetAtt AccessLogBucket.DomainName
-          Prefix: !Ref LogPrefix
+          Prefix: !Sub 's3-access/${AWS::StackName}/'
           IncludeCookies: false
 Outputs:
   CloudfrontId:
