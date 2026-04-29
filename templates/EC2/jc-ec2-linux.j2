@@ -258,8 +258,6 @@ Resources:
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource Ec2Instance --configsets SetupCfn,SetupTools,SetupJumpcloud --region ${AWS::Region}
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource Ec2Instance --region ${AWS::Region}
       Tags:
-        - Key: "parkmycloud"
-          Value: !Ref ParkMyCloudManaged
         - Key: "ManagedInstanceMaintenanceTarget"
           Value: "yes"
         - Key: "PatchGroup"
@@ -293,9 +291,6 @@ Resources:
       Parameters:
         StackName: !Ref AWS::StackName
         SnapshotCount: !Ref SnapshotCount
-      Tags:
-        - Key: "parkmycloud"
-          Value: !Ref ParkMyCloudManaged
 Outputs:
   Ec2InstanceId:
     Value: !Ref Ec2Instance

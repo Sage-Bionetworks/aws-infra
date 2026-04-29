@@ -248,8 +248,6 @@ Resources:
           cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource Ec2Instance --region ${AWS::Region}
           </script>
       Tags:
-        - Key: "parkmycloud"
-          Value: !Ref ParkMyCloudManaged
         - Key: "ManagedInstanceMaintenanceTarget"
           Value: "yes"
         - Key: "PatchGroup"
@@ -284,9 +282,6 @@ Resources:
       Parameters:
         StackName: !Ref AWS::StackName
         SnapshotCount: !Ref SnapshotCount
-      Tags:
-        - Key: "parkmycloud"
-          Value: !Ref ParkMyCloudManaged
 Outputs:
   Ec2InstanceId:
     Value: !Ref Ec2Instance
