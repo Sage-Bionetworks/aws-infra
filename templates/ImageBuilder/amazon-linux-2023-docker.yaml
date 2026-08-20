@@ -217,3 +217,14 @@ Resources:
                 - !Sub 'arn:${AWS::Partition}:organizations::${AWS::AccountId}:organization/${AwsOrganizationId}'
               UserGroups:
                 - all   # Make AMI globally public
+
+Outputs:
+  # Lets a human look up the latest AMI ID per architecture (e.g. via `aws cloudformation
+  # describe-stacks`) when updating the hardcoded AMI literal in a downstream template
+  # like service-catalog-library
+  AmiIdX86:
+    Description: 'Latest x86_64 AMI ID'
+    Value: !GetAtt ImageX86.ImageId
+  AmiIdArm64:
+    Description: 'Latest arm64 AMI ID'
+    Value: !GetAtt ImageArm64.ImageId
