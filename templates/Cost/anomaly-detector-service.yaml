@@ -12,7 +12,6 @@ Parameters:
     Description: The frequency that anomaly reports are sent over email
     AllowedValues:
       - 'DAILY'
-      - 'IMMEDIATE'
       - 'WEEKLY'
   Subscriber:
     Type: String
