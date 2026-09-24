@@ -106,15 +106,15 @@ Resources:
               StringLike:
                 token.actions.githubusercontent.com:sub: [
 {% for Repository in Repositories %}
-{%   if '*' in Repository.branches %}
+{%     if '*' in Repository.branches %}
                   "repo:{{ Repository.owner }}/{{ Repository.name }}:*",
-{%   else %}
-{%     for branch in Repository.branches %}
+{%     else %}
+{%         for branch in Repository.branches %}
                   "repo:{{ Repository.owner }}/{{ Repository.name }}:ref:refs/heads/{{ branch }}",
-{%     endfor %}
+{%         endfor %}
                   "repo:{{ Repository.owner }}/{{ Repository.name }}:ref:refs/tags/*",
                   "repo:{{ Repository.owner }}/{{ Repository.name }}:environment:*",
-{%   endif %}
+{%     endif %}
 {% endfor %}
                 ]
 Outputs:
