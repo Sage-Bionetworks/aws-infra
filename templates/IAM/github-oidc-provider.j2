@@ -10,6 +10,11 @@
 {#     - owner: "Sage-Bionetworks"                                                #}
 {#       name: "organizations-infra"                                              #}
 {#       branches: ["master"]                                                     #}
+{#                                                                                #}
+{# By default a repository is trusted for its listed branches, for any tag, and   #}
+{# for any environment.  Listing a branch of "*" instead trusts every subject for #}
+{# that repository (any branch, tag or environment), so the tag and environment   #}
+{# patterns are omitted in that case as they would be redundant.                  #}
 
 {% if sceptre_user_data.Repositories is defined %}
 {%     set Repositories = sceptre_user_data.Repositories %}
@@ -108,8 +113,12 @@ Resources:
                   "repo:{{ Repository.owner }}/{{ Repository.name }}:ref:refs/heads/{{ branch }}",
 {%         endif %}
 {%     endfor %}
+{#     A branch of '*' already matches every subject for the repo, making the #}
+{#     tag and environment patterns below redundant.                         #}
+{%     if '*' not in Repository.branches %}
                   "repo:{{ Repository.owner }}/{{ Repository.name }}:ref:refs/tags/*",
                   "repo:{{ Repository.owner }}/{{ Repository.name }}:environment:*",
+{%     endif %}
 {% endfor %}
                 ]
 Outputs:
