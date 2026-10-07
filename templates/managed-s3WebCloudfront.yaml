@@ -18,73 +18,112 @@ Parameters:
     Description: The Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
     AllowedPattern: "arn:aws:acm:.*"
     ConstraintDescription: must be a valid certificate ARN.
+  OnErrorGotoRoot:
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+    Description: Set to true to redirect 403/404 errors to /index.html (SPA routing)
+Conditions:
+  IsProd: !Equals [!Ref SubDomainName, 'prod']
+  UseCustomErrorResponses: !Equals [!Ref OnErrorGotoRoot, 'true']
 Resources:
-  WebsiteLogBucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      AccessControl: LogDeliveryWrite
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerEnforced
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName, 'logs']
-  WebsiteBucket:
+  AccessLogBucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerEnforced
-      BucketName: !Join
-        - '.'
-        - [!Ref SubDomainName, !Ref DomainName]
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: error.html
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Status: Enabled
+            ExpirationInDays: 365
+            Prefix: !Sub 's3-access/${AWS::StackName}/'
+  CloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: Default Origin Access Control
+        Name: !Ref AWS::StackName
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ['.',  [!Ref SubDomainName, !Ref DomainName]]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
       LoggingConfiguration:
-        DestinationBucketName: !Ref WebsiteLogBucket
+        DestinationBucketName: !Ref AccessLogBucket
+        LogFilePrefix: !Sub 's3-access/${AWS::StackName}/'
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
+      Bucket: !Ref WebsiteBucket
       PolicyDocument:
-        Id: MyPolicy
+        Id: BucketPolicy
         Version: 2012-10-17
         Statement:
-          - Sid: PublicReadForGetBucketObjects
-            Effect: Allow
-            Principal: '*'
+          - Sid: CFOACReadForGetBucketObjects
             Action: 's3:GetObject'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref WebsiteBucket
-                - /*
-      Bucket: !Ref WebsiteBucket
+            Effect: Allow
+            Resource: !Sub ${WebsiteBucket.Arn}/*
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${Cloudfront}
   Cloudfront:
     Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - WebsiteBucket
     Properties:
       DistributionConfig:
         Comment: Cloudfront Distribution pointing to S3 bucket
         Origins:
-          - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
+          - DomainName: !Sub '${WebsiteBucket}.s3.${AWS::Region}.amazonaws.com'
             Id: S3Origin
-            CustomOriginConfig:
-              HTTPPort: 80
-              HTTPSPort: 443
-              OriginProtocolPolicy: http-only
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt CloudFrontOAC.Id
         Enabled: true
         HttpVersion: 'http2'
         DefaultRootObject: index.html
         Aliases:
-          - !Join
-            - '.'
-            - - !Ref SubDomainName
-              - !Ref DomainName
+          - !Sub '${SubDomainName}.${DomainName}'
+          - !If [IsProd, !Sub '${DomainName}', !Ref AWS::NoValue]
+        CustomErrorResponses: !If
+          - UseCustomErrorResponses
+          - - ErrorCachingMinTTL: 60
+              ErrorCode: 404
+              ResponseCode: 200
+              ResponsePagePath: '/index.html'
+            - ErrorCachingMinTTL: 60
+              ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: '/index.html'
+          - !Ref "AWS::NoValue"
         DefaultCacheBehavior:
           DefaultTTL: 3600
           AllowedMethods:
@@ -92,15 +131,18 @@ Resources:
             - HEAD
           Compress: true
           TargetOriginId: S3Origin
-          ForwardedValues:
-            QueryString: true
-            Cookies:
-              Forward: none
+          # AWS managed cache policy "CachingOptimized" (see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html)
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           ViewerProtocolPolicy: redirect-to-https
-        PriceClass: PriceClass_All
+        PriceClass: PriceClass_100
         ViewerCertificate:
           AcmCertificateArn: !Ref AcmCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
           SslSupportMethod: sni-only
+        Logging:
+          Bucket: !GetAtt AccessLogBucket.DomainName
+          Prefix: !Sub 's3-access/${AWS::StackName}/'
+          IncludeCookies: false
 Outputs:
   CloudfrontId:
     Value: !Ref Cloudfront
@@ -108,18 +150,10 @@ Outputs:
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontId'
   CloudfrontEndpoint:
-    Value: !Join
-      - ''
-      - - 'https://'
-        - !GetAtt Cloudfront.DomainName
+    Value: !Join ['', ['https://', !GetAtt Cloudfront.DomainName ]]
     Description: URL for cloudfront
     Export:
       Name: !Sub '${AWS::Region}-${AWS::StackName}-CloudfrontEndpoint'
-  BucketWebsiteUrl:
-    Value: !GetAtt WebsiteBucket.WebsiteURL
-    Description: URL for website hosted in S3 bucket
-    Export:
-      Name: !Sub '${AWS::Region}-${AWS::StackName}-BucketWebsiteUrl'
   WebsiteBucket:
     Value: !Ref WebsiteBucket
     Description: The bucket containing the website content
