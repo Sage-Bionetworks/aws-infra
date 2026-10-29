@@ -39,6 +39,12 @@ Resources:
               AWS: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}/*"
+          - Sid: "AllowPublicList"
+            Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "s3:ListBucket"
+            Resource: !Sub "arn:aws:s3:::${AWSS3CloudformationBucket}"
           - Sid: RestrictToTLSRequestsOnly
             Effect: Deny
             Principal: '*'
