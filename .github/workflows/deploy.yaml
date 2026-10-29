@@ -14,12 +14,8 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-      - uses: pre-commit/action@v3.0.0
+      - uses: actions/checkout@v7
+      - uses: pre-commit/action@v3.0.1
   deploy:
     name: Upload to Amazon S3
     runs-on: ubuntu-latest
@@ -30,9 +26,9 @@ jobs:
       contents: read
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
     - name: Assume AWS Role
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-region: us-east-1
         role-to-assume: arn:aws:iam::745159704268:role/sagebase-github-oidc-cfn-template-deploy
